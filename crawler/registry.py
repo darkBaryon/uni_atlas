@@ -3,11 +3,44 @@
 任务的生命周期都在这里：取到期任务、登记新发现的页面、
 回写抓取状态（成功 / dead / moved / 失败留痕）。
 """
+from dataclasses import dataclass, fields
 from datetime import datetime
 
 import pymysql
 
 import config
+
+@dataclass
+class Task:
+    """source_pages 行的类型化视图（+ 学校 code/中文名），pipeline 全程传它。
+
+    字段拼写错误由 mypy/IDE 在改代码时抓出，而不是运行时 KeyError。
+    """
+    id: int
+    university_id: int
+    category: str
+    url: str
+    uni_code: str
+    uni_name_zh: str | None = None
+    title: str | None = None
+    note: str | None = None
+    crawl_freq: str = "monthly"
+    fetch_method: str = "html"
+    status: str = "active"
+    faculty_id: int | None = None
+    redirect_to: str | None = None
+    last_content_hash: str | None = None
+    last_fetched_at: datetime | None = None
+    last_changed_at: datetime | None = None
+
+    _FIELDS = None  # 类缓存
+
+    @classmethod
+    def from_row(cls, row):
+        if cls._FIELDS is None:
+            cls._FIELDS = {f.name for f in fields(cls)}
+        return cls(**{k: v for k, v in row.items() if k in cls._FIELDS})
+
 
 # 目录类 category：抓到内容后走 discover 流程（展开出新任务）而非实体解析
 DISCOVER_CATEGORIES = {"program_catalog", "faculty_list", "module_catalog"}
@@ -77,7 +110,7 @@ def get_tasks(conn, uni_code=None, category=None, due_only=False,
         args.append(int(limit))
     with conn.cursor() as cur:
         cur.execute(" ".join(sql), args)
-        return cur.fetchall()
+        return [Task.from_row(r) for r in cur.fetchall()]
 
 
 def count_skipped(conn, uni_code=None):

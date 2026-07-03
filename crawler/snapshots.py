@@ -29,10 +29,10 @@ def save(conn, task, body_bytes, http_status):
     哈希与库中 last_content_hash 一致 → 未变更：不写盘不登记，返回 snapshot_id=None。
     """
     content_hash = hashlib.sha256(body_bytes).hexdigest()
-    if content_hash == task.get("last_content_hash"):
+    if content_hash == task.last_content_hash:
         return content_hash, False, None
 
-    fpath = path_for(task["uni_code"], task["category"], task["url"])
+    fpath = path_for(task.uni_code, task.category, task.url)
     os.makedirs(os.path.dirname(fpath), exist_ok=True)
     with open(fpath, "wb") as f:
         f.write(body_bytes)
@@ -41,7 +41,7 @@ def save(conn, task, body_bytes, http_status):
         cur.execute(
             "INSERT INTO page_snapshots (source_page_id, fetched_at, http_status,"
             " content_hash, content_path) VALUES (%s,%s,%s,%s,%s)",
-            (task["id"], datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            (task.id, datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
              http_status, content_hash, fpath))
         return content_hash, True, cur.lastrowid
 

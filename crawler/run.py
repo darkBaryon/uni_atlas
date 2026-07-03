@@ -69,7 +69,7 @@ def main():
     if args.dry_run:
         print(f"将执行 {len(tasks)} 个任务:")
         for t in tasks:
-            print(f"  [{t['uni_code']}/{t['category']}] {t['url']}")
+            print(f"  [{t.uni_code}/{t.category}] {t.url}")
         return 0
 
     mode = "重放" if args.reparse else "抓取"

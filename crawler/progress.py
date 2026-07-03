@@ -60,13 +60,13 @@ class _RichBars:
 def page_desc(task):
     """孙级描述：学院 · 专业名（专业页不再带类别字样；其他类别保留标签）。"""
     parts = []
-    if task.get("category") != "program_detail":
-        parts.append(f"[{CATEGORY_ZH.get(task.get('category'), task.get('category', ''))}]")
-    note = task.get("note") or ""
+    if task.category != "program_detail":
+        parts.append(f"[{CATEGORY_ZH.get(task.category, (task.category or ''))}]")
+    note = task.note or ""
     if "|" in note:                       # UCL 式 'Faculty | Dept' 取院系
         parts.append(note.split("|")[-1].strip()[:24] + " ·")
-    title = task.get("title")
-    parts.append((title or task.get("url", "").rstrip("/").rsplit("/", 1)[-1])[:48])
+    title = task.title
+    parts.append((title or (task.url or '').rstrip("/").rsplit("/", 1)[-1])[:48])
     return " ".join(parts)
 
 

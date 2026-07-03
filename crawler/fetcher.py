@@ -49,7 +49,7 @@ def _is_cloudflare(status, text_head):
 
 
 async def _fetch_one(session, task):
-    url = task["url"]
+    url = task.url
     try:
         async with session.get(url, allow_redirects=True) as resp:
             body = await resp.read()
@@ -100,7 +100,7 @@ async def _domain_worker(domain, queue, session, handle, sem, log):
                 if result.kind != "cloudflare":
                     break
                 log(f"  [{domain}] 反爬/限流({result.note or 'CF 挑战'})，"
-                    f"退避 {backoff}s: {task['url'][:80]}")
+                    f"退避 {backoff}s: {task.url[:80]}")
                 await asyncio.sleep(backoff)
                 result = await _fetch_one(session, task)
             if result.kind == "cloudflare":
@@ -113,7 +113,7 @@ async def _domain_worker(domain, queue, session, handle, sem, log):
 async def _run(tasks, handle, log):
     queues: dict[str, list] = {}
     for t in tasks:
-        queues.setdefault(_domain(t["url"]), []).append(t)
+        queues.setdefault(_domain(t.url), []).append(t)
     sem = asyncio.Semaphore(config.MAX_DOMAINS)
     timeout = aiohttp.ClientTimeout(total=config.TIMEOUT)
     # trust_env 默认 False：绕开本机代理环境变量（anaconda requests 曾因此出错）
