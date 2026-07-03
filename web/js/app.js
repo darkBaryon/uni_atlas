@@ -55,8 +55,8 @@
       }
       parts.push(dept ? UI.esc(dept.name_zh || dept.name_en) : "系");
     }
-    if (route.view === "program") parts.push("课程详情");
-    if (route.view === "module") parts.push("模块详情");
+    if (route.view === "program") parts.push("专业详情");
+    if (route.view === "module") parts.push("课程详情");
     return parts.length > 1 ? '<div class="crumbs">' + parts.join("<span>›</span>") + "</div>" : "";
   }
 

@@ -20,6 +20,8 @@ cmd="${1:-run}"
 case "$cmd" in
   run)
     python3 crawler/run.py --due
+    echo "▸ 翻译新增名称 ..."
+    ( cd crawler && python3 translate_backfill.py )
     export_web
     echo "▸ 打开页面 ..."
     open web/index.html

@@ -24,7 +24,7 @@
         '<span class="country">' + esc(u.country) + " · " + esc(u.city || "") + "</span>" +
         "<h3>" + esc(u.name_en) + "</h3>" +
         '<span class="zh">' + esc(u.name_zh || "") + " · " + esc(u.term_system || "") + "</span>" +
-        '<div class="nums"><div><b>' + nProg + "</b><span>课程</span></div>" +
+        '<div class="nums"><div><b>' + nProg + "</b><span>专业</span></div>" +
         "<div><b>" + nMod + "</b><span>模块</span></div>" +
         "<div><b>" + (u.calendar.length ? "✓" : "—") + "</b><span>校历</span></div>" +
         "<div><b>" + (dead ? dead + "⚠" : "0") + "</b><span>失效源</span></div></div></a>";
@@ -91,9 +91,9 @@
     var keys = Object.keys(agg).sort(function (a, b) {
       return agg[b].n - agg[a].n;
     });
-    if (!keys.length) return "<section><h2>学院</h2><p class='empty'>暂无课程数据</p></section>";
+    if (!keys.length) return "<section><h2>学院</h2><p class='empty'>暂无专业数据</p></section>";
     return "<section><h2>学院</h2>" +
-      '<p class="h2note">共 ' + uni.programs.length + " 个课程已入库 · 点击学院查看</p>" +
+      '<p class="h2note">共 ' + uni.programs.length + " 个专业已入库 · 点击学院查看</p>" +
       '<div class="uni-grid">' + keys.map(function (k) {
         var a = agg[k];
         var nameEn = a.fac ? a.fac.name_en : "未归类";
@@ -101,7 +101,7 @@
         return '<a class="uni-card" href="#/u/' + esc(uni.code) + "/f/" + k + '">' +
           "<h3>" + esc(nameEn) + "</h3>" +
           '<span class="zh">' + esc(nameZh) + "</span>" +
-          '<div class="nums"><div><b>' + a.n + "</b><span>课程</span></div>" +
+          '<div class="nums"><div><b>' + a.n + "</b><span>专业</span></div>" +
           "<div><b>" + a.ug + "</b><span>本科</span></div>" +
           "<div><b>" + a.pgt + "</b><span>硕士</span></div></div></a>";
       }).join("") + "</div></section>";
@@ -139,7 +139,7 @@
 
     if (depts.length) {
       h += "<section><h2>系</h2>" +
-        '<p class="h2note">点击进入系的课程列表</p><div class="uni-grid">' +
+        '<p class="h2note">点击进入系页</p><div class="uni-grid">' +
         depts.map(function (d) {
           var ug = 0, pgt = 0;
           uni.programs.forEach(function (p) {
@@ -148,19 +148,52 @@
           return '<a class="uni-card" href="#/u/' + esc(uni.code) + "/d/" + d.id + '">' +
             "<h3>" + esc(d.name_en) + "</h3>" +
             '<span class="zh">' + esc(d.name_zh || "") + "</span>" +
-            '<div class="nums"><div><b>' + (ug + pgt) + "</b><span>课程</span></div>" +
+            '<div class="nums"><div><b>' + (ug + pgt) + "</b><span>专业</span></div>" +
             "<div><b>" + ug + "</b><span>本科</span></div>" +
             "<div><b>" + pgt + "</b><span>硕士</span></div></div></a>";
         }).join("") + "</div></section>";
       if (direct.length) {
-        h += VIEWS._programSection(uni, filters, direct, "学院直属课程");
+        h += VIEWS._programSection(uni, filters, direct, "学院直属专业");
       }
       return h;
     }
-    return h + VIEWS._programSection(uni, filters, direct, "课程列表");
+    h += VIEWS._moduleSection(uni, direct);   // 无系的学院：课程列表在上
+    return h + VIEWS._programSection(uni, filters, direct, "专业列表");
   };
 
-  /* ---------------- 系页：该系的课程列表 ---------------- */
+  /* 课程（模块）列表：该组专业引用到的全部单门课，去重 */
+  VIEWS._moduleSection = function (uni, progs) {
+    var seen = {}, mods = [];
+    progs.forEach(function (p) {
+      (p.modules || []).forEach(function (pm) {
+        var m = uni.modules[pm.module_id];
+        if (m && !seen[m.id]) { seen[m.id] = 1; mods.push(m); }
+      });
+    });
+    if (!mods.length) {
+      return "<section><h2>课程列表</h2>" +
+        '<p class="empty">课程（单门课）数据未采集' +
+        (Object.keys(uni.modules || {}).length ? "" : " — 该校官网专业页不公开课程清单") +
+        "</p></section>";
+    }
+    mods.sort(function (a, b) { return (a.code || "zz").localeCompare(b.code || "zz"); });
+    var h = "<section><h2>课程列表</h2>" +
+      '<p class="h2note">共 ' + mods.length + " 门 · 来自本系各专业的课程表 · 点击行看大纲/考核</p>" +
+      '<div class="scroll"><table><tr><th>代码</th><th>课程</th><th>学分</th><th>学期</th><th>考核</th></tr>';
+    mods.forEach(function (m) {
+      h += '<tr class="click" data-href="#/u/' + esc(uni.code) + "/m/" + m.id + '">' +
+        '<td class="mcode">' + esc(m.code || "—") + "</td>" +
+        "<td>" + esc(m.name_en) +
+        (m.name_zh ? '<span class="sub">' + esc(m.name_zh) + "</span>"
+                   : (m.leader ? '<span class="sub">' + esc(m.leader) + "</span>" : "")) + "</td>" +
+        '<td class="num">' + (m.credits || "—") + "</td>" +
+        "<td>" + esc(m.semester || "—") + "</td>" +
+        "<td>" + UI.assBar(m.assessment) + "</td></tr>";
+    });
+    return h + "</table></div></section>";
+  };
+
+  /* ---------------- 系页：课程列表在上，专业列表在下 ---------------- */
   VIEWS.dept = function (uni, deptId, filters) {
     var ft = VIEWS.facTop(uni);
     var dept = ft.byId[deptId];
@@ -173,14 +206,15 @@
       (dept && dept.name_zh ? ' <span class="zh">' + esc(dept.name_zh) + "</span>" : "") + "</h1>" +
       (dept && dept.url ? '<p class="sub"><a href="' + esc(dept.url) +
         '" target="_blank" rel="noopener">官网 ↗</a></p>' : "") + "</header>";
-    return h + VIEWS._programSection(uni, filters, progs, "课程列表");
+    h += VIEWS._moduleSection(uni, progs);
+    return h + VIEWS._programSection(uni, filters, progs, "专业列表");
   };
 
   /* 课程列表（筛选 + 表格）；progs 为该视图下的课程集合 */
   VIEWS._programSection = function (uni, f, progs, title) {
     f = f || { level: "all", fac: "all", q: "" };
     progs = progs || uni.programs;
-    title = title || "课程列表";
+    title = title || "专业列表";
     var facs = {};
     progs.forEach(function (p) { if (p.faculty_name) facs[p.faculty_name] = 1; });
     var facOpts = Object.keys(facs).sort().map(function (n) {
@@ -197,7 +231,7 @@
     });
 
     var h = "<section><h2>" + esc(title) + "</h2>" +
-      '<p class="h2note">共 ' + progs.length + " 个已入库 · 点击行进入课程详情</p>" +
+      '<p class="h2note">共 ' + progs.length + " 个已入库 · 点击行进入专业详情</p>" +
       '<div class="filterbar">' +
       '<div class="seg" data-filter="level">' +
       ["all|本硕", "PGT|硕士", "UG|本科"].map(function (s) {
@@ -206,13 +240,13 @@
       }).join("") + "</div>" +
       (Object.keys(facs).length > 1
         ? '<select data-filter="fac"><option value="all">全部院系</option>' + facOpts + "</select>" : "") +
-      '<input type="search" data-filter="q" value="' + esc(f.q || "") + '" placeholder="搜索课程名…" aria-label="搜索课程">' +
+      '<input type="search" data-filter="q" value="' + esc(f.q || "") + '" placeholder="搜索专业名…" aria-label="搜索专业">' +
       '<span class="count">' + rows.length + " / " + progs.length + "</span></div>";
 
-    if (!rows.length) return h + '<p class="empty">没有匹配的课程</p></section>';
+    if (!rows.length) return h + '<p class="empty">没有匹配的专业</p></section>';
 
     var showFac = Object.keys(facs).length > 1;  // 院系只有一个时列是纯重复，不显示
-    h += '<div class="scroll"><table><tr><th>课程</th><th>层次</th>' +
+    h += '<div class="scroll"><table><tr><th>专业</th><th>层次</th>' +
       (showFac ? "<th>院系</th>" : "") +
       "<th>国际学费</th><th>语言</th><th>模块</th><th>最近截止</th></tr>";
     rows.forEach(function (p) {
@@ -322,7 +356,7 @@
       (UI.LEVEL[prog.level] || prog.level) + (prog.ucas_code ? " · UCAS " + esc(prog.ucas_code) : "") + "</div>" +
       "<h1>" + esc(prog.name_en) + "</h1>" +
       '<p class="sub">' + esc([prog.name_zh, prog.faculty_name, prog.duration].filter(Boolean).join(" · ")) +
-      (prog.url ? ' · <a href="' + esc(prog.url) + '" target="_blank" rel="noopener">官网课程页 ↗</a>' : "") + "</p></header>";
+      (prog.url ? ' · <a href="' + esc(prog.url) + '" target="_blank" rel="noopener">官网专业页 ↗</a>' : "") + "</p></header>";
 
     h += '<div class="detail-grid"><div class="facts">';
     if (extraNote) h += '<div class="warnbox">⚠ ' + esc(extraNote) + "</div>";
@@ -395,7 +429,7 @@
       return p.modules.some(function (pm) { return pm.module_id === mod.id; });
     });
     if (parents.length) {
-      h += '<section><p class="h2note" style="margin:14px 0 0">出现在 ' + parents.length + " 个课程：" +
+      h += '<section><p class="h2note" style="margin:14px 0 0">出现在 ' + parents.length + " 个专业：" +
         parents.map(function (p) {
           var t = p.modules.filter(function (pm) { return pm.module_id === mod.id; })[0];
           return '<a href="#/u/' + esc(uni.code) + "/p/" + p.id + '">' + esc(p.name_en) + "</a>（" +
