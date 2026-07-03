@@ -81,29 +81,44 @@ def first(txt, *patterns, flags=re.I):
     return None
 
 
+# 学费语境的排除词：这些词附近的 £ 金额不是学费
+_FEE_EXCLUDE = ("deposit", "application fee", "scholarship", "discount",
+                "bursar", "living cost", "accommodation", "per year for books")
+# 英国大学学年学费的合理区间（区间外视为误抓：奖学金/杂费/总生活费等）
+_FEE_MIN, _FEE_MAX = 3500, 70000
+
+
+def _fee_ok(val, ctx):
+    if val is None or not (_FEE_MIN <= val <= _FEE_MAX):
+        return False
+    low = ctx.lower()
+    return not any(w in low for w in _FEE_EXCLUDE)
+
+
 def fee_near(txt, labels):
+    """学费标签附近取 £ 金额；排除奖学金/押金等语境并限定合理区间。"""
     for label in labels:
         for hit in re.finditer(re.escape(label), txt or "", re.I):
             tail = (txt or "")[hit.end():hit.end() + 500]
-            if "deposit" in tail[:120].lower() or "application fee" in tail[:120].lower():
-                continue
             val = money(tail)
-            if val is not None:
+            if _fee_ok(val, tail[:160]):
                 return val
     lines = (txt or "").splitlines()
     for i, line in enumerate(lines):
         if "£" not in line:
             continue
-        ctx = " ".join(lines[max(0, i - 4):i + 2]).lower()
-        if any(label.lower() in ctx for label in labels) and "deposit" not in ctx:
+        ctx = " ".join(lines[max(0, i - 4):i + 2])
+        if any(label.lower() in ctx.lower() for label in labels):
             val = money(line)
-            if val is not None:
+            if _fee_ok(val, ctx):
                 return val
     for label in labels:
         m = re.search(re.escape(label) + r"[^£]{0,220}(£\s*[\d,]+(?:\.\d{1,2})?)",
                       txt or "", re.I | re.S)
         if m:
-            return money(m.group(1))
+            val = money(m.group(1))
+            if _fee_ok(val, m.group(0)):
+                return val
     return None
 
 

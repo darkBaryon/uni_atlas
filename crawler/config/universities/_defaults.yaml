@@ -1,0 +1,8 @@
+# 所有学校 YAML 的默认层（下划线开头 = 非学校文件，不进 all_unis）。
+# 各校 YAML 只需写差异项；同名字段以学校文件为准（浅层按键覆盖）。
+country: UK
+entry_year: "2026"
+
+scope:
+  # 范围 = 数据层级而非院系：专业页全抓，模块详情页不抓
+  crawl_module_details: false

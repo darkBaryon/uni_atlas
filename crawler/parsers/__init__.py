@@ -17,3 +17,8 @@ for _mod in pkgutil.iter_modules(__path__):
         importlib.import_module(f"parsers.{_mod.name}")
     except Exception:
         logger.exception("解析器模块 parsers/%s.py 导入失败（跳过）", _mod.name)
+
+# 专属解析器全部就位后，通用解析器接管「只有 YAML 的学校」
+from parsers import generic  # noqa: E402
+
+generic.register_for_configured()

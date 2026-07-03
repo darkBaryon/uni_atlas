@@ -263,6 +263,8 @@ class BaseParser:
 
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
+        if cls.__dict__.get("abstract"):   # 中间基类（如 GenericUK）不注册
+            return
         if not cls.uni_code:
             raise TypeError(f"{cls.__name__} 必须声明 uni_code")
         inst = cls()

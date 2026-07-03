@@ -62,18 +62,41 @@ class UniConfig:
         self.seed_pages = data.get("seed_pages") or []
         # 官方院系清单 {英文名: 中文名}：解析器用来规范化院系提及，loader 用来填 name_zh
         self.faculties = data.get("faculties") or {}
+        # 通用解析器的声明式配置（parsers/generic.py）；无专属解析器时凭它接管
+        self.generic = data.get("generic")
+
+
+def _merge(base, over):
+    """默认层与学校层合并：dict 逐键深并，其余类型学校层直接覆盖。"""
+    out = dict(base)
+    for k, v in over.items():
+        if isinstance(v, dict) and isinstance(out.get(k), dict):
+            out[k] = _merge(out[k], v)
+        else:
+            out[k] = v
+    return out
 
 
 @functools.lru_cache(maxsize=None)
 def all_unis():
-    """code -> UniConfig，装载 config/universities/ 下全部 YAML。"""
+    """code -> UniConfig，装载 config/universities/ 下全部 YAML。
+
+    _defaults.yaml 是所有学校的默认层（下划线开头的文件不算学校）。
+    """
+    defaults = {}
+    dpath = os.path.join(_UNI_DIR, "_defaults.yaml")
+    if os.path.exists(dpath):
+        with open(dpath, encoding="utf-8") as f:
+            defaults = yaml.safe_load(f) or {}
     out = {}
     for path in sorted(glob.glob(os.path.join(_UNI_DIR, "*.yaml"))):
+        if os.path.basename(path).startswith("_"):
+            continue
         with open(path, encoding="utf-8") as f:
             data = yaml.safe_load(f) or {}
         if "code" not in data:
             raise ValueError(f"{path} 缺少 code 字段")
-        out[data["code"]] = UniConfig(data, path)
+        out[data["code"]] = UniConfig(_merge(defaults, data), path)
     return out
 
 
