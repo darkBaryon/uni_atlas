@@ -6,7 +6,7 @@ from parsers.models import CalendarData, DeadlineData, DiscoveredPage, ModuleRef
 from parsers.page import norm_ws
 from parsers.uk.common import (date_loose, date_range, event_type, find_links,
                                ielts, keyword_check, section_text, title_from)
-from config import codes
+from config.codes import UniCode
 
 COURSE_RE = r"/(?:undergraduate/courses|postgraduate/taught/courses)/20\d{2}/[^/?#]+/?$"
 FACULTY_RE = r"Faculty of (?:Arts and Humanities|Engineering|Health|Science|Social Sciences)|International Faculty, CITY College"
@@ -21,7 +21,7 @@ DEADLINE_KEYWORDS = (
 
 
 class Sheffield(BaseParser):
-    uni_code = codes.SHEF
+    uni_code = UniCode.SHEF
 
     def program_catalog(self, page, res):
         for url, title, _ in find_links(page, COURSE_RE):

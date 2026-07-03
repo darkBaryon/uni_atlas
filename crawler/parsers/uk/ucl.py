@@ -11,13 +11,13 @@ import re
 from parsers.base import BaseParser
 from parsers.models import DeadlineData, DiscoveredPage, ModuleData, ModuleRef, ProgramData
 from parsers.page import parse_date
-from config import codes
+from config.codes import UniCode
 
 MODULE_CODE_RE = re.compile(r"-([A-Z]{4}\d{4})/?$")
 
 
 class UCL(BaseParser):
-    uni_code = codes.UCL
+    uni_code = UniCode.UCL
 
     # ---------------- 专业页 ----------------
     def program_detail(self, page, res):

@@ -8,14 +8,14 @@ from parsers.models import CalendarData, DeadlineData, DiscoveredPage, ProgramDa
 from parsers.uk.common import (band, fee_near, find_links, first, ielts,
                                keyword_check, known_name, scan_term_lines,
                                section_text, standard_deadlines, title_from)
-from config import codes
+from config.codes import UniCode
 
 COURSE_RE = (r"/study/(?:undergraduate|postgraduate-taught)/courses/"
              r"(?!course-types-and-study-options/?$)[a-z0-9-]+/?$")
 
 
 class KCL(BaseParser):
-    uni_code = codes.KCL
+    uni_code = UniCode.KCL
 
     def program_catalog(self, page, res):
         for url, title, _ in find_links(page, COURSE_RE):

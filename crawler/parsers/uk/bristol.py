@@ -8,13 +8,13 @@ from parsers.page import norm_ws, parse_date
 from parsers.uk.common import (date_range, dedupe_discovered, event_type, facts,
                                fee_near, ielts, keyword_check, known_name, pick,
                                section_text, title_from)
-from config import codes
+from config.codes import UniCode
 
 PG_AWARDS = r"MSc|MA|LLM|MRes|MEd|PGDip|PGCert|MBA|MPH"
 
 
 class Bristol(BaseParser):
-    uni_code = codes.BRISTOL
+    uni_code = UniCode.BRISTOL
 
     def program_catalog(self, page, res):
         for a in page.soup.find_all("a", href=True):
