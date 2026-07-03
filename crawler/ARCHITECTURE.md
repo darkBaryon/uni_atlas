@@ -109,6 +109,16 @@ python3 run.py --dry-run                 # 只列出将执行的任务
 | JS 渲染页 | fetch_method='js_render' | v1 跳过并计数报告（如华威课程列表、UCL Profiles），后续接 Playwright 作为独立 fetcher |
 | PDF | fetch_method='pdf' | 只落盘快照登记，解析暂缓（如曼大校历） |
 
+## 七点五、设计决策：按技术分层，不按学校分域
+
+`config/universities/*.yaml` + `parsers/*.py` 按技术分层，而非
+`universities/<校>/{config,parser}` 业务域结构。判断依据是**域间差异度**：
+业务域架构的收益在「域文件多、域间共性小」时才兑现；本项目各校抓取流程
+95% 相同，按技术分层才能把公共层（BaseParser/GenericUK/uk_common）做到
+最大，学校个性压到最薄——理想态是新校只有一个 YAML、零 Python。
+每校资产靠命名约定（`<code>.yaml` / `<code>.py`）保持可寻。
+**切换信号**：若将来每校长出多个伴生文件（测试样本/单测/文档），再迁业务域。
+
 ## 八、边界（v1 明确不做）
 
 - **不做全站镜像**——核心数据 = 校级关键页（校历/截止/语言/中国政策）+ 关注院系的专业页
