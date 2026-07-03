@@ -179,6 +179,8 @@ CREATE TABLE modules (
   description    TEXT,
   assessment     JSON COMMENT '考核方式 [{type:"exam",weight:70},{type:"coursework",weight:30}]',
   prerequisites  VARCHAR(512),
+  leader         VARCHAR(255) COMMENT '模块负责人',
+  extra          JSON COMMENT '往年选课人数/限制条件等',
   url            VARCHAR(768),
   entry_year     VARCHAR(9) COMMENT '目录年份(模块内容也按年更新)',
   is_active      TINYINT(1) NOT NULL DEFAULT 1,
@@ -201,6 +203,42 @@ CREATE TABLE program_modules (
   CONSTRAINT fk_pm_prog FOREIGN KEY (program_id) REFERENCES programs(id),
   CONSTRAINT fk_pm_mod  FOREIGN KEY (module_id) REFERENCES modules(id)
 ) COMMENT '专业—模块关联(必修/选修)';
+
+-- -------------------------------------------------------------
+-- 6b-2. 课程内容明细：模块内部的具体材料/周安排
+--       公开渠道到书单为止(讲义/试卷在登录墙内), 本表以手动录入为主,
+--       source + verified 字段用于区分官方信息与学生口述
+-- -------------------------------------------------------------
+CREATE TABLE module_contents (
+  id            BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  module_id     INT UNSIGNED NOT NULL,
+  entry_year    VARCHAR(9) COMMENT '适用学年; NULL=常年适用',
+  content_type  ENUM('week_topic',     -- 每周主题/教学安排
+                     'reading',        -- 书单条目(可自动采自 Talis)
+                     'lecture_note',   -- 讲义/课件要点
+                     'assignment',     -- 作业/项目说明
+                     'past_paper',     -- 往年考试信息
+                     'exam_tips',      -- 考试重点/备考经验
+                     'student_review', -- 学生评价(难度/工作量)
+                     'other') NOT NULL,
+  seq_no        SMALLINT UNSIGNED COMMENT '排序/周次, 如 week_topic 的第几周',
+  title         VARCHAR(512) NOT NULL,
+  body          MEDIUMTEXT COMMENT '正文: 主题细节/书目信息/经验内容',
+  source        ENUM('official_public',  -- 官网公开(如书单)
+                     'official_gated',   -- 官方但在登录墙内(转述需谨慎)
+                     'student',          -- 在读/毕业学生提供
+                     'agent',            -- 中介/第三方资料
+                     'manual_other') NOT NULL DEFAULT 'manual_other',
+  source_note   VARCHAR(512) COMMENT '来源细节: 谁提供/哪个链接/哪届学生',
+  url           VARCHAR(768) COMMENT '外部链接(书目/课程页)',
+  file_path     VARCHAR(512) COMMENT '本地文件(讲义PDF等)存放路径',
+  verified      TINYINT(1) NOT NULL DEFAULT 0 COMMENT '是否已核实',
+  added_by      VARCHAR(64) COMMENT '录入人',
+  created_at    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  KEY idx_mc (module_id, content_type, seq_no),
+  CONSTRAINT fk_mc_mod FOREIGN KEY (module_id) REFERENCES modules(id)
+) COMMENT '模块级课程内容(手动为主): 周安排/书单/讲义要点/备考经验';
 
 -- -------------------------------------------------------------
 -- 6c. 师资(学院主页公开的 staff/people 目录)
@@ -330,8 +368,8 @@ CREATE TABLE change_log (
   university_id INT UNSIGNED NOT NULL,
   entity_type   ENUM('calendar_event','program','program_detail','deadline',
                      'language_band','china_policy','china_tier','faculty',
-                     'module','program_module','staff','faculty_info_item',
-                     'source_page') NOT NULL,
+                     'module','program_module','module_content','staff',
+                     'faculty_info_item','source_page') NOT NULL,
   entity_id     BIGINT UNSIGNED NOT NULL,
   change_type   ENUM('insert','update','delete') NOT NULL,
   field_name    VARCHAR(64),

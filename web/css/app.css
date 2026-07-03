@@ -1,0 +1,183 @@
+/* ============================================================
+   留学申请信息库 · 样式
+   设计令牌沿用初版 index.html：深紫 + 宋体标题 + 卡片
+   ============================================================ */
+:root{
+  --ink:#262030; --ink-soft:#5c5468; --paper:#faf9fc; --card:#ffffff;
+  --accent:#4b1e78; --accent-soft:#efe9f6; --line:#e5e0ec;
+  --ok:#1e6e46; --ok-soft:#e3f0e9;
+  --warn:#a05a00; --warn-soft:#f6ecdd;
+  --danger:#a12b23; --danger-soft:#f7e8e6;
+  --past:#8b8494; --past-soft:#efedf2;
+  --info:#1d5c8a; --info-soft:#e5eef5;
+  --serif:"Songti SC","Noto Serif SC",Georgia,serif;
+  --sans:"PingFang SC","Hiragino Sans GB","Microsoft YaHei",-apple-system,sans-serif;
+  --mono:ui-monospace,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--sans);
+     line-height:1.65;margin:0;padding:0 24px 64px}
+.wrap{max-width:1020px;margin:0 auto}
+a{color:var(--accent)}
+a:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* ---- 顶部导航 ---- */
+nav.top{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding-top:20px}
+nav.top .brand{font-family:var(--serif);font-weight:600;font-size:15px;color:var(--accent);
+  text-decoration:none;margin-right:8px}
+nav.top a.tab{font-size:14px;padding:6px 16px;border-radius:99px;text-decoration:none;
+  border:1px solid var(--line);background:var(--card);color:var(--ink-soft)}
+nav.top a.tab.on{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+
+/* ---- 面包屑 ---- */
+.crumbs{font-size:13px;color:var(--ink-soft);margin:18px 0 0}
+.crumbs a{text-decoration:none}
+.crumbs span{margin:0 6px;color:var(--line)}
+
+/* ---- Hero ---- */
+header.hero{padding:28px 0 24px;border-bottom:2px solid var(--accent)}
+.eyebrow{font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);font-weight:600}
+h1{font-family:var(--serif);font-size:clamp(26px,4vw,36px);margin:.25em 0 .1em;
+   text-wrap:balance;font-weight:600;line-height:1.3}
+h1 .zh{font-weight:400;color:var(--ink-soft)}
+.hero .sub{color:var(--ink-soft);margin:0 0 14px;font-size:15px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{background:var(--accent-soft);color:var(--accent);border-radius:3px;
+      padding:3px 10px;font-size:13px;font-weight:500}
+
+/* ---- 章节 ---- */
+section{margin-top:40px}
+h2{font-family:var(--serif);font-size:22px;font-weight:600;margin:0 0 4px}
+h3{font-family:var(--serif);font-size:17px;font-weight:600;margin:18px 0 8px}
+.h2note{color:var(--ink-soft);font-size:13.5px;margin:0 0 16px}
+
+/* ---- 概览页：学校卡片 ---- */
+.uni-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
+.uni-card{background:var(--card);border:1px solid var(--line);border-radius:6px;
+  padding:20px 22px;text-decoration:none;color:inherit;display:block}
+.uni-card:hover{border-color:var(--accent)}
+.uni-card .country{font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--accent);font-weight:700}
+.uni-card h3{margin:4px 0 2px;font-size:19px}
+.uni-card .zh{color:var(--ink-soft);font-size:13.5px}
+.uni-card .nums{display:flex;gap:18px;margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}
+.uni-card .nums b{display:block;font-family:var(--serif);font-size:20px;
+  font-variant-numeric:tabular-nums}
+.uni-card .nums span{font-size:12px;color:var(--ink-soft)}
+
+/* ---- 状态标签 ---- */
+.tag{font-size:12px;font-weight:600;padding:2px 9px;border-radius:99px;white-space:nowrap}
+.tag.past{background:var(--past-soft);color:var(--past)}
+.tag.open{background:var(--ok-soft);color:var(--ok)}
+.tag.soon{background:var(--warn-soft);color:var(--warn)}
+.tag.dead{background:var(--danger-soft);color:var(--danger)}
+.tag.info{background:var(--info-soft);color:var(--info)}
+
+/* ---- 截止日期列表 ---- */
+.dl-list{display:flex;flex-direction:column;gap:10px}
+.dl{display:grid;grid-template-columns:150px 1fr auto;gap:14px;align-items:baseline;
+    background:var(--card);border:1px solid var(--line);border-left:4px solid var(--accent);
+    padding:12px 16px;border-radius:4px}
+.dl.past{border-left-color:var(--past);color:var(--past)}
+.dl.past .dl-date,.dl.past .dl-what small{color:var(--past)}
+.dl-date{font-family:var(--serif);font-size:17px;font-weight:600;
+         font-variant-numeric:tabular-nums;color:var(--accent);white-space:nowrap}
+.dl-what{font-size:14.5px}
+.dl-what a{text-decoration:none}
+.dl-what small{display:block;color:var(--ink-soft);font-size:12.5px}
+
+/* ---- 筛选栏 ---- */
+.filterbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:0 0 14px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--card)}
+.seg button{border:0;background:none;padding:7px 14px;font:inherit;font-size:13px;
+  cursor:pointer;color:var(--ink-soft)}
+.seg button.on{background:var(--accent);color:#fff}
+.filterbar input[type=search],.filterbar select{
+  border:1px solid var(--line);border-radius:8px;padding:8px 12px;font:inherit;
+  font-size:13.5px;background:var(--card);color:var(--ink)}
+.filterbar input[type=search]{flex:1;min-width:170px}
+.filterbar .count{font-size:12.5px;color:var(--ink-soft);font-variant-numeric:tabular-nums}
+
+/* ---- 专业列表表格 ---- */
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:14px;background:var(--card)}
+th,td{border:1px solid var(--line);padding:8px 12px;text-align:left;vertical-align:top}
+th{background:var(--accent-soft);color:var(--accent);font-size:12.5px;
+   letter-spacing:.05em;font-weight:600;white-space:nowrap}
+td.num,td.date{font-variant-numeric:tabular-nums;white-space:nowrap;
+  font-family:var(--serif);font-weight:600}
+tr.click{cursor:pointer}
+tr.click:hover td{background:var(--accent-soft)}
+td .sub{display:block;font-size:12px;color:var(--ink-soft);font-weight:400;font-family:var(--sans)}
+
+.etype{font-size:11.5px;font-weight:600;padding:1px 8px;border-radius:99px;white-space:nowrap}
+.etype.teach{background:var(--accent-soft);color:var(--accent)}
+.etype.rest{background:var(--warn-soft);color:var(--warn)}
+.etype.exam{background:var(--danger-soft);color:var(--danger)}
+
+/* ---- 详情页两栏 ---- */
+.detail-grid{display:grid;grid-template-columns:300px 1fr;gap:28px;margin-top:24px}
+@media(max-width:760px){.detail-grid{grid-template-columns:1fr}}
+.facts{display:flex;flex-direction:column;gap:4px}
+.facts .card{background:var(--card);border:1px solid var(--line);border-radius:6px;
+  padding:16px 18px;margin-bottom:10px}
+.kv{margin:0;font-size:14px}
+.kv dt{font-weight:600;font-size:12.5px;color:var(--ink-soft);margin-top:10px}
+.kv dt:first-child{margin-top:0}
+.kv dd{margin:1px 0 0}
+.fee-big{font-family:var(--serif);font-size:22px;font-weight:600;font-variant-numeric:tabular-nums}
+.ielts{display:inline-block;background:var(--accent-soft);color:var(--accent);
+       border-radius:3px;padding:1px 8px;font-weight:600;font-size:13px}
+.warnbox{background:var(--warn-soft);color:var(--warn);border-radius:6px;
+  padding:10px 12px;font-size:13px;margin-bottom:10px}
+
+/* ---- 模块 ---- */
+.mcode{font-family:var(--mono);font-size:12px;color:var(--accent)}
+.assbar{display:inline-flex;height:8px;width:88px;border-radius:4px;overflow:hidden;
+  vertical-align:middle;background:var(--past-soft)}
+.assbar i{display:block;height:100%}
+.a-exam{background:var(--accent)}
+.a-coursework{background:#1d5c8a}
+.a-group{background:#9a86b8}
+.a-other{background:#c9c4d6}
+.asslabel{font-size:11.5px;color:var(--ink-soft);margin-left:6px;white-space:nowrap}
+.legend{font-size:11.5px;color:var(--ink-soft);margin:4px 0 10px;display:flex;gap:14px;flex-wrap:wrap}
+.legend i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+
+/* 模块详情页：大纲全文 */
+.syllabus{background:var(--card);border:1px solid var(--line);border-radius:6px;
+  padding:22px 26px;font-size:14.5px;white-space:pre-wrap;line-height:1.75;
+  max-width:72ch}
+.syllabus.empty{color:var(--ink-soft);font-style:normal}
+
+/* 课程内容（module_contents）来源可信度 */
+.content-item{background:var(--card);border:1px solid var(--line);border-radius:6px;
+  padding:14px 18px;margin-bottom:10px}
+.content-item .head{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.content-item .head b{font-size:14.5px}
+.content-item .body{margin-top:6px;font-size:13.5px;white-space:pre-wrap}
+.content-item .meta{margin-top:8px;font-size:12px;color:var(--ink-soft)}
+.src{font-size:11.5px;font-weight:600;padding:1px 8px;border-radius:99px;white-space:nowrap}
+.src.official_public{background:var(--ok-soft);color:var(--ok)}
+.src.official_gated{background:var(--warn-soft);color:var(--warn)}
+.src.student{background:var(--info-soft);color:var(--info)}
+.src.agent,.src.manual_other{background:var(--past-soft);color:var(--past)}
+.verified{color:var(--ok);font-size:12px;font-weight:600}
+.unverified{color:var(--warn);font-size:12px}
+
+/* ---- 政策 / 提示卡 ---- */
+.policy{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:20px 22px}
+.policy .no{color:var(--danger);font-weight:700}
+.policy .yes{color:var(--ok);font-weight:700}
+.note{font-size:13px;color:var(--ink-soft);margin-top:10px;padding-top:10px;
+  border-top:1px dashed var(--line)}
+.empty{color:var(--ink-soft);font-size:14px;background:var(--card);
+       border:1px dashed var(--line);border-radius:6px;padding:16px;text-align:center}
+
+footer{margin-top:56px;padding-top:16px;border-top:1px solid var(--line);
+       color:var(--ink-soft);font-size:12.5px}
+
+@media (prefers-reduced-motion: no-preference){
+  main{animation:fadein .12s ease-out}
+  @keyframes fadein{from{opacity:.4}to{opacity:1}}
+}
