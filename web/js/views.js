@@ -195,15 +195,26 @@
   };
 
   VIEWS._calendarSection = function (uni) {
-    if (!uni.calendar.length) return "";
-    var h = "<section><h2>" + esc(uni.calendar[0].academic_year) + " 学期日历</h2>" +
-      '<div class="scroll"><table><tr><th>起</th><th>止</th><th>事项</th><th>类型</th></tr>';
+    if (!uni.calendar.length) {
+      return "<section><h2>学期日历</h2>" +
+        '<p class="empty">校历未采集（官网未公布或来源页尚未解析）</p></section>';
+    }
+    var byYear = {};
     uni.calendar.forEach(function (e) {
-      var t = UI.ETYPE[e.event_type] || [e.event_type, "teach"];
-      h += "<tr><td class='date'>" + e.start_date + "</td><td class='date'>" + (e.end_date || "—") +
-        "</td><td>" + esc(e.name) + "</td><td><span class='etype " + t[1] + "'>" + t[0] + "</span></td></tr>";
+      (byYear[e.academic_year] = byYear[e.academic_year] || []).push(e);
     });
-    return h + "</table></div></section>";
+    var h = "<section><h2>学期日历</h2>";
+    Object.keys(byYear).sort().forEach(function (y) {
+      h += "<h3>" + esc(y) + " 学年</h3>" +
+        '<div class="scroll"><table><tr><th>起</th><th>止</th><th>事项</th><th>类型</th></tr>';
+      byYear[y].forEach(function (e) {
+        var t = UI.ETYPE[e.event_type] || [e.event_type, "teach"];
+        h += "<tr><td class='date'>" + e.start_date + "</td><td class='date'>" + (e.end_date || "—") +
+          "</td><td>" + esc(e.name) + "</td><td><span class='etype " + t[1] + "'>" + t[0] + "</span></td></tr>";
+      });
+      h += "</table></div>";
+    });
+    return h + "</section>";
   };
 
   VIEWS._bandSection = function (uni) {

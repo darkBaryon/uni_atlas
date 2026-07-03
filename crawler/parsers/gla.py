@@ -14,8 +14,8 @@ from urllib.parse import urljoin
 from bs4 import BeautifulSoup
 
 import config
-from parsers.base import (DeadlineData, DiscoveredPage, ParseResult,
-                          ProgramData, register)
+from parsers.base import (CalendarData, DeadlineData, DiscoveredPage,
+                          ParseResult, ProgramData, register)
 
 
 def _default_year():
@@ -30,6 +30,24 @@ def _dt(s):
             return datetime.strptime(s.strip(), fmt).strftime("%Y-%m-%d")
         except ValueError:
             continue
+    return None
+
+
+def _norm(s):
+    return re.sub(r"\s+", " ", s.lower().replace(" and ", " & ")).strip()
+
+
+def _canon_school(txt):
+    """把正文里的 School 提及匹配到 gla.yaml 的官方清单；匹配不上返回 None。"""
+    u = config.uni("gla")
+    if not u or not u.faculties:
+        return None
+    canon = {_norm(k): k for k in u.faculties}
+    for m in re.finditer(r"(Adam Smith Business School|School of [A-Z][A-Za-z ,&\-]{3,70})", txt):
+        cand = _norm(m.group(0))
+        for nk, name in canon.items():
+            if cand == nk or cand.startswith(nk):
+                return name
     return None
 
 
@@ -105,10 +123,8 @@ def parse_program(html, url):
     if m:
         p.ielts_overall, p.ielts_min_each = float(m.group(1)), float(m.group(2))
 
-    # ---- 院系：页面正文首个 'School of X'（推断值，仅供范围参考）----
-    m = re.search(r"School of ([A-Z][A-Za-z &,]+?)(?:[.\n]| launched| offers| at | is )", txt)
-    if m:
-        p.dept = "School of " + m.group(1).strip().rstrip(",")
+    # ---- 院系：正文里的 School 提及规范化到官方清单（防止句子片段进院系表）----
+    p.dept = _canon_school(txt)
 
     # ---- 截止日期 ----
     if is_pg:
@@ -146,4 +162,132 @@ def parse_program(html, url):
     if p.tuition_intl is None and is_pg:
         p.notes.append("未解析出国际学费，页面结构可能已变，需人工核对")
     res.programs.append(p)
+    return res
+
+
+@register("gla", "term_dates")
+def parse_term_dates(html, url):
+    """sessiondates 根页 → 各学年子页任务；学年子页表格 → 校历事件。
+
+    子页表格列：[年, 月, 星期, 日, 教学事件, 假期事件]，年/月为空表示沿用上一行；
+    事件是 'Start of X' / 'End of X'（或 'X starts/ends'）的时间点，配对成区间。
+    """
+    res = ParseResult()
+    soup = BeautifulSoup(html, "html.parser")
+
+    m = re.search(r"session(\d{4})-(\d{2})/?$", url)
+    if not m:   # 根页：发现各学年子页
+        seen = set()
+        for a in soup.find_all("a", href=True):
+            href = urljoin(url, a["href"]).split("#")[0]
+            if re.search(r"/sessiondates/session\d{4}-\d{2}/?$", href) and href not in seen:
+                seen.add(href)
+                res.discovered.append(DiscoveredPage(
+                    url=href, category="term_dates",
+                    title=a.get_text(strip=True), crawl_freq="monthly"))
+        if not res.discovered:
+            res.notes.append("sessiondates 根页未发现学年子页链接")
+        return res
+
+    year_label = f"{m.group(1)}/{m.group(2)}"
+    table = soup.find("table")
+    if not table:
+        res.notes.append("学年页无日期表格")
+        return res
+
+    # 1) 表格 → 时间点/区间序列。两种历史格式：
+    #    A（当年页）: [年, 月, 星期, 日, 教学事件, 假期事件]，年/月空则沿用上行
+    #    B（未来页）: [完整日期或日期区间, 事件]，如 'Monday 7 - Friday 18 December 2026'
+    points, ranges, year, month = [], [], None, None
+
+    def iso(day, mon, yr):
+        try:
+            return datetime.strptime(f"{day} {mon} {yr}", "%d %B %Y").strftime("%Y-%m-%d")
+        except ValueError:
+            return None
+
+    for tr in table.find_all("tr"):
+        cells = [td.get_text(" ", strip=True) for td in tr.find_all(["td", "th"])]
+        if len(cells) >= 5:          # 格式 A
+            year = cells[0] or year
+            month = cells[1] or month
+            if cells[3].isdigit() and year and month:
+                date = iso(cells[3], month, year)
+                if date:
+                    for text in cells[4:6]:
+                        if text:
+                            points.append((date, text))
+        elif len(cells) == 2:        # 格式 B
+            dtxt, ev = cells
+            mr = re.match(r"\w+ (\d{1,2})(?: (\w+))?(?: (\d{4}))? ?- ?\w+ (\d{1,2}) (\w+) (\d{4})$", dtxt)
+            if mr:                   # 日期区间 'Mon 30 November - Fri 11 December 2026'
+                d1 = iso(mr.group(1), mr.group(2) or mr.group(5), mr.group(3) or mr.group(6))
+                d2 = iso(mr.group(4), mr.group(5), mr.group(6))
+                if d1 and d2:
+                    ranges.append((ev, d1, d2))
+                continue
+            ms = re.match(r"\w+ (\d{1,2}) (\w+) (\d{4})$", dtxt)
+            if ms:
+                date = iso(ms.group(1), ms.group(2), ms.group(3))
+                if date:
+                    points.append((date, ev))
+
+    # 2) Start/End 配对成区间；配不上的保留为单日事件
+    events, opens = [], []
+    for date, text in points:
+        ms = re.match(r"Start of (.+)$", text) or re.match(r"(.+?) starts$", text)
+        if ms:
+            opens.append([ms.group(1).strip(), date])
+            continue
+        me = re.match(r"End of (.+?)(?: / .*)?$", text) or re.match(r"(.+?) ends$", text)
+        if me:
+            key = me.group(1).strip().lower()
+            hit = next((o for o in opens
+                        if o[0].lower().startswith(key) or key.startswith(o[0].lower())), None)
+            if hit:
+                opens.remove(hit)
+                events.append((hit[0], hit[1], date))
+            else:
+                events.append((text, date, None))
+            continue
+        events.append((text, date, None))
+    events.extend(("Start of " + name, start, None) for name, start in opens)
+    events.extend(ranges)   # 格式 B 的现成日期区间
+
+    # 同学年同名事件（如两个毕业典礼期）加月份后缀区分，避免唯一键互相覆盖
+    seen_names = {}
+    disamb = []
+    for name, start, end in sorted(events, key=lambda e: e[1]):
+        if name in seen_names:
+            name = f"{name} ({datetime.strptime(start, '%Y-%m-%d').strftime('%b')})"
+        seen_names[name] = 1
+        disamb.append((name, start, end))
+    events = disamb
+
+    def etype(name, start):
+        n = name.lower()
+        if "teaching" in n:
+            return "teaching_period"
+        if "examination" in n or "revision" in n:
+            return "resit_period" if start[5:7] in ("07", "08") else "exam_period"
+        if "vacation" in n:
+            return "closure"
+        if "holiday" in n:
+            return "holiday"
+        if "graduation" in n:
+            return "graduation"
+        if "welcome" in n:
+            return "welcome_week"
+        if "academic year" in n:      # 学年整体区间（9月至次年9月）
+            return "other"
+        if "orientation" in n:
+            return "welcome_week"
+        return "other"
+
+    for name, start, end in events:
+        res.calendar.append(CalendarData(
+            academic_year=year_label, event_type=etype(name, start),
+            name=name, start_date=start, end_date=end))
+    if not res.calendar:
+        res.notes.append("学年页表格未解析出任何事件")
     return res

@@ -60,6 +60,8 @@ class UniConfig:
         self.focus_depts = scope.get("focus_depts")
         self.crawl_module_details = bool(scope.get("crawl_module_details", False))
         self.seed_pages = data.get("seed_pages") or []
+        # 官方院系清单 {英文名: 中文名}：解析器用来规范化院系提及，loader 用来填 name_zh
+        self.faculties = data.get("faculties") or {}
 
 
 @functools.lru_cache(maxsize=None)

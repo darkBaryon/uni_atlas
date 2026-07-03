@@ -162,7 +162,7 @@ def run_fetch(conn, tasks, report):
             try:
                 conn.ping(reconnect=True)   # 长任务期间数据库连接掉线自愈
                 ldr = ldr_by_uni.setdefault(
-                    task["university_id"], Loader(conn, task["university_id"]))
+                    task["university_id"], Loader(conn, task["university_id"], task["uni_code"]))
                 _handle_fetched(conn, ldr, task, res, report)
             except Exception:
                 # 单页失败绝不中断整轮：堆栈进文件日志，任务表留痕待下轮
@@ -190,7 +190,7 @@ def run_reparse(conn, tasks, report):
             try:
                 body = snapshots.read(snap["content_path"])
                 ldr = ldr_by_uni.setdefault(
-                    task["university_id"], Loader(conn, task["university_id"]))
+                    task["university_id"], Loader(conn, task["university_id"], task["uni_code"]))
                 logger.debug("[重放] %s", task["url"][:80])
                 _parse_and_load(conn, ldr, task, body, snap["id"], report)
                 report.counts["reparsed"] += 1

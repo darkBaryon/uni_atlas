@@ -19,6 +19,34 @@ scope:
   # 不抓的是底层细节（课程大纲/考核/书单等模块详情页）
   crawl_module_details: false
 
+# 官方 School 清单（4 College 下 23 School）：
+# 解析器把专业页正文里的 School 提及规范化到这份清单（防句子片段污染院系表），
+# 中文名由 loader 写入 faculties.name_zh
+faculties:
+  "School of Critical Studies": 批判研究学院
+  "School of Culture & Creative Arts": 文化与创意艺术学院
+  "School of Humanities": 人文学院
+  "School of Modern Languages & Cultures": 现代语言与文化学院
+  "School of Biodiversity, One Health & Veterinary Medicine": 生物多样性、同一健康与兽医学院
+  "School of Cancer Sciences": 癌症科学学院
+  "School of Cardiovascular & Metabolic Health": 心血管与代谢健康学院
+  "School of Health & Wellbeing": 健康与福祉学院
+  "School of Infection & Immunity": 感染与免疫学院
+  "School of Medicine, Dentistry & Nursing": 医学、牙医与护理学院
+  "School of Molecular Biosciences": 分子生物科学学院
+  "School of Psychology & Neuroscience": 心理学与神经科学学院
+  "School of Chemistry": 化学学院
+  "School of Computing Science": 计算机科学学院
+  "School of Engineering": 工程学院
+  "School of Geographical & Earth Sciences": 地理与地球科学学院
+  "School of Mathematics & Statistics": 数学与统计学院
+  "School of Physics & Astronomy": 物理与天文学院
+  "Adam Smith Business School": 亚当·斯密商学院
+  "School of Education": 教育学院
+  "School of Law": 法学院
+  "School of Social & Political Sciences": 社会与政治科学学院
+  "School of Social & Environmental Sustainability": 社会与环境可持续学院
+
 seed_pages:
   # 校历：按学年归档（/session2025-26/），历年可回溯
   - {category: term_dates, crawl_freq: monthly,

@@ -7,6 +7,8 @@
 import json
 from datetime import datetime
 
+import config
+
 # 各实体记入 change_log 的字段
 TRACKED = {
     "program_detail": ("tuition_home", "tuition_intl", "entry_req_text",
@@ -19,9 +21,11 @@ FACULTY_ALIAS = {"Computer Science": "UCL Computer Science"}  # 库中既有行�
 
 
 class Loader:
-    def __init__(self, conn, university_id):
+    def __init__(self, conn, university_id, uni_code=None):
         self.conn = conn
         self.uid = university_id
+        uconf = config.uni(uni_code) if uni_code else None
+        self.faculty_zh = uconf.faculties if uconf else {}   # 英文名 -> 中文名
         self.stats = {"programs": 0, "modules": 0, "deadlines": 0,
                       "calendar": 0, "changes": 0}
         self.changes = []          # 报告用: (entity, name, field, old, new)
@@ -72,15 +76,19 @@ class Loader:
         if not name:
             return None
         name = FACULTY_ALIAS.get(name, name)
+        name_zh = self.faculty_zh.get(name)
         with self._cur() as cur:
-            cur.execute("SELECT id FROM faculties WHERE university_id=%s AND name_en=%s",
+            cur.execute("SELECT id, name_zh FROM faculties WHERE university_id=%s AND name_en=%s",
                         (self.uid, name))
             row = cur.fetchone()
             if row:
+                if name_zh and not row["name_zh"]:   # 配置里有中文名而库里还没有 → 补上
+                    cur.execute("UPDATE faculties SET name_zh=%s WHERE id=%s",
+                                (name_zh, row["id"]))
                 return row["id"]
             cur.execute("INSERT INTO faculties (university_id, parent_id, name_en,"
-                        " level) VALUES (%s,%s,%s,%s)",
-                        (self.uid, parent_id, name, level))
+                        " name_zh, level) VALUES (%s,%s,%s,%s,%s)",
+                        (self.uid, parent_id, name, name_zh, level))
             return cur.lastrowid
 
     def faculty_from_note(self, note):
