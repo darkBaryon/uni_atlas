@@ -32,6 +32,7 @@
       if (!uni) return { view: "overview" };
       if (seg[2] === "p" && seg[3]) return { view: "program", uni: uni, id: +seg[3] };
       if (seg[2] === "m" && seg[3]) return { view: "module", uni: uni, id: +seg[3] };
+      if (seg[2] === "f" && seg[3] != null) return { view: "faculty", uni: uni, id: +seg[3] };
       return { view: "university", uni: uni };
     }
     return { view: "overview" };
@@ -40,6 +41,10 @@
   function crumbs(route) {
     var parts = ['<a href="#/">总览</a>'];
     if (route.uni) parts.push('<a href="#/u/' + route.uni.code + '">' + UI.esc(route.uni.name_zh || route.uni.name_en) + "</a>");
+    if (route.view === "faculty") {
+      var fac = (route.uni.faculties || []).filter(function (x) { return x.id === route.id; })[0];
+      parts.push(fac ? UI.esc(fac.name_zh || fac.name_en) : "未归类");
+    }
     if (route.view === "program") parts.push("专业详情");
     if (route.view === "module") parts.push("模块详情");
     return parts.length > 1 ? '<div class="crumbs">' + parts.join("<span>›</span>") + "</div>" : "";
@@ -52,8 +57,11 @@
     if (route.view === "overview") {
       html += VIEWS.overview(DATA);
     } else if (route.view === "university") {
-      var f = filterState[route.uni.code] || (filterState[route.uni.code] = { level: "all", fac: "all", q: "" });
-      html += VIEWS.university(route.uni, f);
+      html += VIEWS.university(route.uni, null);
+    } else if (route.view === "faculty") {
+      var fk = route.uni.code + "/f" + route.id;
+      var f = filterState[fk] || (filterState[fk] = { level: "all", fac: "all", q: "" });
+      html += VIEWS.faculty(route.uni, route.id, f);
     } else if (route.view === "program") {
       var prog = route.uni.programs.filter(function (p) { return p.id === route.id; })[0];
       html += prog ? VIEWS.program(route.uni, prog) : '<p class="empty">专业不存在</p>';
@@ -63,7 +71,7 @@
     }
 
     app.innerHTML = html;
-    if (route.view !== "university") window.scrollTo(0, 0);
+    if (route.view !== "faculty") window.scrollTo(0, 0);
     renderNav(route);
     bindEvents(route);
   }
@@ -88,9 +96,9 @@
         if (e.key === "Enter") location.hash = tr.dataset.href;
       });
     });
-    // 学校页筛选（改状态后原地重渲染，不动 hash）
-    if (route.view === "university") {
-      var f = filterState[route.uni.code];
+    // 学院页筛选（改状态后原地重渲染，不动 hash）
+    if (route.view === "faculty") {
+      var f = filterState[route.uni.code + "/f" + route.id];
       app.querySelectorAll('[data-filter="level"] button').forEach(function (b) {
         b.addEventListener("click", function () { f.level = b.dataset.v; render(); });
       });

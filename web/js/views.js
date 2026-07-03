@@ -68,26 +68,86 @@
         esc(uni.website.replace(/^https?:\/\//, "")) + "</a>" : "") + "</p>" +
       (chips ? '<div class="chips">' + chips + "</div>" : "") + "</header>";
 
-    h += VIEWS._programSection(uni, filters);
-    h += VIEWS._deadlineSection(uni);
     h += VIEWS._calendarSection(uni);
+    h += VIEWS._facultyGrid(uni);
+    h += VIEWS._deadlineSection(uni);
     h += VIEWS._bandSection(uni);
     h += VIEWS._policySection(uni);
     h += VIEWS._sourceSection(uni);
     return h;
   };
 
-  /* 专业列表（筛选 + 表格） */
-  VIEWS._programSection = function (uni, f) {
+  /* ---- 学院聚合：专业挂在系上时向上归并到顶层学院 ---- */
+  VIEWS.facTop = function (uni) {
+    var byId = {};
+    (uni.faculties || []).forEach(function (f) { byId[f.id] = f; });
+    function topOf(id) {
+      var cur = byId[id];
+      while (cur && cur.parent_id && byId[cur.parent_id]) cur = byId[cur.parent_id];
+      return cur || null;
+    }
+    return { byId: byId, topOf: topOf };
+  };
+
+  /* 学院卡片（学校页）：顶层学院 + 本硕专业数 */
+  VIEWS._facultyGrid = function (uni) {
+    var ft = VIEWS.facTop(uni);
+    var agg = {};   // topId -> {fac, n, ug, pgt}
+    uni.programs.forEach(function (p) {
+      var top = p.faculty_id != null ? ft.topOf(p.faculty_id) : null;
+      var key = top ? top.id : 0;
+      var a = agg[key] || (agg[key] = { fac: top, n: 0, ug: 0, pgt: 0 });
+      a.n += 1;
+      if (p.level === "UG") a.ug += 1; else a.pgt += 1;
+    });
+    var keys = Object.keys(agg).sort(function (a, b) {
+      return agg[b].n - agg[a].n;
+    });
+    if (!keys.length) return "<section><h2>学院</h2><p class='empty'>暂无专业数据</p></section>";
+    return "<section><h2>学院</h2>" +
+      '<p class="h2note">共 ' + uni.programs.length + " 个专业已入库 · 点击学院查看专业列表</p>" +
+      '<div class="uni-grid">' + keys.map(function (k) {
+        var a = agg[k];
+        var nameEn = a.fac ? a.fac.name_en : "未归类";
+        var nameZh = a.fac ? (a.fac.name_zh || "") : "院系信息待补";
+        return '<a class="uni-card" href="#/u/' + esc(uni.code) + "/f/" + k + '">' +
+          "<h3>" + esc(nameEn) + "</h3>" +
+          '<span class="zh">' + esc(nameZh) + "</span>" +
+          '<div class="nums"><div><b>' + a.n + "</b><span>专业</span></div>" +
+          "<div><b>" + a.ug + "</b><span>本科</span></div>" +
+          "<div><b>" + a.pgt + "</b><span>硕士</span></div></div></a>";
+      }).join("") + "</div></section>";
+  };
+
+  /* ---------------- 学院页 ---------------- */
+  VIEWS.faculty = function (uni, facId, filters) {
+    var ft = VIEWS.facTop(uni);
+    var fac = facId ? ft.byId[facId] : null;
+    var progs = uni.programs.filter(function (p) {
+      var top = p.faculty_id != null ? ft.topOf(p.faculty_id) : null;
+      return (top ? top.id : 0) === facId;
+    });
+    var h = '<header class="hero"><div class="eyebrow">' +
+      esc(uni.name_zh || uni.name_en) + " · 学院</div>" +
+      "<h1>" + esc(fac ? fac.name_en : "未归类专业") +
+      (fac && fac.name_zh ? ' <span class="zh">' + esc(fac.name_zh) + "</span>" : "") + "</h1>" +
+      (fac && fac.url ? '<p class="sub"><a href="' + esc(fac.url) +
+        '" target="_blank" rel="noopener">学院官网 ↗</a></p>' : "") + "</header>";
+    return h + VIEWS._programSection(uni, filters, progs);
+  };
+
+  /* 专业列表（筛选 + 表格）；progs 为该视图下的专业集合（学院页传子集） */
+  VIEWS._programSection = function (uni, f, progs) {
     f = f || { level: "all", fac: "all", q: "" };
+    progs = progs || uni.programs;
     var facs = {};
-    uni.programs.forEach(function (p) { if (p.faculty_name) facs[p.faculty_name] = 1; });
+    progs.forEach(function (p) { if (p.faculty_name) facs[p.faculty_name] = 1; });
     var facOpts = Object.keys(facs).sort().map(function (n) {
       return '<option value="' + esc(n) + '"' + (f.fac === n ? " selected" : "") + ">" + esc(n) + "</option>";
     }).join("");
 
     var q = (f.q || "").toLowerCase();
-    var rows = uni.programs.filter(function (p) {
+    var rows = progs.filter(function (p) {
       if (f.level !== "all" && p.level !== f.level) return false;
       if (f.fac !== "all" && p.faculty_name !== f.fac) return false;
       if (q && !((p.name_en || "").toLowerCase().indexOf(q) >= 0 ||
@@ -96,16 +156,17 @@
     });
 
     var h = "<section><h2>专业档案</h2>" +
-      '<p class="h2note">共 ' + uni.programs.length + " 个已入库 · 点击行进入专业详情</p>" +
+      '<p class="h2note">共 ' + progs.length + " 个已入库 · 点击行进入专业详情</p>" +
       '<div class="filterbar">' +
       '<div class="seg" data-filter="level">' +
       ["all|本硕", "PGT|硕士", "UG|本科"].map(function (s) {
         var kv = s.split("|");
         return '<button data-v="' + kv[0] + '"' + (f.level === kv[0] ? ' class="on"' : "") + ">" + kv[1] + "</button>";
       }).join("") + "</div>" +
-      '<select data-filter="fac"><option value="all">全部院系</option>' + facOpts + "</select>" +
+      (Object.keys(facs).length > 1
+        ? '<select data-filter="fac"><option value="all">全部院系</option>' + facOpts + "</select>" : "") +
       '<input type="search" data-filter="q" value="' + esc(f.q || "") + '" placeholder="搜索专业名…" aria-label="搜索专业">' +
-      '<span class="count">' + rows.length + " / " + uni.programs.length + "</span></div>";
+      '<span class="count">' + rows.length + " / " + progs.length + "</span></div>";
 
     if (!rows.length) return h + '<p class="empty">没有匹配的专业</p></section>';
 
