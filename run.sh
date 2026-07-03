@@ -1,47 +1,27 @@
 #!/usr/bin/env bash
-# uni_atlas 启动脚本
-#   ./run.sh              # = update：抓所有到期任务 + 导出前端数据
-#   ./run.sh update       # 日常更新（--due，内容没变的页面秒过）
-#   ./run.sh status       # 看现状：待抓任务数 / 库里有什么 / 最近变更
-#   ./run.sh web          # 刷新数据并打开前端页面
+# uni_atlas 一键运行：
+#   ./run.sh              # 抓到期页面 → 导出数据 → 打开页面（日常就用这一条）
+#
+# 其他子命令（按需）：
+#   ./run.sh status       # 看现状：待抓任务 / 每校数据量 / 最近变更
 #   ./run.sh seed <校>    # 按 crawler/config/universities/<校>.yaml 登记新学校
 #   ./run.sh discover <校># 展开该校目录页 → 生成专业页任务
-#   ./run.sh reparse <校> # 离线重放快照（改解析器后回填，不联网）
-#   ./run.sh crawl ...    # 透传任意参数给 run.py，如 ./run.sh crawl --uni ucl --limit 50
+#   ./run.sh reparse <校> # 改完解析器离线回填快照（不联网）
+#   ./run.sh crawl ...    # 任意参数透传 run.py，如 ./run.sh crawl --uni ucl --limit 50
 set -euo pipefail
 cd "$(dirname "$0")"
 
-LOCK_DIR="/tmp/uni_atlas-crawl.lock"
-
-release_lock() {
-  if [ -d "$LOCK_DIR" ] && [ "$(cat "$LOCK_DIR/pid" 2>/dev/null || true)" = "$$" ]; then
-    rm -f "$LOCK_DIR/pid"; rmdir "$LOCK_DIR" 2>/dev/null || true
-  fi
-}
-
-acquire_lock() {  # 防止两次爬取同时跑：同一域名限速配额会被瓜分甚至触发反爬
-  if mkdir "$LOCK_DIR" 2>/dev/null; then
-    printf '%s\n' "$$" >"$LOCK_DIR/pid"; trap release_lock EXIT; return
-  fi
-  holder="$(cat "$LOCK_DIR/pid" 2>/dev/null || true)"
-  if [ -n "$holder" ] && ps -p "$holder" >/dev/null 2>&1; then
-    echo "错误：已有爬取在运行（pid ${holder}），等它结束再跑。" >&2; exit 1
-  fi
-  echo "清理上次异常退出留下的锁……" >&2
-  rm -f "$LOCK_DIR/pid"; rmdir "$LOCK_DIR" 2>/dev/null || true
-  mkdir "$LOCK_DIR"; printf '%s\n' "$$" >"$LOCK_DIR/pid"; trap release_lock EXIT
-}
-
 export_web() { echo "▸ 导出前端数据 ..."; python3 web/export.py; }
 
-cmd="${1:-update}"
+cmd="${1:-run}"
 [ $# -gt 0 ] && shift
 
 case "$cmd" in
-  update)
-    acquire_lock
-    python3 crawler/run.py --due "$@"
+  run)
+    python3 crawler/run.py --due
     export_web
+    echo "▸ 打开页面 ..."
+    open web/index.html
     ;;
   status)
     python3 crawler/run.py --due --dry-run | head -1 || true
@@ -59,16 +39,12 @@ case "$cmd" in
         FROM change_log WHERE change_type='update'
        ORDER BY detected_at DESC LIMIT 5;"
     ;;
-  web)
-    exec ./web/start.sh "$@"
-    ;;
   seed)
     [ $# -ge 1 ] || { echo "用法: ./run.sh seed <校代码>" >&2; exit 2; }
     python3 crawler/run.py --seed "$1"
     ;;
   discover)
     [ $# -ge 1 ] || { echo "用法: ./run.sh discover <校代码>" >&2; exit 2; }
-    acquire_lock
     python3 crawler/run.py --discover --uni "$1"
     ;;
   reparse)
@@ -77,7 +53,6 @@ case "$cmd" in
     export_web
     ;;
   crawl)
-    acquire_lock
     python3 crawler/run.py "$@"
     export_web
     ;;
