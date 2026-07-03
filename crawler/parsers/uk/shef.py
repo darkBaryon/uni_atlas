@@ -6,7 +6,7 @@ from parsers.models import CalendarData, DeadlineData, DiscoveredPage, ModuleRef
 from parsers.page import norm_ws
 from parsers.uk.common import (date_loose, date_range, event_type, find_links,
                                ielts, keyword_check, section_text, title_from)
-from config.codes import UniCode
+from config.codes import Category, UniCode
 
 COURSE_RE = r"/(?:undergraduate/courses|postgraduate/taught/courses)/20\d{2}/[^/?#]+/?$"
 FACULTY_RE = r"Faculty of (?:Arts and Humanities|Engineering|Health|Science|Social Sciences)|International Faculty, CITY College"
@@ -26,7 +26,7 @@ class Sheffield(BaseParser):
     def program_catalog(self, page, res):
         for url, title, _ in find_links(page, COURSE_RE):
             res.discovered.append(DiscoveredPage(
-                url=url, category="program_detail", title=title or None))
+                url=url, category=Category.PROGRAM_DETAIL, title=title or None))
         if not res.discovered:
             res.note("Sheffield 目录页未解析出课程详情链接")
 
@@ -58,7 +58,7 @@ class Sheffield(BaseParser):
         if re.search(r"/about/dates/?$", page.url):
             for url, title, _ in find_links(page, r"/about/dates/(?:current-and-future-semester|past|non-standard-semesters)"):
                 res.discovered.append(DiscoveredPage(
-                    url=url, category="term_dates", title=title or None))
+                    url=url, category=Category.TERM_DATES, title=title or None))
             if not res.discovered:
                 res.note("dates hub 未解析到子页面")
             return

@@ -22,6 +22,7 @@ URL 模式和标签措辞，这些放 YAML 就够了。
 """
 import logging
 import re
+from config.codes import Category
 
 import config
 from parsers.base import BaseParser, get_parser
@@ -60,11 +61,11 @@ class GenericUK(BaseParser):
             if url.rstrip("/") == page.url.rstrip("/"):
                 continue
             res.discovered.append(DiscoveredPage(
-                url=url, category="program_detail", title=text or None))
+                url=url, category=Category.PROGRAM_DETAIL, title=text or None))
         nxt = page.soup.select_one('a[rel="next"], .pager-next a, li.next a')
         if nxt and nxt.get("href"):
             res.discovered.append(DiscoveredPage(
-                url=page.abs(nxt["href"]), category="program_catalog",
+                url=page.abs(nxt["href"]), category=Category.PROGRAM_CATALOG,
                 title="目录分页", crawl_freq="manual"))
         if not res.discovered:
             res.note(f"目录页未匹配到 {link_re} 链接，页面结构需人工核对")

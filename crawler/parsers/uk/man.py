@@ -5,7 +5,7 @@ from parsers.base import BaseParser
 from parsers.models import CalendarData, DeadlineData, DiscoveredPage, ModuleRef, ProgramData
 from parsers.page import norm_ws, parse_date
 from parsers.uk.common import date_loose, event_type, fee_near, find_links, first, ielts, section_text
-from config.codes import UniCode
+from config.codes import Category, UniCode
 
 COURSE_RE = r"/study/(?:undergraduate/courses/2026|masters/courses/list)/\d{4,6}/[^/?#]+/?$"
 MODULE_CODE_RE = re.compile(r"\b[A-Z]{4}\d{4,5}\b")
@@ -17,7 +17,7 @@ class Manchester(BaseParser):
     def program_catalog(self, page, res):
         for url, title, _ in find_links(page, COURSE_RE):
             res.discovered.append(DiscoveredPage(
-                url=url, category="program_detail", title=title or None))
+                url=url, category=Category.PROGRAM_DETAIL, title=title or None))
         if not res.discovered:
             res.note("未解析出 Manchester 专业链接")
 

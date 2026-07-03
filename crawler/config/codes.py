@@ -1,4 +1,4 @@
-"""学校代码枚举：代码里引用 UniCode.XXX，不写裸字符串。
+"""标识符常量层：学校代码 UniCode、页面类别 Category。代码里引用枚举，不写裸字符串。
 
 映射链：枚举值 = config/universities/**/<code>.yaml 的 code 字段
             = 数据库 universities.code 列。
@@ -26,3 +26,27 @@ class UniCode(str, Enum):
     SHEF = "shef"          # 谢菲尔德大学
 
     __str__ = str.__str__      # 日志/格式化输出 'bristol' 而非 'UniCode.BRISTOL'
+
+
+class Category(str, Enum):
+    """页面类别——镜像数据库 source_pages.category 的 ENUM 定义。
+
+    BaseParser 子类实现与成员值同名的方法即注册该类别的解析器。
+    """
+    PROGRAM_DETAIL = "program_detail"
+    PROGRAM_CATALOG = "program_catalog"
+    MODULE_CATALOG = "module_catalog"
+    TERM_DATES = "term_dates"
+    UG_ADMISSIONS = "ug_admissions"
+    PG_ADMISSIONS = "pg_admissions"
+    FACULTY_LIST = "faculty_list"
+    LANGUAGE_REQ = "language_req"
+    CHINA_PAGE = "china_page"
+    DEADLINES = "deadlines"
+    FEES = "fees"
+    STAFF_LIST = "staff_list"
+    RESEARCH = "research"
+    NEWS = "news"
+    OTHER = "other"
+
+    __str__ = str.__str__

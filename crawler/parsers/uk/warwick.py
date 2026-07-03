@@ -10,7 +10,7 @@ from parsers.models import CalendarData, DeadlineData, DiscoveredPage, ProgramDa
 from parsers.uk.common import (band, fee_near, find_links, first, ielts,
                                keyword_check, known_name, scan_term_lines,
                                section_text, standard_deadlines, title_from)
-from config.codes import UniCode
+from config.codes import Category, UniCode
 
 COURSE_RE = (r"/study/undergraduate/courses-20\d{2}/[a-z0-9-]+/?$|"
              r"/study/postgraduate/courses(?:-20\d{2})?/(?!course-list/?$)[a-z0-9-]+/?$")
@@ -22,7 +22,7 @@ class Warwick(BaseParser):
     def program_catalog(self, page, res):
         for url, title, _ in find_links(page, COURSE_RE):
             res.discovered.append(DiscoveredPage(
-                url=url, category="program_detail", title=title or None))
+                url=url, category=Category.PROGRAM_DETAIL, title=title or None))
         if not res.discovered:
             res.note("Warwick 目录页未解析出静态课程链接")
 
@@ -70,7 +70,7 @@ class Warwick(BaseParser):
 
     def china_page(self, page, res):
         for url, title, _ in find_links(page, r"china"):
-            res.discovered.append(DiscoveredPage(url=url, category="china_page",
+            res.discovered.append(DiscoveredPage(url=url, category=Category.CHINA_PAGE,
                                                  title=title or "China"))
         if not res.discovered:
             keyword_check(res, page, r"China", "Warwick 国别页")

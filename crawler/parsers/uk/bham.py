@@ -6,7 +6,7 @@ from parsers.models import CalendarData, DiscoveredPage, ModuleRef, ProgramData
 from parsers.page import norm_ws
 from parsers.uk.common import (date_range, event_type, fee_near, find_links,
                                ielts, keyword_check, section_text, title_from)
-from config.codes import UniCode
+from config.codes import Category, UniCode
 
 COURSE_RE = r"/study/(?:undergraduate|postgraduate)/subjects/.+-courses/[^/?#]+/?$"
 COLLEGE_RE = r"College of (?:Arts and Law|Engineering and Physical Sciences|Life and Environmental Sciences|Medicine and Health|Social Sciences)"
@@ -19,7 +19,7 @@ class Birmingham(BaseParser):
         for url, title, _ in find_links(page, COURSE_RE):
             if "/dubai/" not in url:
                 res.discovered.append(DiscoveredPage(
-                    url=url, category="program_detail", title=title or None))
+                    url=url, category=Category.PROGRAM_DETAIL, title=title or None))
         if not res.discovered:
             res.note("Birmingham 目录页未解析出课程详情链接")
 

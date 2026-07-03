@@ -13,7 +13,7 @@ from datetime import datetime
 from parsers.base import BaseParser
 from parsers.models import CalendarData, DeadlineData, DiscoveredPage, ProgramData
 from parsers.page import parse_date
-from config.codes import UniCode
+from config.codes import Category, UniCode
 
 SCHOOL_RE = r"(Adam Smith Business School|School of [A-Z][A-Za-z ,&\-]{3,70})"
 
@@ -31,7 +31,7 @@ class Glasgow(BaseParser):
             m = re.match(r"^(.*?)\[(.*?)\]$", raw)
             name, degrees = (m.group(1).strip(), m.group(2).strip()) if m else (raw, "")
             res.discovered.append(DiscoveredPage(
-                url=href, category="program_detail",
+                url=href, category=Category.PROGRAM_DETAIL,
                 title=f"{name} [{degrees}]" if degrees else name))
         if not res.discovered:
             res.note("目录页未解析出 programme-list 项目链接，页面结构可能已变")
@@ -118,7 +118,7 @@ class Glasgow(BaseParser):
         if not m:   # 根页：发现各学年子页
             for href, text in page.links(href_re=r"/sessiondates/session\d{4}-\d{2}/?$"):
                 res.discovered.append(DiscoveredPage(
-                    url=href, category="term_dates", title=text))
+                    url=href, category=Category.TERM_DATES, title=text))
             if not res.discovered:
                 res.note("sessiondates 根页未发现学年子页链接")
             return

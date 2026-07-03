@@ -11,7 +11,7 @@ import re
 from parsers.base import BaseParser
 from parsers.models import DeadlineData, DiscoveredPage, ModuleData, ModuleRef, ProgramData
 from parsers.page import parse_date
-from config.codes import UniCode
+from config.codes import Category, UniCode
 
 MODULE_CODE_RE = re.compile(r"-([A-Z]{4}\d{4})/?$")
 
@@ -127,13 +127,13 @@ class UCL(BaseParser):
                 continue
             dept_el = item.select_one("span.search-results__dept")
             res.discovered.append(DiscoveredPage(
-                url=href, category="program_detail",
+                url=href, category=Category.PROGRAM_DETAIL,
                 title=re.sub(r"\s+", " ", a.get_text(strip=True)),
                 note=dept_el.get_text(strip=True) if dept_el else None))
         nxt = page.soup.select_one('a[rel="next"], li.pager__item--next a')
         if nxt and nxt.get("href"):
             res.discovered.append(DiscoveredPage(
-                url=page.abs(nxt["href"]), category="program_catalog",
+                url=page.abs(nxt["href"]), category=Category.PROGRAM_CATALOG,
                 title="目录分页", crawl_freq="manual"))
         if not res.discovered:
             res.note("目录页未解析出学位卡（result-item），页面结构可能已变")

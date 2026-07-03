@@ -17,16 +17,14 @@ import logging
 import re
 
 import config
+from config.codes import Category
 from parsers.models import ParseResult
 from parsers.page import Page
 
 logger = logging.getLogger(__name__)
 
-# 与 source_pages.category 对应；BaseParser 子类实现同名方法即注册
-CATEGORIES = ("program_detail", "program_catalog", "module_catalog",
-              "term_dates", "ug_admissions", "pg_admissions", "faculty_list",
-              "language_req", "china_page", "deadlines", "fees",
-              "staff_list", "research", "news", "other")
+# BaseParser 子类实现与 Category 成员值同名的方法即注册
+CATEGORIES = tuple(Category)
 
 PARSERS = {}   # (uni_code, category) -> fn(html, url) -> ParseResult
 

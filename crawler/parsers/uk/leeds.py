@@ -8,7 +8,7 @@ from parsers.page import norm_ws, parse_date
 from parsers.uk.common import (dedupe_discovered, facts, fee_near, ielts,
                                keyword_check, known_name, pick, scan_term_lines,
                                section_text, title_from, unwrap_funnelback)
-from config.codes import UniCode
+from config.codes import Category, UniCode
 
 PG_AWARDS = r"MSc|MA|MBA|LLM|MRes|MEd|MPH|PGDip|PGCert|Masters"
 
@@ -23,11 +23,11 @@ class Leeds(BaseParser):
             if _is_detail(url) and url not in seen:
                 seen.add(url)
                 res.discovered.append(DiscoveredPage(
-                    url=url, category="program_detail",
+                    url=url, category=Category.PROGRAM_DETAIL,
                     title=norm_ws(a.get_text(" ", strip=True)) or None))
             elif "course-search/" in url and ("start_rank=" in url or "page=" in url):
                 res.discovered.append(DiscoveredPage(
-                    url=url, category="program_catalog", title="Course search page"))
+                    url=url, category=Category.PROGRAM_CATALOG, title="Course search page"))
         dedupe_discovered(res.discovered)
         if not res.discovered:
             res.note("未解析出 Leeds 课程链接")

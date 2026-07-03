@@ -9,6 +9,7 @@ from datetime import datetime
 import pymysql
 
 import config
+from config.codes import Category
 
 @dataclass
 class Task:
@@ -43,7 +44,8 @@ class Task:
 
 
 # 目录类 category：抓到内容后走 discover 流程（展开出新任务）而非实体解析
-DISCOVER_CATEGORIES = {"program_catalog", "faculty_list", "module_catalog"}
+DISCOVER_CATEGORIES = {Category.PROGRAM_CATALOG, Category.FACULTY_LIST,
+                       Category.MODULE_CATALOG}
 
 _FREQ_DAYS = {"daily": 1, "weekly": 7, "monthly": 30}
 

@@ -6,7 +6,7 @@ from parsers.models import CalendarData, DeadlineData, DiscoveredPage, ProgramDa
 from parsers.page import norm_ws, parse_date
 from parsers.uk.common import (date_range, event_type, ielts, keyword_check,
                                section_text)
-from config.codes import UniCode
+from config.codes import Category, UniCode
 
 PROGRAM_RE = r"/programmes/(?:undergraduate/(?:\d{4}/)?\d+|postgraduate-taught/\d+)-[^/?#]+/?$"
 
@@ -19,7 +19,7 @@ class Edinburgh(BaseParser):
             a = row.select_one(".views-field-title a[href]")
             if a and re.search(PROGRAM_RE, page.abs(a["href"]), re.I):
                 res.discovered.append(DiscoveredPage(
-                    url=page.abs(a["href"]), category="program_detail",
+                    url=page.abs(a["href"]), category=Category.PROGRAM_DETAIL,
                     title=norm_ws(a.get_text(" ", strip=True))))
         if not res.discovered:
             res.note("Degree Finder A-Z 未解析出专业链接")
@@ -52,7 +52,7 @@ class Edinburgh(BaseParser):
         # 静态的入学要求源数据子页（雅思/学历要求都在这，主页面是 JS 下拉）
         res.discovered.append(DiscoveredPage(
             url=page.url.rstrip("/") + "/entry-requirements",
-            category="program_detail", title=f"{name} · 入学要求源数据"))
+            category=Category.PROGRAM_DETAIL, title=f"{name} · 入学要求源数据"))
 
     def _entry_requirements(self, page, res):
         """/entry-requirements 源数据子页：回填雅思与学历要求（实测 2026-07）。

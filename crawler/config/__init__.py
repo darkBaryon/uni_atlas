@@ -30,12 +30,15 @@ CF_MARKERS = ("Just a moment", "cf-challenge", "Checking your browser")
 
 DEFAULT_ENTRY_YEAR = "2026"   # 学校 YAML 未指定申请季时的默认值
 
+from config.codes import Category  # noqa: E402  常量层无外部依赖，置底避免环
+
 # 抓取优先级：越靠前越先抓（申请决策直接依赖的排前，课程大纲类殿后）
 CATEGORY_PRIORITY = [
-    "deadlines", "term_dates", "ug_admissions", "pg_admissions",
-    "language_req", "china_page", "fees", "program_detail",
-    "program_catalog", "faculty_list", "module_catalog",
-    "staff_list", "research", "news", "other",
+    Category.DEADLINES, Category.TERM_DATES, Category.UG_ADMISSIONS,
+    Category.PG_ADMISSIONS, Category.LANGUAGE_REQ, Category.CHINA_PAGE,
+    Category.FEES, Category.PROGRAM_DETAIL, Category.PROGRAM_CATALOG,
+    Category.FACULTY_LIST, Category.MODULE_CATALOG, Category.STAFF_LIST,
+    Category.RESEARCH, Category.NEWS, Category.OTHER,
 ]
 
 DB_NAME = "study_abroad"
