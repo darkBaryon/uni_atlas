@@ -10,10 +10,10 @@ import registry
 
 def _in_focus(uni_code, dept_note):
     """dept_note: 目录页学位卡的院系文本，如 'Faculty of X | Computer Science'。"""
-    focus = config.FOCUS_DEPTS.get(uni_code)
-    if not focus:          # 未配置范围的学校 = 全部在范围内
+    u = config.uni(uni_code)
+    if u is None or not u.focus_depts:   # 未配置范围的学校 = 全部在范围内
         return True
-    return bool(dept_note) and any(d in dept_note for d in focus)
+    return bool(dept_note) and any(d in dept_note for d in u.focus_depts)
 
 
 def register_discovered(conn, university_id, uni_code, discovered):
@@ -30,9 +30,10 @@ def register_discovered(conn, university_id, uni_code, discovered):
     return n_new
 
 
-def register_module_pages(conn, university_id, programs):
+def register_module_pages(conn, university_id, uni_code, programs):
     """专业页模块表里带链接的模块，登记为任务；默认 manual（不自动抓详情）。"""
-    freq = "monthly" if config.CRAWL_MODULE_DETAILS else "manual"
+    u = config.uni(uni_code)
+    freq = "monthly" if (u and u.crawl_module_details) else "manual"
     n_new = 0
     for p in programs:
         for ref in p.modules:

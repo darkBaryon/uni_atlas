@@ -36,7 +36,7 @@ source_pages(任务) → crawler(抓取/快照/解析) → MySQL (study_abroad)
 ## 爬虫用法
 
 ```bash
-cd crawler
+cd crawler                                # 加新学校: 建 config/universities/<code>.yaml 后 --seed <code>
 python3 run.py --due                     # 抓所有到期任务（日常）
 python3 run.py --uni ucl --category program_detail --limit 50
 python3 run.py --discover --uni ucl      # 展开目录页 → 新任务

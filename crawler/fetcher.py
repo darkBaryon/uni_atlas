@@ -68,7 +68,7 @@ async def _fetch_one(session, task):
 
 
 async def _domain_worker(domain, queue, session, handle, sem, log):
-    interval = config.DOMAIN_INTERVALS.get(domain, config.DEFAULT_INTERVAL)
+    interval = config.domain_interval(domain)
     async with sem:
         first = True
         while queue:

@@ -12,11 +12,32 @@ import argparse
 import logging
 import sys
 
+import config
 import logging_setup
 import pipeline
 import registry
 
 logger = logging.getLogger(__name__)
+
+
+def seed(conn, code):
+    """按 config/universities/<code>.yaml 登记学校与入口页种子。"""
+    uconf = config.uni(code)
+    if uconf is None:
+        print(f"没有 config/universities/{code}.yaml，先建配置文件。")
+        return 1
+    uid = registry.ensure_university(conn, uconf)
+    n_new = 0
+    for p in uconf.seed_pages:
+        _, created = registry.add_page(
+            conn, uid, p["category"], p["url"],
+            crawl_freq=p.get("crawl_freq", "monthly"),
+            fetch_method=p.get("fetch_method", "html"),
+            note=p.get("note"))
+        n_new += created
+    print(f"{uconf.name} ({code}): 入口页 {len(uconf.seed_pages)} 个，新登记 {n_new} 个。"
+          f"\n下一步: python3 run.py --discover --uni {code} && python3 run.py --due --uni {code}")
+    return 0
 
 
 def main():
@@ -29,11 +50,15 @@ def main():
     ap.add_argument("--reparse", action="store_true", help="离线重放最近快照，不联网")
     ap.add_argument("--dry-run", action="store_true", help="只列出将执行的任务")
     ap.add_argument("--verbose", action="store_true", help="控制台也输出逐页 DEBUG 日志")
+    ap.add_argument("--seed", metavar="CODE",
+                    help="按 config/universities/<code>.yaml 登记新学校的入口页")
     args = ap.parse_args()
 
     if not args.dry_run:
         logging_setup.setup(verbose=args.verbose)
     conn = registry.connect()
+    if args.seed:
+        return seed(conn, args.seed)
     tasks = registry.get_tasks(
         conn, uni_code=args.uni, category=args.category,
         due_only=args.due, discover_only=args.discover, limit=args.limit)
@@ -63,4 +88,7 @@ def main():
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    try:
+        sys.exit(main())
+    except BrokenPipeError:   # 输出被 head 等截断属正常，静默退出
+        sys.exit(0)

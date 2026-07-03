@@ -23,6 +23,21 @@ def connect():
     )
 
 
+def ensure_university(conn, uconf):
+    """--seed 用：universities 表没有该校则按 YAML 建行，返回 id。"""
+    with conn.cursor() as cur:
+        cur.execute("SELECT id FROM universities WHERE code=%s", (uconf.code,))
+        row = cur.fetchone()
+        if row:
+            return row["id"]
+        cur.execute(
+            "INSERT INTO universities (code, name_en, name_zh, country, city, website)"
+            " VALUES (%s,%s,%s,%s,%s,%s)",
+            (uconf.code, uconf.name, uconf.name_zh, uconf.country,
+             uconf.city, uconf.website))
+        return cur.lastrowid
+
+
 def universities(conn):
     """code -> {id, code, name_en, website}"""
     with conn.cursor() as cur:

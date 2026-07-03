@@ -87,7 +87,8 @@ def _parse_and_load(conn, ldr, task, body, snapshot_id, report):
 
     report.new_tasks += discover.register_discovered(
         conn, uid, task["uni_code"], result.discovered)
-    report.new_tasks += discover.register_module_pages(conn, uid, result.programs)
+    report.new_tasks += discover.register_module_pages(
+        conn, uid, task["uni_code"], result.programs)
     snapshots.mark_parsed(conn, snapshot_id, ok=True)
     if result.counts():
         logger.debug("    -> %s", result.counts())

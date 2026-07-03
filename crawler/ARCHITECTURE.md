@@ -73,7 +73,9 @@ parsers/
 ```
 crawler/
   ARCHITECTURE.md   # 本文档
-  config.py         # 限速/重试/路径/UA；按域覆盖: {'ucl.ac.uk': 3.0}
+  config/           # 全局默认 (__init__.py) + 每校一个 YAML
+    universities/
+      ucl.yaml      # 域名限速/申请季/抓取范围/入口页种子；加新校=新建一个 YAML
   registry.py       # source_pages 读任务/写状态（唯一接触任务表的模块）
   fetcher.py        # 域名队列 + 限速 + 退避重试 + Cloudflare/404/301 识别
   snapshots.py      # 落盘 + sha256 变更检测 + page_snapshots 登记

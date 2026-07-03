@@ -18,6 +18,11 @@ from parsers.base import (CalendarData, DeadlineData, DiscoveredPage,  # noqa: F
 MODULE_CODE_RE = re.compile(r"-([A-Z]{4}\d{4})/?$")
 
 
+def _default_year():
+    u = config.uni("ucl")
+    return u.entry_year if u else config.DEFAULT_ENTRY_YEAR
+
+
 def _dt(s):
     """'20 Oct 2025' / '20 October 2025' -> '2025-10-20'"""
     for fmt in ("%d %b %Y", "%d %B %Y"):
@@ -37,7 +42,7 @@ def _entry_year(url, fee_year_label):
     if fee_year_label:                       # '2026/27' -> '2026'
         return fee_year_label.split("/")[0]
     m = re.search(r"-(\d{4})/?$", url)       # slug 结尾 '...-bsc-2026'
-    return m.group(1) if m else config.DEFAULT_ENTRY_YEAR
+    return m.group(1) if m else _default_year()
 
 
 @register("ucl", "program_detail")
@@ -56,7 +61,7 @@ def parse_program(html, url):
 
     level = "UG" if "/undergraduate/" in url else "PGT"
     p = ProgramData(name_en=name, level=level, url=url,
-                    entry_year=config.DEFAULT_ENTRY_YEAR)
+                    entry_year=_default_year())
 
     # ---- 学费/学制: .study-mode 元素 + 前置标签判断含义 ----
     for el in soup.select(".study-mode"):
@@ -191,7 +196,7 @@ def parse_module(html, url):
         return res
 
     mm = MODULE_CODE_RE.search(url)
-    mod = ModuleData(name_en=name, url=url, entry_year=config.DEFAULT_ENTRY_YEAR,
+    mod = ModuleData(name_en=name, url=url, entry_year=_default_year(),
                      code=mm.group(1) if mm else None)
 
     def kv(label):

@@ -1,0 +1,41 @@
+# UCL —— 每所学校一个这样的 YAML；加新学校 = 复制本文件改内容 + 写解析器
+code: ucl
+name: University College London
+name_zh: 伦敦大学学院
+website: https://www.ucl.ac.uk
+country: UK
+city: London
+
+entry_year: "2026"
+
+# 域名限速（秒/页）。实测连续 ~40 请求触发 Cloudflare，3s 稳定通过
+domains:
+  www.ucl.ac.uk: 3.0
+
+# 抓取范围：核心数据而非全站镜像（见 ARCHITECTURE.md 第八节）
+scope:
+  # 关注院系：与目录页学位卡上的系名子串匹配（卡片文本不带 "UCL" 前缀）
+  focus_depts:
+    - Computer Science
+    - School of Management
+  # 模块详情页（大纲/考核/负责人）默认不抓；专业页自带模块名单
+  crawl_module_details: false
+
+# 入口页种子：python3 run.py --seed ucl 时登记进 source_pages（已存在的跳过）
+seed_pages:
+  - {category: program_catalog, crawl_freq: monthly,
+     url: "https://www.ucl.ac.uk/prospective-students/undergraduate/degrees"}
+  - {category: program_catalog, crawl_freq: monthly,
+     url: "https://www.ucl.ac.uk/prospective-students/graduate/taught-degrees"}
+  - {category: term_dates, crawl_freq: monthly,
+     url: "https://www.ucl.ac.uk/study/current-students/life-ucl/term-dates-and-closures"}
+  - {category: ug_admissions, crawl_freq: weekly,
+     url: "https://www.ucl.ac.uk/study/prospective-students/undergraduate"}
+  - {category: pg_admissions, crawl_freq: weekly,
+     url: "https://www.ucl.ac.uk/study/prospective-students/graduate"}
+  - {category: language_req, crawl_freq: monthly,
+     url: "https://www.ucl.ac.uk/study/prospective-students/graduate/how-apply/english-language-requirements"}
+  - {category: china_page, crawl_freq: monthly,
+     url: "https://www.ucl.ac.uk/prospective-students/international/china"}
+  - {category: faculty_list, crawl_freq: monthly,
+     url: "https://www.ucl.ac.uk/about/who-we-are/faculties-and-departments"}
