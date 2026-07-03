@@ -113,7 +113,7 @@ class Manchester(BaseParser):
             res.note("Manchester UG admissions 未解析出 equal consideration 日期")
 
     def pg_admissions(self, page, res):
-        res.note("Manchester PGT 截止日期在专业页解析")
+        res.info("Manchester PGT 截止日期在专业页解析")
 
     def faculty_list(self, page, res):
         if not any(name in page.txt for name in self.conf.faculties):

@@ -83,16 +83,16 @@ class SheffieldParser(BaseParser):
             res.note("Sheffield deadlines 未解析出截止日期")
 
     def fees(self, page, res):
-        res.note("Sheffield fees lookup 作为参考页抓取")
+        res.info("Sheffield fees lookup 作为参考页抓取")
 
     def language_req(self, page, res):
         overall, minimum = ielts(page.txt)
         if overall is None:
             res.note("未解析出 IELTS 数字")
         elif minimum is None:
-            res.note(f"IELTS overall {overall}")
+            res.info(f"IELTS overall {overall}")
         else:
-            res.note(f"IELTS overall {overall}, minimum {minimum}")
+            res.info(f"IELTS overall {overall}, minimum {minimum}")
 
     def china_page(self, page, res):
         if "China" not in page.txt:
@@ -103,10 +103,10 @@ class SheffieldParser(BaseParser):
             res.note("未匹配到 Sheffield Faculty 名称")
 
     def ug_admissions(self, page, res):
-        res.note("Sheffield UG 招生页作为参考页抓取")
+        res.info("Sheffield UG 招生页作为参考页抓取")
 
     def pg_admissions(self, page, res):
-        res.note("Sheffield PGT 招生页作为参考页抓取")
+        res.info("Sheffield PGT 招生页作为参考页抓取")
 
 
 def _entry_year(url, default):

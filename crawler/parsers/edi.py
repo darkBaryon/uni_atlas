@@ -125,7 +125,7 @@ class Edinburgh(BaseParser):
             res.note("Edinburgh UG admissions 未解析出 equal consideration 日期")
 
     def pg_admissions(self, page, res):
-        res.note("Edinburgh PGT 截止日期按 degree finder 专业页解析")
+        res.info("Edinburgh PGT 截止日期按 degree finder 专业页解析")
 
     def faculty_list(self, page, res):
         txt = page.txt.replace("&", "and")

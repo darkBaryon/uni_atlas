@@ -83,7 +83,7 @@ class Leeds(BaseParser):
                     "all", "equal_consideration", d + " 18:00:00", self.entry_year, "UCAS 日期"))
 
     def pg_admissions(self, page, res):
-        res.note("Leeds PGT 截止日期主要在课程页解析")
+        res.info("Leeds PGT 截止日期主要在课程页解析")
 
     def china_page(self, page, res):
         if "China" not in page.txt:

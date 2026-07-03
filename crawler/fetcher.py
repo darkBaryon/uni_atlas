@@ -52,11 +52,17 @@ async def _fetch_one(session, task):
             head = body[:4096].decode("utf-8", "ignore")
             if _is_cloudflare(resp.status, head):
                 return FetchResult(task, "cloudflare", resp.status)
+            if resp.status == 429:   # 对方限流：与 Cloudflare 同样退避重试
+                return FetchResult(task, "cloudflare", 429,
+                                   note="HTTP 429 对方限流")
             if resp.status == 404:
                 return FetchResult(task, "dead", 404)
             final = str(resp.url)
             if resp.history and not _same_page(url, final):
                 return FetchResult(task, "moved", resp.status, body, final_url=final)
+            if 500 <= resp.status <= 599:   # 5xx 多为瞬时（如 CF 520），可重试
+                return FetchResult(task, "transient", resp.status,
+                                   note=f"HTTP {resp.status} 服务端瞬时错误")
             if resp.status != 200:
                 return FetchResult(task, "error", resp.status,
                                    note=f"HTTP {resp.status}")
@@ -78,15 +84,24 @@ async def _domain_worker(domain, queue, session, handle, sem, log):
             first = False
 
             result = await _fetch_one(session, task)
-            # Cloudflare：指数退避重试，用尽则失败留痕（只影响本域）
+            # 5xx 瞬时错误：短暂等待重试一次
+            if result.kind == "transient":
+                await asyncio.sleep(20)
+                retry = await _fetch_one(session, task)
+                result = retry if retry.kind == "ok" else FetchResult(
+                    task, "error", retry.http_status,
+                    note=f"{result.note}（重试 1 次仍失败）")
+            # Cloudflare / 429 限流：指数退避重试，用尽则失败留痕（只影响本域）
             for backoff in config.CF_BACKOFFS:
                 if result.kind != "cloudflare":
                     break
-                log(f"  [{domain}] Cloudflare 挑战，退避 {backoff}s: {task['url'][:80]}")
+                log(f"  [{domain}] 反爬/限流({result.note or 'CF 挑战'})，"
+                    f"退避 {backoff}s: {task['url'][:80]}")
                 await asyncio.sleep(backoff)
                 result = await _fetch_one(session, task)
             if result.kind == "cloudflare":
-                result.note = f"Cloudflare 挑战 {len(config.CF_BACKOFFS)+1} 次未过，待下轮"
+                result.note = (f"{result.note or 'Cloudflare 挑战'}"
+                               f" {len(config.CF_BACKOFFS)+1} 次未过，待下轮")
 
             handle(result)
 

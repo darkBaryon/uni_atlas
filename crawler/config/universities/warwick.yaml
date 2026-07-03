@@ -10,7 +10,7 @@ city: Coventry
 entry_year: "2026"
 
 domains:
-  warwick.ac.uk: 3.0
+  warwick.ac.uk: 8.0   # 实测 3s 仍被 429 限流，放宽
 
 scope:
   crawl_module_details: false

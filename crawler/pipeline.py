@@ -94,6 +94,8 @@ def _parse_and_load(conn, ldr, task, body, snapshot_id, report):
         logger.debug("    -> %s", result.counts())
     for note in result.notes:
         logger.warning("    !! %s (%s)", note, task["url"][:80])
+    for info in getattr(result, "infos", []):
+        logger.debug("    ·· %s (%s)", info, task["url"][:80])
 
 
 def _handle_fetched(conn, ldr, task, res, report):
@@ -115,7 +117,9 @@ def _handle_fetched(conn, ldr, task, res, report):
         registry.mark_failed(conn, task["id"], res.note)
         report.counts["failed"] += 1
         report.failures.append((task["url"], res.note))
-        logger.warning("[失败] %s  (%s)", short, res.note)
+        logger.warning("[失败·下轮自动重试] %s《%s》%s  原因: %s",
+                       progress.CATEGORY_ZH.get(task["category"], task["category"]),
+                       (task.get("title") or short)[:50], short, res.note)
     else:  # ok
         report.counts["fetched"] += 1
         content_hash, changed, snap_id = snapshots.save(

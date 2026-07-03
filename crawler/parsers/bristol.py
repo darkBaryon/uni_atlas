@@ -89,7 +89,7 @@ class Bristol(BaseParser):
                     "all", "equal_consideration", d + " 18:00:00", self.entry_year, "UCAS 日期"))
 
     def pg_admissions(self, page, res):
-        res.note("Bristol PGT 截止日期在课程页解析")
+        res.info("Bristol PGT 截止日期在课程页解析")
 
     def language_req(self, page, res):
         if not re.search(r"\bProfile\s+[A-H]\b", page.txt, re.I):

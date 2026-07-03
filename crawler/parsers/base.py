@@ -140,10 +140,15 @@ class ParseResult:
     calendar: list = field(default_factory=list)
     deadlines: list = field(default_factory=list)     # 校级
     discovered: list = field(default_factory=list)
-    notes: list = field(default_factory=list)
+    notes: list = field(default_factory=list)   # 异常类：控制台警告（需要人看）
+    infos: list = field(default_factory=list)   # 说明类：只进文件日志（页面性质等）
 
     def note(self, msg):
         self.notes.append(msg)
+
+    def info(self, msg):
+        """说明性备注（如"该页为参考页"）：不算异常，不上控制台。"""
+        self.infos.append(msg)
 
     def counts(self):
         parts = [(len(self.programs), "专业"), (len(self.modules), "课程"),

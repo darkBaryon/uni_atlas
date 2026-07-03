@@ -66,10 +66,10 @@ class BirminghamParser(BaseParser):
             res.note("Birmingham academic year dates 未解析出日期")
 
     def ug_admissions(self, page, res):
-        res.note("Birmingham UG 招生页作为参考页抓取")
+        res.info("Birmingham UG 招生页作为参考页抓取")
 
     def pg_admissions(self, page, res):
-        res.note("Birmingham PGT 招生页作为参考页抓取")
+        res.info("Birmingham PGT 招生页作为参考页抓取")
 
     def china_page(self, page, res):
         if "China" not in page.txt:
