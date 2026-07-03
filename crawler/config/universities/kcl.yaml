@@ -1,0 +1,48 @@
+# King's College London —— 入口页来自 docs/英国院校公开信息调研.md 第 7 节（2026-07 调研）
+# 注意：KCL term dates 不在主站公开页；旧校历/学院短链接已失效，勿用。
+code: kcl
+name: King's College London
+name_zh: 伦敦国王学院
+website: https://www.kcl.ac.uk
+country: UK
+city: London
+
+entry_year: "2026"
+
+domains:
+  www.kcl.ac.uk: 3.0
+  self-service.kcl.ac.uk: 3.0
+
+scope:
+  crawl_module_details: false
+
+faculties:
+  "Faculty of Arts & Humanities": 人文艺术学院
+  "King's Business School": 国王商学院
+  "Faculty of Dentistry, Oral & Craniofacial Sciences": 牙科、口腔与颅面科学学院
+  "The Dickson Poon School of Law": 迪克森潘法学院
+  "Faculty of Life Sciences & Medicine": 生命科学与医学学院
+  "Faculty of Natural, Mathematical & Engineering Sciences": 自然、数学与工程科学学院
+  "Florence Nightingale Faculty of Nursing, Midwifery & Palliative Care": 弗洛伦斯·南丁格尔护理、助产与姑息护理学院
+  "Institute of Psychiatry, Psychology & Neuroscience": 精神病学、心理学与神经科学学院
+  "Faculty of Social Science & Public Policy": 社会科学与公共政策学院
+
+seed_pages:
+  - {category: program_catalog, crawl_freq: monthly,
+     url: "https://www.kcl.ac.uk/study/undergraduate/courses"}
+  - {category: program_catalog, crawl_freq: monthly,
+     url: "https://www.kcl.ac.uk/study/postgraduate-taught/courses"}
+  - {category: term_dates, crawl_freq: monthly,
+     url: "https://self-service.kcl.ac.uk/article/ka-01913/en-us"}
+  - {category: ug_admissions, crawl_freq: weekly,
+     url: "https://www.kcl.ac.uk/study/undergraduate"}
+  - {category: pg_admissions, crawl_freq: weekly,
+     url: "https://www.kcl.ac.uk/study/postgraduate-taught"}
+  - {category: language_req, crawl_freq: monthly,
+     url: "https://www.kcl.ac.uk/study/postgraduate-taught/how-to-apply/entry-requirements/english-language-requirements"}
+  - {category: china_page, crawl_freq: monthly,
+     url: "https://www.kcl.ac.uk/study/international/region/east-asia"}
+  - {category: china_page, crawl_freq: monthly,
+     url: "https://www.kcl.ac.uk/events/series/offer-holder-china-2026"}
+  - {category: faculty_list, crawl_freq: monthly,
+     url: "https://www.kcl.ac.uk/faculties-departments"}

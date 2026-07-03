@@ -93,6 +93,8 @@ def count_skipped(conn, uni_code=None):
 def add_page(conn, university_id, category, url, title=None,
              crawl_freq="monthly", fetch_method="html", note=None):
     """登记新发现的页面；已存在则返回 (id, False)。"""
+    if title and len(title) > 255:
+        title = title[:252].rstrip() + "..."
     with conn.cursor() as cur:
         cur.execute("SELECT id FROM source_pages WHERE university_id=%s AND url=%s",
                     (university_id, url))

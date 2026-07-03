@@ -114,10 +114,15 @@ class Loader:
             fac_id = self.faculty_from_note(faculty_note)
 
         slug = p.url.rstrip("/").split("/")[-1]
+        name_en = _trunc(p.name_en, 255)
         with self._cur() as cur:
             cur.execute("SELECT id FROM programs WHERE university_id=%s AND level=%s"
-                        " AND name_en=%s", (self.uid, p.level, p.name_en))
+                        " AND name_en=%s", (self.uid, p.level, name_en))
             row = cur.fetchone()
+            if not row:   # 名称对不上时按 URL 兜底（子页数据回填、页面改名等场景防重复）
+                cur.execute("SELECT id FROM programs WHERE university_id=%s AND url=%s",
+                            (self.uid, p.url))
+                row = cur.fetchone()
             if row:
                 prog_id = row["id"]
                 self._diff_update(
@@ -128,12 +133,18 @@ class Loader:
             else:
                 cur.execute(
                     "INSERT INTO programs (university_id, faculty_id, level, name_en,"
-                    " slug, url, ucas_code, duration) VALUES (%s,%s,%s,%s,%s,%s,%s,%s)",
-                    (self.uid, fac_id, p.level, _trunc(p.name_en, 255), slug, p.url,
-                     p.ucas_code, _trunc(p.duration, 64)))
+                    " slug, url, ucas_code, duration) VALUES (%s,%s,%s,%s,%s,%s,%s,%s)"
+                    " ON DUPLICATE KEY UPDATE id=LAST_INSERT_ID(id),"
+                    " faculty_id=COALESCE(VALUES(faculty_id), faculty_id),"
+                    " slug=VALUES(slug), url=VALUES(url),"
+                    " ucas_code=COALESCE(VALUES(ucas_code), ucas_code),"
+                    " duration=COALESCE(VALUES(duration), duration)",
+                    (self.uid, fac_id, p.level, name_en, slug, p.url, p.ucas_code,
+                     _trunc(p.duration, 64)))
                 prog_id = cur.lastrowid
-                self._log("program", prog_id, "insert", None, None,
-                          p.name_en, snapshot_id)
+                if cur.rowcount == 1:
+                    self._log("program", prog_id, "insert", None, None,
+                              p.name_en, snapshot_id)
         self.stats["programs"] += 1
 
         # ---- program_details（按申请季）----
@@ -166,8 +177,12 @@ class Loader:
             else:
                 cols = ["program_id", "entry_year", "currency"] + list(detail_vals)
                 vals = [prog_id, p.entry_year, p.currency] + list(detail_vals.values())
+                updates = ", ".join(
+                    f"{c}=COALESCE(VALUES({c}), {c})"
+                    for c in cols if c not in ("program_id", "entry_year"))
                 cur.execute(f"INSERT INTO program_details ({', '.join(cols)})"
-                            f" VALUES ({', '.join(['%s']*len(vals))})", vals)
+                            f" VALUES ({', '.join(['%s']*len(vals))})"
+                            f" ON DUPLICATE KEY UPDATE {updates}", vals)
 
         for d in p.deadlines:
             self.load_deadline(d, source_page_id, snapshot_id,
@@ -252,8 +267,9 @@ class Loader:
             cur.execute(
                 "SELECT id, deadline_at FROM deadlines WHERE university_id=%s"
                 " AND (program_id <=> %s) AND entry_year=%s AND audience=%s"
-                " AND deadline_type=%s LIMIT 1",
-                (self.uid, program_id, d.entry_year, d.audience, d.deadline_type))
+                " AND deadline_type=%s AND (round_no <=> %s) LIMIT 1",
+                (self.uid, program_id, d.entry_year, d.audience, d.deadline_type,
+                 getattr(d, "round_no", None)))
             row = cur.fetchone()
             if row:
                 if _neq(row["deadline_at"], d.deadline_at):
@@ -269,10 +285,11 @@ class Loader:
             else:
                 cur.execute(
                     "INSERT INTO deadlines (university_id, program_id, entry_year,"
-                    " audience, deadline_type, deadline_at, note, source_page_id,"
-                    " fetched_at) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)",
+                    " audience, deadline_type, round_no, deadline_at, note,"
+                    " source_page_id, fetched_at) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
                     (self.uid, program_id, d.entry_year, d.audience,
-                     d.deadline_type, d.deadline_at, d.note, source_page_id, now))
+                     d.deadline_type, getattr(d, "round_no", None),
+                     d.deadline_at, d.note, source_page_id, now))
                 self._log("deadline", cur.lastrowid, "insert", None, None,
                           f"{label} {d.deadline_at}".strip(), snapshot_id)
         self.stats["deadlines"] += 1

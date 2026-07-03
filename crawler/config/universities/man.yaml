@@ -1,0 +1,37 @@
+# University of Manchester —— entries from docs/英国院校公开信息调研.md 第 2 节
+code: man
+name: University of Manchester
+name_zh: 曼彻斯特大学
+website: https://www.manchester.ac.uk
+country: UK
+city: Manchester
+
+entry_year: "2026"
+
+domains:
+  www.manchester.ac.uk: 3.0
+
+scope:
+  crawl_module_details: false
+
+faculties:
+  "Faculty of Biology, Medicine and Health": 生物、医学与健康学院
+  "Faculty of Science and Engineering": 科学与工程学院
+  "Faculty of Humanities": 人文学院
+
+seed_pages:
+  # Docs mention the crawler-friendly A-Z lists; current official simple lists return 200.
+  - {category: program_catalog, crawl_freq: monthly,
+     url: "https://www.manchester.ac.uk/study/undergraduate/courses/2026/basic/"}
+  - {category: program_catalog, crawl_freq: monthly,
+     url: "https://www.manchester.ac.uk/study/masters/courses/list/basic/"}
+  - {category: term_dates, crawl_freq: monthly,
+     url: "https://www.manchester.ac.uk/about/key-dates/"}
+  - {category: ug_admissions, crawl_freq: weekly,
+     url: "https://www.manchester.ac.uk/study/undergraduate/applying/"}
+  - {category: pg_admissions, crawl_freq: weekly,
+     url: "https://www.manchester.ac.uk/study/masters/"}
+  - {category: china_page, crawl_freq: monthly,
+     url: "https://www.manchester.ac.uk/study/international/country-specific-information/china-mainland/entry-requirements/"}
+  - {category: faculty_list, crawl_freq: monthly,
+     url: "https://www.manchester.ac.uk/about/structure/faculties-schools/"}

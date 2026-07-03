@@ -1,0 +1,39 @@
+# University of Warwick —— 入口页来自 docs/英国院校公开信息调研.md 第 8 节（2026-07 调研）
+# 课程列表页可能由 JS 动态加载；解析器会尽量解析静态链接/嵌入数据，抓不到时只记录 note。
+code: warwick
+name: University of Warwick
+name_zh: 华威大学
+website: https://warwick.ac.uk
+country: UK
+city: Coventry
+
+entry_year: "2026"
+
+domains:
+  warwick.ac.uk: 3.0
+
+scope:
+  crawl_module_details: false
+
+faculties:
+  "Faculty of Arts": 文学院
+  "Faculty of Science, Engineering and Medicine": 科学、工程与医学院
+  "Faculty of Social Sciences": 社会科学学院
+
+seed_pages:
+  - {category: program_catalog, crawl_freq: monthly,
+     url: "https://warwick.ac.uk/study/undergraduate/courses-2026/"}
+  - {category: program_catalog, crawl_freq: monthly,
+     url: "https://warwick.ac.uk/study/postgraduate/courses/"}
+  - {category: term_dates, crawl_freq: monthly,
+     url: "https://warwick.ac.uk/study/termdates"}
+  - {category: ug_admissions, crawl_freq: weekly,
+     url: "https://warwick.ac.uk/study/undergraduate"}
+  - {category: pg_admissions, crawl_freq: weekly,
+     url: "https://warwick.ac.uk/study/postgraduate"}
+  - {category: language_req, crawl_freq: monthly,
+     url: "https://warwick.ac.uk/study/international/admissions/englishlanguage/"}
+  - {category: china_page, crawl_freq: monthly,
+     url: "https://warwick.ac.uk/study/international/countryinformation/"}
+  - {category: faculty_list, crawl_freq: monthly,
+     url: "https://warwick.ac.uk/fac"}

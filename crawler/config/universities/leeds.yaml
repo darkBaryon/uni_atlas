@@ -1,0 +1,42 @@
+# University of Leeds -- public-entry crawler config for 2026 entry.
+code: leeds
+name: University of Leeds
+name_zh: 利兹大学
+website: https://www.leeds.ac.uk
+country: UK
+city: Leeds
+
+entry_year: "2026"
+
+domains:
+  www.leeds.ac.uk: 3.0
+  courses.leeds.ac.uk: 3.0
+
+scope:
+  crawl_module_details: false
+
+faculties:
+  "Faculty of Arts, Humanities and Cultures": 艺术、人文与文化学院
+  "Faculty of Biological Sciences": 生物科学学院
+  "Faculty of Business": 商学院
+  "Faculty of Engineering and Physical Sciences": 工程与物理科学学院
+  "Faculty of Environment": 环境学院
+  "Faculty of Medicine and Health": 医学与健康学院
+  "Faculty of Social Sciences": 社会科学学院
+  "Leeds University Business School": 利兹大学商学院
+
+seed_pages:
+  - {category: program_catalog, crawl_freq: monthly,
+     url: "https://courses.leeds.ac.uk/course-search/undergraduate-courses?query=&type=UG&term=202627"}
+  - {category: program_catalog, crawl_freq: monthly,
+     url: "https://courses.leeds.ac.uk/course-search/masters-courses?query=&type=PGT&term=202627"}
+  - {category: term_dates, crawl_freq: monthly,
+     url: "https://www.leeds.ac.uk/term-dates"}
+  - {category: ug_admissions, crawl_freq: weekly,
+     url: "https://www.leeds.ac.uk/undergraduate-how-to-apply/doc/application-timetable"}
+  - {category: pg_admissions, crawl_freq: weekly,
+     url: "https://www.leeds.ac.uk/masters"}
+  - {category: china_page, crawl_freq: monthly,
+     url: "https://www.leeds.ac.uk/admissions-qualifications/21834/china"}
+  - {category: faculty_list, crawl_freq: monthly,
+     url: "https://www.leeds.ac.uk/about/doc/faculties-contacts"}

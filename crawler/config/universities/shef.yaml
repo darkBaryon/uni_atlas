@@ -1,0 +1,62 @@
+code: shef
+name: University of Sheffield
+name_zh: 谢菲尔德大学
+country: UK
+city: Sheffield
+website: https://www.sheffield.ac.uk
+entry_year: "2026"
+
+domains:
+  www.sheffield.ac.uk: 3.0
+  sheffield.ac.uk: 3.0
+
+scope:
+  crawl_module_details: false
+
+faculties:
+  Faculty of Arts and Humanities: 艺术与人文学院
+  Faculty of Engineering: 工程学院
+  Faculty of Health: 健康学院
+  Faculty of Science: 理学院
+  Faculty of Social Sciences: 社会科学学院
+  International Faculty, CITY College: 国际学院（CITY College）
+
+seed_pages:
+  - category: program_catalog
+    url: https://www.sheffield.ac.uk/undergraduate/courses/2026
+    crawl_freq: monthly
+    note: Undergraduate 2026 course list.
+  - category: program_catalog
+    url: https://www.sheffield.ac.uk/postgraduate/taught/courses/2026
+    crawl_freq: monthly
+    note: Postgraduate taught 2026 course list.
+  - category: term_dates
+    url: https://www.sheffield.ac.uk/about/dates
+    crawl_freq: monthly
+  - category: ug_admissions
+    url: https://www.sheffield.ac.uk/undergraduate/apply
+    crawl_freq: weekly
+  - category: pg_admissions
+    url: https://sheffield.ac.uk/postgraduate/taught/apply
+    crawl_freq: weekly
+  - category: deadlines
+    url: https://www.sheffield.ac.uk/postgraduate/deadlines
+    crawl_freq: weekly
+  - category: fees
+    url: https://www.sheffield.ac.uk/postgraduate/taught/fees-lookup
+    crawl_freq: monthly
+  - category: language_req
+    url: https://www.sheffield.ac.uk/undergraduate/apply/english-language
+    crawl_freq: monthly
+  - category: language_req
+    url: https://www.sheffield.ac.uk/postgraduate/english-language
+    crawl_freq: monthly
+  - category: china_page
+    url: https://www.sheffield.ac.uk/international/entry-requirements/china
+    crawl_freq: monthly
+  - category: china_page
+    url: https://www.sheffield.ac.uk/international/entry-requirements/china/ranking-list
+    crawl_freq: monthly
+  - category: faculty_list
+    url: https://www.sheffield.ac.uk/faculty
+    crawl_freq: monthly

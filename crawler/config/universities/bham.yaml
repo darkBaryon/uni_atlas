@@ -1,0 +1,46 @@
+code: bham
+name: University of Birmingham
+name_zh: 伯明翰大学
+country: UK
+city: Birmingham
+website: https://www.birmingham.ac.uk
+entry_year: "2026"
+
+domains:
+  www.birmingham.ac.uk: 3.0
+
+scope:
+  crawl_module_details: false
+
+faculties:
+  College of Arts and Law: 艺术与法律学院
+  College of Engineering and Physical Sciences: 工程与物理科学学院
+  College of Life and Environmental Sciences: 生命与环境科学学院
+  College of Medicine and Health: 医学与健康学院
+  College of Social Sciences: 社会科学学院
+
+seed_pages:
+  - category: program_catalog
+    url: https://www.birmingham.ac.uk/study/undergraduate/course-search
+    crawl_freq: monthly
+    note: Undergraduate course search.
+  - category: program_catalog
+    url: https://www.birmingham.ac.uk/study/postgraduate/course-search
+    crawl_freq: monthly
+    note: Postgraduate course search.
+  - category: term_dates
+    url: https://www.birmingham.ac.uk/undergraduate/courses/academicyear
+    crawl_freq: monthly
+    note: Official academic year dates from the undergraduate academic year page.
+  - category: ug_admissions
+    url: https://www.birmingham.ac.uk/study/undergraduate
+    crawl_freq: weekly
+  - category: pg_admissions
+    url: https://www.birmingham.ac.uk/study/postgraduate
+    crawl_freq: weekly
+  - category: china_page
+    url: https://www.birmingham.ac.uk/study/international/country/china
+    crawl_freq: monthly
+  - category: faculty_list
+    url: https://www.birmingham.ac.uk/about/colleges-schools-and-departments
+    crawl_freq: monthly

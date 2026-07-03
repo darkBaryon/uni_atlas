@@ -55,10 +55,11 @@ def get_parser(uni_code, category):
 @dataclass
 class DeadlineData:
     audience: str                     # all | international | home
-    deadline_type: str                # application | equal_consideration | ...
+    deadline_type: str                # application | equal_consideration | round | ...
     deadline_at: str                  # 'YYYY-MM-DD HH:MM:SS'
     entry_year: str
     note: Optional[str] = None
+    round_no: Optional[int] = None    # 分轮录取的轮次（deadline_type='round' 时必填）
 
 
 @dataclass
