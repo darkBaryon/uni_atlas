@@ -48,7 +48,8 @@ def universities(conn):
 def get_tasks(conn, uni_code=None, category=None, due_only=False,
               discover_only=False, limit=None):
     """取待抓任务。due_only: 仅 crawl_freq 周期已到期的; discover_only: 仅目录类。"""
-    sql = ["SELECT sp.*, u.code AS uni_code FROM source_pages sp"
+    sql = ["SELECT sp.*, u.code AS uni_code, u.name_zh AS uni_name_zh"
+           " FROM source_pages sp"
            " JOIN universities u ON u.id = sp.university_id"
            " WHERE sp.status = 'active' AND sp.fetch_method = 'html'"]
     args = []

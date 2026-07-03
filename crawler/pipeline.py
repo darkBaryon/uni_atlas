@@ -133,17 +133,29 @@ def _handle_fetched(conn, ldr, task, res, report):
         report.counts["changed"] += 1
 
 
+def _school_list(tasks):
+    """[(uni_code, 中文名, 任务数)]，按任务表顺序。"""
+    order, counts, labels = [], Counter(), {}
+    for t in tasks:
+        code = t["uni_code"]
+        if code not in counts:
+            order.append(code)
+        counts[code] += 1
+        labels[code] = t.get("uni_name_zh") or code
+    return [(c, labels[c], counts[c]) for c in order]
+
+
 def run_fetch(conn, tasks, report):
     ldr_by_uni = {}
     state = {"done": 0}
     total = len(tasks)
 
-    with progress.stage_bar("抓取", total) as bar:
+    with progress.crawl_bars(_school_list(tasks), mode="抓取") as bar:
         def handle(res):
             task = res.task
             state["done"] += 1
-            bar.describe(f"[{task['category']}] {task['url'][:60]}")
-            bar.advance()
+            bar.describe(task["uni_code"], progress.page_desc(task))
+            bar.advance(task["uni_code"])
             if state["done"] % PROGRESS_EVERY == 0:
                 logger.info("进度 %d/%d（失败 %d，变更 %d）", state["done"], total,
                             report.counts["failed"], report.counts["changed"])
@@ -168,10 +180,10 @@ def run_fetch(conn, tasks, report):
 
 def run_reparse(conn, tasks, report):
     ldr_by_uni = {}
-    with progress.stage_bar("重放", len(tasks)) as bar:
+    with progress.crawl_bars(_school_list(tasks), mode="重放") as bar:
         for task in tasks:
-            bar.describe(f"[{task['category']}] {task['url'][:60]}")
-            bar.advance()
+            bar.describe(task["uni_code"], progress.page_desc(task))
+            bar.advance(task["uni_code"])
             snap = snapshots.latest_snapshot(conn, task["id"])
             if not snap or not snap.get("content_path"):
                 continue
