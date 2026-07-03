@@ -3,6 +3,7 @@
 #   ./run.sh              # 抓到期页面 → 导出数据 → 打开页面（日常就用这一条）
 #
 # 其他子命令（按需）：
+#   ./run.sh web          # 不抓取，只刷新数据并打开页面（--serve 起本地服务器）
 #   ./run.sh status       # 看现状：待抓任务 / 每校数据量 / 最近变更
 #   ./run.sh seed <校>    # 按 crawler/config/universities/<校>.yaml 登记新学校
 #   ./run.sh discover <校># 展开该校目录页 → 生成专业页任务
@@ -22,6 +23,9 @@ case "$cmd" in
     export_web
     echo "▸ 打开页面 ..."
     open web/index.html
+    ;;
+  web)
+    exec ./web/start.sh "$@"
     ;;
   status)
     python3 crawler/run.py --due --dry-run | head -1 || true
