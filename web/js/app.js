@@ -33,6 +33,7 @@
       if (seg[2] === "p" && seg[3]) return { view: "program", uni: uni, id: +seg[3] };
       if (seg[2] === "m" && seg[3]) return { view: "module", uni: uni, id: +seg[3] };
       if (seg[2] === "f" && seg[3] != null) return { view: "faculty", uni: uni, id: +seg[3] };
+      if (seg[2] === "d" && seg[3] != null) return { view: "dept", uni: uni, id: +seg[3] };
       return { view: "university", uni: uni };
     }
     return { view: "overview" };
@@ -45,7 +46,16 @@
       var fac = (route.uni.faculties || []).filter(function (x) { return x.id === route.id; })[0];
       parts.push(fac ? UI.esc(fac.name_zh || fac.name_en) : "未归类");
     }
-    if (route.view === "program") parts.push("专业详情");
+    if (route.view === "dept") {
+      var dept = (route.uni.faculties || []).filter(function (x) { return x.id === route.id; })[0];
+      if (dept && dept.parent_id) {
+        var pf = (route.uni.faculties || []).filter(function (x) { return x.id === dept.parent_id; })[0];
+        if (pf) parts.push('<a href="#/u/' + route.uni.code + '/f/' + pf.id + '">' +
+          UI.esc(pf.name_zh || pf.name_en) + "</a>");
+      }
+      parts.push(dept ? UI.esc(dept.name_zh || dept.name_en) : "系");
+    }
+    if (route.view === "program") parts.push("课程详情");
     if (route.view === "module") parts.push("模块详情");
     return parts.length > 1 ? '<div class="crumbs">' + parts.join("<span>›</span>") + "</div>" : "";
   }
@@ -62,6 +72,10 @@
       var fk = route.uni.code + "/f" + route.id;
       var f = filterState[fk] || (filterState[fk] = { level: "all", fac: "all", q: "" });
       html += VIEWS.faculty(route.uni, route.id, f);
+    } else if (route.view === "dept") {
+      var dk = route.uni.code + "/d" + route.id;
+      var fd = filterState[dk] || (filterState[dk] = { level: "all", fac: "all", q: "" });
+      html += VIEWS.dept(route.uni, route.id, fd);
     } else if (route.view === "program") {
       var prog = route.uni.programs.filter(function (p) { return p.id === route.id; })[0];
       html += prog ? VIEWS.program(route.uni, prog) : '<p class="empty">专业不存在</p>';
@@ -71,7 +85,7 @@
     }
 
     app.innerHTML = html;
-    if (route.view !== "faculty") window.scrollTo(0, 0);
+    if (route.view !== "faculty" && route.view !== "dept") window.scrollTo(0, 0);
     renderNav(route);
     bindEvents(route);
   }
@@ -96,9 +110,9 @@
         if (e.key === "Enter") location.hash = tr.dataset.href;
       });
     });
-    // 学院页筛选（改状态后原地重渲染，不动 hash）
-    if (route.view === "faculty") {
-      var f = filterState[route.uni.code + "/f" + route.id];
+    // 学院/系页筛选（改状态后原地重渲染，不动 hash）
+    if (route.view === "faculty" || route.view === "dept") {
+      var f = filterState[route.uni.code + (route.view === "faculty" ? "/f" : "/d") + route.id];
       app.querySelectorAll('[data-filter="level"] button').forEach(function (b) {
         b.addEventListener("click", function () { f.level = b.dataset.v; render(); });
       });
