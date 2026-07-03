@@ -10,6 +10,7 @@ import os
 from datetime import datetime
 
 import config
+import progress
 
 CONSOLE_DATEFMT = "%H:%M:%S"
 FILE_FORMAT = ("%(asctime)s %(levelname)-7s %(name)s"
@@ -36,13 +37,25 @@ class ConsoleFormatter(logging.Formatter):
         return line
 
 
+class RichConsoleHandler(logging.Handler):
+    """控制台日志经 rich Console 输出：进度条活动时自动“收起→打印→重画”，
+    避免日志行把旧进度条顶成僵尸留在滚动区。"""
+
+    def emit(self, record):
+        try:
+            progress.console.print(self.format(record),
+                                   highlight=False, markup=False)
+        except Exception:
+            self.handleError(record)
+
+
 def setup(verbose=False):
     """配置根 logger；返回本次运行的文件日志路径（不可用时 None）。"""
     root = logging.getLogger()
     root.handlers.clear()
     root.setLevel(logging.DEBUG)
 
-    console = logging.StreamHandler()
+    console = RichConsoleHandler()
     console.setLevel(logging.DEBUG if verbose else logging.INFO)
     console.setFormatter(ConsoleFormatter())
     root.addHandler(console)

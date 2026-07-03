@@ -14,6 +14,10 @@ from rich.progress import (BarColumn, MofNCompleteColumn, Progress,
                            SpinnerColumn, TextColumn, TimeElapsedColumn,
                            TimeRemainingColumn)
 
+# 全局共享 Console：日志与进度条都经它输出，rich 才能协调
+# 「收起活动条 → 打印日志 → 重画」，否则日志行会把旧条形顶成僵尸留在滚动区
+console = Console(stderr=True)
+
 CATEGORY_ZH = {
     "program_detail": "专业页", "program_catalog": "专业目录",
     "module_catalog": "模块页", "term_dates": "校历",
@@ -54,14 +58,15 @@ class _RichBars:
 
 
 def page_desc(task):
-    """孙级描述：[类别] 学院 · 专业名（能拿到多少拼多少）。"""
-    cat = CATEGORY_ZH.get(task.get("category"), task.get("category", ""))
-    parts = [f"[{cat}]"]
+    """孙级描述：学院 · 专业名（专业页不再带类别字样；其他类别保留标签）。"""
+    parts = []
+    if task.get("category") != "program_detail":
+        parts.append(f"[{CATEGORY_ZH.get(task.get('category'), task.get('category', ''))}]")
     note = task.get("note") or ""
     if "|" in note:                       # UCL 式 'Faculty | Dept' 取院系
-        parts.append(note.split("|")[-1].strip()[:24])
+        parts.append(note.split("|")[-1].strip()[:24] + " ·")
     title = task.get("title")
-    parts.append((title or task.get("url", "").rstrip("/").rsplit("/", 1)[-1])[:44])
+    parts.append((title or task.get("url", "").rstrip("/").rsplit("/", 1)[-1])[:48])
     return " ".join(parts)
 
 
@@ -72,7 +77,6 @@ def crawl_bars(schools, mode="抓取"):
     单校时不画总进度条（避免两条一样的）；非 TTY 时 yield no-op。
     """
     total = sum(n for _, _, n in schools)
-    console = Console(stderr=True)
     if not console.is_terminal or console.is_dumb_terminal or total <= 0:
         yield _NullBars()
         return
