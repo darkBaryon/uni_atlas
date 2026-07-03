@@ -85,7 +85,8 @@ def _parse_and_load(conn, ldr, task, body, snapshot_id, report):
     for d in result.deadlines:
         ldr.load_deadline(d, task["id"], snapshot_id)
 
-    report.new_tasks += discover.register_discovered(conn, uid, result.discovered)
+    report.new_tasks += discover.register_discovered(
+        conn, uid, task["uni_code"], result.discovered)
     report.new_tasks += discover.register_module_pages(conn, uid, result.programs)
     snapshots.mark_parsed(conn, snapshot_id, ok=True)
     if result.counts():

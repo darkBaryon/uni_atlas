@@ -109,6 +109,10 @@ python3 run.py --dry-run                 # 只列出将执行的任务
 
 ## 八、边界（v1 明确不做）
 
+- **不做全站镜像**——核心数据 = 校级关键页（校历/截止/语言/中国政策）+ 关注院系的专业页
+  （`config.FOCUS_DEPTS`）。模块详情页默认不抓（`CRAWL_MODULE_DETAILS=False`，专业页自带
+  模块名单已够用）；范围外页面照常登记进 source_pages 但 `crawl_freq='manual'` 留档，
+  需要时定向抓，`--due` 永不选中；
 - 不做分布式/代理池——礼貌限速下单机足够，也符合合规姿态；
 - 不做 JS 渲染（登记跳过，v2 用 Playwright 单独跑小批量）；
 - 不绕过登录墙（Moodle 讲义等本来就是 module_contents 手动录入的范围）。
