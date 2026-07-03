@@ -1,7 +1,9 @@
 """King's College London parser."""
 import re
 
-from parsers.base import BaseParser, CalendarData, DeadlineData, DiscoveredPage, ProgramData, parse_date
+from parsers.base import BaseParser
+from parsers.models import CalendarData, DeadlineData, DiscoveredPage, ProgramData
+from parsers.page import parse_date
 from parsers.uk.common import date_range, event_type, fee_near, find_links, first, ielts, known_name, section_text, title_from
 
 COURSE_RE = r"/study/(?:undergraduate|postgraduate-taught)/courses/(?!course-types-and-study-options/?$)[a-z0-9-]+/?$"

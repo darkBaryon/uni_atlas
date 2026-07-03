@@ -1,7 +1,9 @@
 """University of Sheffield parser."""
 import re
 
-from parsers.base import BaseParser, CalendarData, DeadlineData, DiscoveredPage, ModuleRef, ProgramData, norm_ws
+from parsers.base import BaseParser
+from parsers.models import CalendarData, DeadlineData, DiscoveredPage, ModuleRef, ProgramData
+from parsers.page import norm_ws
 from parsers.uk.common import date_loose, date_range, event_type, find_links, ielts, section_text, title_from
 
 COURSE_RE = r"/(?:undergraduate/courses|postgraduate/taught/courses)/20\d{2}/[^/?#]+/?$"

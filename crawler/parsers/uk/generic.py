@@ -24,8 +24,9 @@ import logging
 import re
 
 import config
-from parsers.base import (BaseParser, DeadlineData, DiscoveredPage,
-                          ProgramData, get_parser, parse_date)
+from parsers.base import BaseParser, get_parser
+from parsers.models import DeadlineData, DiscoveredPage, ProgramData
+from parsers.page import parse_date
 from parsers.uk.common import fee_near, first, ielts, section_text
 
 logger = logging.getLogger(__name__)

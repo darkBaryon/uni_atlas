@@ -8,8 +8,9 @@
 """
 import re
 
-from parsers.base import (BaseParser, DeadlineData, DiscoveredPage,
-                          ModuleData, ModuleRef, ProgramData, parse_date)
+from parsers.base import BaseParser
+from parsers.models import DeadlineData, DiscoveredPage, ModuleData, ModuleRef, ProgramData
+from parsers.page import parse_date
 
 MODULE_CODE_RE = re.compile(r"-([A-Z]{4}\d{4})/?$")
 
@@ -179,7 +180,7 @@ class UCL(BaseParser):
 
 
 def _fee(val, p, label):
-    from parsers.base import money
+    from parsers.page import money
     v = money(val)
     if v is None and val:
         p.notes.append(f"{label} 学费非标准格式，原文: {val[:200]}")

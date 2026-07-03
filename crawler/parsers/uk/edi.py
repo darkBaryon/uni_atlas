@@ -1,7 +1,9 @@
 """University of Edinburgh parser."""
 import re
 
-from parsers.base import BaseParser, CalendarData, DeadlineData, DiscoveredPage, ProgramData, norm_ws, parse_date
+from parsers.base import BaseParser
+from parsers.models import CalendarData, DeadlineData, DiscoveredPage, ProgramData
+from parsers.page import norm_ws, parse_date
 from parsers.uk.common import date_range, event_type, ielts, section_text
 
 PROGRAM_RE = r"/programmes/(?:undergraduate/(?:\d{4}/)?\d+|postgraduate-taught/\d+)-[^/?#]+/?$"

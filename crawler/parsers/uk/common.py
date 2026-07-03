@@ -5,7 +5,7 @@ Keep this file boring: selectors and school-specific rules stay in each parser.
 import re
 from urllib.parse import parse_qs, unquote, urlparse, urlsplit, urlunsplit
 
-from parsers.base import norm_ws, money, parse_date
+from parsers.page import money, norm_ws, parse_date
 
 
 def clean_url(url, keep_query=False):

@@ -10,8 +10,9 @@
 import re
 from datetime import datetime
 
-from parsers.base import (BaseParser, CalendarData, DeadlineData,
-                          DiscoveredPage, ProgramData, parse_date)
+from parsers.base import BaseParser
+from parsers.models import CalendarData, DeadlineData, DiscoveredPage, ProgramData
+from parsers.page import parse_date
 
 SCHOOL_RE = r"(Adam Smith Business School|School of [A-Z][A-Za-z ,&\-]{3,70})"
 

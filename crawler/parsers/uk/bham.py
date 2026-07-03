@@ -1,7 +1,9 @@
 """University of Birmingham parser."""
 import re
 
-from parsers.base import BaseParser, CalendarData, DiscoveredPage, ModuleRef, ProgramData, norm_ws
+from parsers.base import BaseParser
+from parsers.models import CalendarData, DiscoveredPage, ModuleRef, ProgramData
+from parsers.page import norm_ws
 from parsers.uk.common import date_range, event_type, fee_near, find_links, ielts, section_text, title_from
 
 COURSE_RE = r"/study/(?:undergraduate|postgraduate)/subjects/.+-courses/[^/?#]+/?$"
