@@ -150,7 +150,9 @@
 
     if (!rows.length) return h + '<p class="empty">没有匹配的专业</p></section>';
 
-    h += '<div class="scroll"><table><tr><th>专业</th><th>层次</th><th>院系</th>' +
+    var showFac = Object.keys(facs).length > 1;  // 院系只有一个时列是纯重复，不显示
+    h += '<div class="scroll"><table><tr><th>专业</th><th>层次</th>' +
+      (showFac ? "<th>院系</th>" : "") +
       "<th>国际学费</th><th>语言</th><th>模块</th><th>最近截止</th></tr>";
     rows.forEach(function (p) {
       var d = p.detail || {};
@@ -160,7 +162,7 @@
       h += '<tr class="click" data-href="#/u/' + esc(uni.code) + "/p/" + p.id + '">' +
         "<td>" + esc(p.name_en) + (p.name_zh ? '<span class="sub">' + esc(p.name_zh) + "</span>" : "") + "</td>" +
         "<td>" + (UI.LEVEL[p.level] || p.level) + "</td>" +
-        "<td>" + esc(p.faculty_name || "—") + "</td>" +
+        (showFac ? "<td>" + esc(p.faculty_name || "—") + "</td>" : "") +
         '<td class="num">' + (UI.money(d.tuition_intl, d.currency) || "—") + "</td>" +
         '<td class="num">' + (ielts ? "IELTS " + ielts : "—") + "</td>" +
         '<td class="num">' + (p.modules.length || "—") + "</td>" +
