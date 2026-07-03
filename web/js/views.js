@@ -30,29 +30,10 @@
         "<div><b>" + (dead ? dead + "⚠" : "0") + "</b><span>失效源</span></div></div></a>";
     }).join("") + "</div></section>";
 
-    // 全局即将截止（90 天内）
-    var upcoming = [];
-    data.universities.forEach(function (u) {
-      var push = function (d, prog) {
-        var days = (new Date(d.deadline_at) - new Date()) / 86400000;
-        if (days >= 0 && days <= 90) upcoming.push({ d: d, prog: prog, uni: u });
-      };
-      u.deadlines.forEach(function (d) { push(d, null); });
-      u.programs.forEach(function (p) { p.deadlines.forEach(function (d) { push(d, p); }); });
-    });
-    upcoming.sort(function (a, b) { return a.d.deadline_at < b.d.deadline_at ? -1 : 1; });
-    h += "<section><h2>未来 90 天截止</h2>" +
-      '<p class="h2note">跨校合并 · 共 ' + upcoming.length + " 项</p>";
-    h += upcoming.length ? '<div class="dl-list">' + upcoming.slice(0, 30).map(function (r) {
-      var title = r.prog
-        ? '<a href="#/u/' + esc(r.uni.code) + "/p/" + r.prog.id + '">' + esc(r.prog.name_en) + "</a> — " + (UI.AUD[r.d.audience] || "")
-        : (UI.DLTYPE[r.d.deadline_type] || r.d.deadline_type);
-      return '<div class="dl"><span class="dl-date">' + r.d.deadline_at.slice(0, 10) + "</span>" +
-        '<span class="dl-what">' + title + "<small>" + esc(r.uni.name_zh || r.uni.name_en) +
-        (r.d.note ? " · " + esc(r.d.note) : "") + "</small></span>" +
-        UI.dlStatus(r.d.deadline_at) + "</div>";
-    }).join("") + "</div>" : '<p class="empty">90 天内暂无未截止事项</p>';
-    return h + "</section>";
+    // 信息页占位：放跨校的重要信息（具体内容待定）
+    h += "<section><h2>重要信息</h2>" +
+      '<p class="empty">这里预留给跨校的重要信息（申请季提醒、政策变动等），内容待定</p></section>';
+    return h;
   };
 
   /* ---------------- 学校页 ---------------- */
@@ -73,7 +54,6 @@
     h += VIEWS._deadlineSection(uni);
     h += VIEWS._bandSection(uni);
     h += VIEWS._policySection(uni);
-    h += VIEWS._sourceSection(uni);
     return h;
   };
 
@@ -252,21 +232,6 @@
     if (c.china_office) notes.push(esc(c.china_office));
     if (notes.length) h += '<p class="note">' + notes.join("；") + "</p>";
     return h + "</div></section>";
-  };
-
-  VIEWS._sourceSection = function (uni) {
-    var ss = uni.source_status || [];
-    var bad = ss.filter(function (s) { return s.status !== "active" || s.note; });
-    if (!bad.length) return "";
-    return "<section><h2>数据状态</h2>" +
-      '<p class="h2note">失效链接与待采集项（来自 source_pages）</p>' +
-      '<div class="scroll"><table><tr><th>类别</th><th>状态</th><th>说明</th></tr>' +
-      bad.map(function (s) {
-        var tag = s.status === "dead" ? '<span class="tag dead">失效</span>'
-          : '<span class="tag info">' + esc(s.status) + "</span>";
-        return "<tr><td>" + esc(s.category) + "</td><td>" + tag + "</td><td>" +
-          esc(s.note || "") + ' <a href="' + esc(s.url) + '" target="_blank" rel="noopener">链接</a></td></tr>';
-      }).join("") + "</table></div></section>";
   };
 
   /* ---------------- 专业详情页 ---------------- */
