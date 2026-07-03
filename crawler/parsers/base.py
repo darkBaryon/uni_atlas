@@ -59,6 +59,12 @@ class BaseParser:
             return
         if not cls.uni_code:
             raise TypeError(f"{cls.__name__} 必须声明 uni_code")
+        # uni_code 是指向配置层的外键（权威定义在 config/universities/*.yaml 的
+        # code 字段），导入时即校验——拼错立刻炸，而不是运行时默默查不到解析器
+        if config.uni(cls.uni_code) is None:
+            raise TypeError(
+                f"{cls.__name__}.uni_code={cls.uni_code!r} 在 config/universities/"
+                f" 中不存在（已知: {sorted(config.all_unis())}）——检查拼写或先建 YAML")
         inst = cls()
         n = 0
         for cat in CATEGORIES:
