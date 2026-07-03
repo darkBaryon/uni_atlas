@@ -10,6 +10,14 @@ from parsers.uk.common import (date_loose, date_range, event_type, find_links,
 COURSE_RE = r"/(?:undergraduate/courses|postgraduate/taught/courses)/20\d{2}/[^/?#]+/?$"
 FACULTY_RE = r"Faculty of (?:Arts and Humanities|Engineering|Health|Science|Social Sciences)|International Faculty, CITY College"
 
+# 集中截止日期页的措辞词典（实测 2026-07）：官网表格描述列 → (类型, 受众判断)
+# 措辞是解析器的"翻译词典"数据，集中放表顶，逻辑不再直接内嵌字符串
+DEADLINE_KEYWORDS = (
+    # (描述列须含的措辞元组,   deadline_type, 受众规则: fixed 或 'visa_check')
+    (("deposit deadline",),                        "deposit",     "international"),
+    (("applications close", "last date to apply"), "application", "visa_check"),
+)
+
 
 class Sheffield(BaseParser):
     uni_code = "shef"
@@ -75,13 +83,13 @@ class Sheffield(BaseParser):
             if not d:
                 continue
             low = cells[1].lower()
-            if "deposit deadline" in low:
-                res.deadlines.append(DeadlineData(
-                    "international", "deposit", d + " 23:59:00", self.entry_year, cells[1]))
-            elif "applications close" in low or "last date to apply" in low:
-                aud = "international" if "visa" in low else "all"
-                res.deadlines.append(DeadlineData(
-                    aud, "application", d + " 23:59:00", self.entry_year, cells[1]))
+            for phrases, dtype, aud_rule in DEADLINE_KEYWORDS:
+                if any(ph in low for ph in phrases):
+                    aud = (("international" if "visa" in low else "all")
+                           if aud_rule == "visa_check" else aud_rule)
+                    res.deadlines.append(DeadlineData(
+                        aud, dtype, d + " 23:59:00", self.entry_year, cells[1]))
+                    break
         if not res.deadlines:
             res.note("Sheffield deadlines 未解析出截止日期")
 
