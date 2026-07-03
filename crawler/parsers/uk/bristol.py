@@ -5,7 +5,9 @@ from urllib.parse import urlparse
 from parsers.base import BaseParser
 from parsers.models import CalendarData, DeadlineData, DiscoveredPage, ModuleRef, ProgramData
 from parsers.page import norm_ws, parse_date
-from parsers.uk.common import date_range, event_type, facts, fee_near, ielts, known_name, pick, section_text, title_from
+from parsers.uk.common import (date_range, dedupe_discovered, event_type, facts,
+                               fee_near, ielts, keyword_check, known_name, pick,
+                               section_text, title_from)
 
 PG_AWARDS = r"MSc|MA|LLM|MRes|MEd|PGDip|PGCert|MBA|MPH"
 
@@ -20,7 +22,7 @@ class Bristol(BaseParser):
             if cat:
                 res.discovered.append(DiscoveredPage(
                     url=url, category=cat, title=_catalog_title(a.get_text(" ", strip=True))))
-        _dedupe(res.discovered)
+        dedupe_discovered(res.discovered)
         if not res.discovered:
             res.note("未解析出 Bristol 课程/学科链接")
 
@@ -98,8 +100,7 @@ class Bristol(BaseParser):
             res.note("未解析到 Profile A-H")
 
     def china_page(self, page, res):
-        if "China" not in page.txt:
-            res.note("China 页面未匹配到 China 关键词")
+        keyword_check(res, page, r"China", "Bristol 中国专页")
 
     def faculty_list(self, page, res):
         if not known_name(self.conf.faculties, page.txt):
@@ -138,7 +139,3 @@ def _year(text):
     m = re.search(r"(20\d{2})/(\d{2})", text)
     return f"{m.group(1)}/{m.group(2)}" if m else None
 
-
-def _dedupe(items):
-    seen = set()
-    items[:] = [d for d in items if not (d.url in seen or seen.add(d.url))]

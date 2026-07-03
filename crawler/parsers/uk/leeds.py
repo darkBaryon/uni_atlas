@@ -5,7 +5,9 @@ from urllib.parse import urlparse
 from parsers.base import BaseParser
 from parsers.models import CalendarData, DeadlineData, DiscoveredPage, ModuleRef, ProgramData
 from parsers.page import norm_ws, parse_date
-from parsers.uk.common import date_range, event_type, facts, fee_near, ielts, known_name, pick, section_text, title_from, unwrap_funnelback
+from parsers.uk.common import (dedupe_discovered, event_type, facts, fee_near, ielts,
+                               keyword_check, known_name, pick, scan_term_lines,
+                               section_text, title_from, unwrap_funnelback)
 
 PG_AWARDS = r"MSc|MA|MBA|LLM|MRes|MEd|MPH|PGDip|PGCert|Masters"
 
@@ -25,7 +27,7 @@ class Leeds(BaseParser):
             elif "course-search/" in url and ("start_rank=" in url or "page=" in url):
                 res.discovered.append(DiscoveredPage(
                     url=url, category="program_catalog", title="Course search page"))
-        _dedupe(res.discovered)
+        dedupe_discovered(res.discovered)
         if not res.discovered:
             res.note("未解析出 Leeds 课程链接")
 
@@ -68,12 +70,8 @@ class Leeds(BaseParser):
                 p.modules.append(ModuleRef(name=norm_ws(m.group(1)), module_type="core"))
 
     def term_dates(self, page, res):
-        year = page.re(r"Academic year\s+(20\d{2}/\d{2})") or f"{self.entry_year}/27"
-        for line in page.txt.splitlines():
-            start, end = date_range(line)
-            if start and re.search(r"term|semester|induction|exam", line, re.I):
-                name = norm_ws(re.sub(r"\d{1,2}.*$", "", line).strip(": -")) or "Term date"
-                res.calendar.append(CalendarData(year, event_type(name, start), name, start, end))
+        # 学年从行内/上文捕获（原实现硬拼 f"{entry_year}/27"，2027 季会出错）
+        scan_term_lines(page, res, CalendarData, r"term|semester|induction|exam")
         if not res.calendar:
             res.note("Leeds term dates 未解析出日期")
 
@@ -88,8 +86,7 @@ class Leeds(BaseParser):
         res.info("Leeds PGT 截止日期主要在课程页解析")
 
     def china_page(self, page, res):
-        if "China" not in page.txt:
-            res.note("China 页面未匹配到 China 关键词")
+        keyword_check(res, page, r"China", "Leeds 中国专页")
 
     def faculty_list(self, page, res):
         if not known_name(self.conf.faculties, page.txt):
@@ -115,7 +112,3 @@ def _window(txt, needle, size=220):
     pos = txt.find(needle)
     return norm_ws(txt[max(0, pos - size):pos + size]) if pos >= 0 else ""
 
-
-def _dedupe(items):
-    seen = set()
-    items[:] = [d for d in items if not (d.url in seen or seen.add(d.url))]

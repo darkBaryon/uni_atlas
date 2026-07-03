@@ -4,13 +4,14 @@ import re
 from parsers.base import BaseParser
 from parsers.models import CalendarData, DeadlineData, DiscoveredPage, ModuleRef, ProgramData
 from parsers.page import norm_ws
-from parsers.uk.common import date_loose, date_range, event_type, find_links, ielts, section_text, title_from
+from parsers.uk.common import (date_loose, date_range, event_type, find_links,
+                               ielts, keyword_check, section_text, title_from)
 
 COURSE_RE = r"/(?:undergraduate/courses|postgraduate/taught/courses)/20\d{2}/[^/?#]+/?$"
 FACULTY_RE = r"Faculty of (?:Arts and Humanities|Engineering|Health|Science|Social Sciences)|International Faculty, CITY College"
 
 
-class SheffieldParser(BaseParser):
+class Sheffield(BaseParser):
     uni_code = "shef"
 
     def program_catalog(self, page, res):
@@ -97,8 +98,7 @@ class SheffieldParser(BaseParser):
             res.info(f"IELTS overall {overall}, minimum {minimum}")
 
     def china_page(self, page, res):
-        if "China" not in page.txt:
-            res.note("China 页面未匹配到 China 关键词")
+        keyword_check(res, page, r"China", "Sheffield 中国专页")
 
     def faculty_list(self, page, res):
         if not re.search(FACULTY_RE, page.txt):

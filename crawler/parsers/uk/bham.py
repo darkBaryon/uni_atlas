@@ -4,13 +4,14 @@ import re
 from parsers.base import BaseParser
 from parsers.models import CalendarData, DiscoveredPage, ModuleRef, ProgramData
 from parsers.page import norm_ws
-from parsers.uk.common import date_range, event_type, fee_near, find_links, ielts, section_text, title_from
+from parsers.uk.common import (date_range, event_type, fee_near, find_links,
+                               ielts, keyword_check, section_text, title_from)
 
 COURSE_RE = r"/study/(?:undergraduate|postgraduate)/subjects/.+-courses/[^/?#]+/?$"
 COLLEGE_RE = r"College of (?:Arts and Law|Engineering and Physical Sciences|Life and Environmental Sciences|Medicine and Health|Social Sciences)"
 
 
-class BirminghamParser(BaseParser):
+class Birmingham(BaseParser):
     uni_code = "bham"
 
     def program_catalog(self, page, res):
@@ -74,8 +75,7 @@ class BirminghamParser(BaseParser):
         res.info("Birmingham PGT 招生页作为参考页抓取")
 
     def china_page(self, page, res):
-        if "China" not in page.txt:
-            res.note("China 页面未匹配到 China 关键词")
+        keyword_check(res, page, r"China", "Birmingham 中国专页")
 
     def faculty_list(self, page, res):
         if not re.search(COLLEGE_RE, page.txt):

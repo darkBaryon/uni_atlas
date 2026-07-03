@@ -4,7 +4,8 @@ import re
 from parsers.base import BaseParser
 from parsers.models import CalendarData, DeadlineData, DiscoveredPage, ProgramData
 from parsers.page import norm_ws, parse_date
-from parsers.uk.common import date_range, event_type, ielts, section_text
+from parsers.uk.common import (date_range, event_type, ielts, keyword_check,
+                               section_text)
 
 PROGRAM_RE = r"/programmes/(?:undergraduate/(?:\d{4}/)?\d+|postgraduate-taught/\d+)-[^/?#]+/?$"
 
@@ -135,8 +136,7 @@ class Edinburgh(BaseParser):
             res.note("未匹配到 Edinburgh College 名称")
 
     def china_page(self, page, res):
-        if "China" not in page.txt:
-            res.note("China 页面未匹配到 China 关键词")
+        keyword_check(res, page, r"China", "Edinburgh 中国专页")
 
 
 def _fact(page, label):

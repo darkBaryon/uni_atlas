@@ -228,3 +228,53 @@ def unwrap_funnelback(url):
         return url.split("#")[0]
     target = parse_qs(parsed.query).get("url", [None])[0]
     return unquote(target).split("#")[0] if target else ""
+
+
+# ---------------- 以下为 2026-07 复审时从各校解析器下沉的共用逻辑 ----------------
+
+def band(txt, letters="A-E", prefix="band"):
+    """语言分级提取：'Band C' -> 'band-C'（KCL Band A-E、华威 Band A-C 等）。"""
+    m = re.search(r"\bBand\s+([" + letters + r"])\b", txt or "", re.I)
+    return f"{prefix}-{m.group(1).upper()}" if m else None
+
+
+def standard_deadlines(page, p, DeadlineData):
+    """课程页常见的两类截止：UCAS 常规 + 'application deadline/closing date'。"""
+    d = page.date(r"UCAS[^\n]{0,120}?(\d{1,2} \w+ \d{4})", flags=re.I)
+    if d:
+        p.deadlines.append(DeadlineData(
+            "all", "equal_consideration", d + " 18:00:00", p.entry_year, "UCAS 常规截止"))
+    for raw in re.findall(r"(?:application deadline|closing date)[^\n]{0,120}"
+                          r"(\d{1,2} \w+ \d{4})", page.txt, re.I):
+        d = parse_date(raw)
+        if d:
+            p.deadlines.append(DeadlineData(
+                "all", "application", d + " 23:59:00", p.entry_year, "课程页申请截止"))
+
+
+def scan_term_lines(page, res, CalendarData, keyword_re, year_re=r"(20\d{2})\s*[/-]\s*(\d{2})"):
+    """逐行扫校历：行内含日期区间 + 关键词即记为事件；学年从行内/上文捕获。
+
+    KCL/华威/利兹/伯明翰的校历页都是这种"标题行带学年、条目行带日期"的松散排版。
+    """
+    year = None
+    for line in page.txt.splitlines():
+        m = re.search(year_re, line)
+        if m:
+            year = f"{m.group(1)}/{m.group(2)}"
+        start, end = date_range(line)
+        if year and start and re.search(keyword_re, line, re.I):
+            name = norm_ws(re.sub(r"\d{1,2}.*$", "", line).strip(" :-")) or "Term date"
+            res.calendar.append(CalendarData(year, event_type(name, start), name, start, end))
+
+
+def keyword_check(res, page, pattern, label):
+    """参考页体检：关键词还在就静默，消失则告警（页面改版信号）。"""
+    if not re.search(pattern, page.txt, re.I):
+        res.note(f"{label} 未匹配到关键词 {pattern!r}，页面可能已改版")
+
+
+def dedupe_discovered(items):
+    """DiscoveredPage 按 URL 去重（保序）。"""
+    seen = set()
+    items[:] = [d for d in items if not (d.url in seen or seen.add(d.url))]
