@@ -141,7 +141,9 @@ class Glasgow(BaseParser):
     @staticmethod
     def _table_points(table):
         """两种历史格式：A=6列点事件（年/月向下继承）；B=2列（完整日期或日期区间）。"""
-        points, ranges, year, month = [], [], None, None
+        points: list = []
+        ranges: list = []
+        year = month = None
 
         def iso(day, mon, yr):
             return parse_date(f"{day} {mon} {yr}")

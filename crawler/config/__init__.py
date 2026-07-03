@@ -82,7 +82,7 @@ def _load_yaml(path):
         return yaml.safe_load(f) or {}
 
 
-@functools.lru_cache(maxsize=None)
+@functools.cache
 def all_unis():
     """code -> UniConfig，递归装载 config/universities/**/*.yaml。
 

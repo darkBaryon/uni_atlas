@@ -87,7 +87,9 @@ class Manchester(BaseParser):
     def term_dates(self, page, res):
         for h2 in page.soup.find_all("h2"):
             m = re.search(r"(\d{4})/(\d{2}) academic year", h2.get_text(" ", strip=True))
-            table = h2.find_next("table") if m else None
+            if not m:
+                continue
+            table = h2.find_next("table")
             if not table:
                 continue
             year = f"{m.group(1)}/{m.group(2)}"

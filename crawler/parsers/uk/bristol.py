@@ -121,7 +121,7 @@ def _target(url):
 def _catalog_title(text):
     text = norm_ws(text)
     text = re.sub(r"^Taught postgraduate programme\s+", "", text)
-    text = re.split(r"\s+(?:Find out|Modes of study|Awards available)\b", text, 1)[0]
+    text = re.split(r"\s+(?:Find out|Modes of study|Awards available)\b", text, maxsplit=1)[0]
     return text[:252].rstrip() + "..." if len(text) > 255 else (text or None)
 
 

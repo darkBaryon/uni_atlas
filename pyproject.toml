@@ -1,0 +1,21 @@
+[tool.ruff]
+line-length = 110
+target-version = "py311"
+extend-exclude = ["crawler/legacy", "snapshots", "logs", "web"]
+
+[tool.ruff.lint]
+# E/W pycodestyle, F pyflakes, B bugbear 常见坑, UP 现代语法
+select = ["E", "F", "W", "B", "UP"]
+ignore = [
+  "E501",   # 行宽由 line-length 统一管，中文注释宽度计算不准
+  "E402",   # parsers/__init__ 的注册顺序需要延迟 import
+]
+
+[tool.mypy]
+python_version = "3.11"
+files = ["crawler"]
+exclude = "crawler/legacy"
+ignore_missing_imports = true      # bs4/pymysql 等无 stub 包
+check_untyped_defs = true          # 未标注函数也检查函数体
+no_implicit_optional = true
+warn_unused_ignores = true

@@ -54,11 +54,14 @@ def get_tasks(conn, uni_code=None, category=None, due_only=False,
            " WHERE sp.status = 'active' AND sp.fetch_method = 'html'"]
     args = []
     if uni_code:
-        sql.append("AND u.code = %s"); args.append(uni_code)
+        sql.append("AND u.code = %s")
+        args.append(uni_code)
     if category:
-        sql.append("AND sp.category = %s"); args.append(category)
+        sql.append("AND sp.category = %s")
+        args.append(category)
     if discover_only:
-        sql.append("AND sp.category IN %s"); args.append(tuple(DISCOVER_CATEGORIES))
+        sql.append("AND sp.category IN %s")
+        args.append(tuple(DISCOVER_CATEGORIES))
         # module_catalog 类里只有目录根页算 discover，模块详情页不算
         sql.append("AND NOT (sp.category='module_catalog' AND sp.url LIKE '%%/modules/%%')")
     if due_only:
@@ -70,7 +73,8 @@ def get_tasks(conn, uni_code=None, category=None, due_only=False,
     sql.append(f"ORDER BY FIELD(sp.category, {prio}),"
                " sp.last_fetched_at IS NOT NULL, sp.last_fetched_at, sp.id")
     if limit:
-        sql.append("LIMIT %s"); args.append(int(limit))
+        sql.append("LIMIT %s")
+        args.append(int(limit))
     with conn.cursor() as cur:
         cur.execute(" ".join(sql), args)
         return cur.fetchall()
@@ -83,7 +87,8 @@ def count_skipped(conn, uni_code=None):
            " WHERE sp.status='active' AND sp.fetch_method IN ('js_render','pdf')")
     args = []
     if uni_code:
-        sql += " AND u.code = %s"; args.append(uni_code)
+        sql += " AND u.code = %s"
+        args.append(uni_code)
     sql += " GROUP BY sp.fetch_method"
     with conn.cursor() as cur:
         cur.execute(sql, args)
@@ -113,9 +118,11 @@ def mark_fetched(conn, page_id, content_hash=None, changed=False, note=None):
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     sets, args = ["last_fetched_at=%s", "note=%s"], [now, note]
     if content_hash:
-        sets.append("last_content_hash=%s"); args.append(content_hash)
+        sets.append("last_content_hash=%s")
+        args.append(content_hash)
     if changed:
-        sets.append("last_changed_at=%s"); args.append(now)
+        sets.append("last_changed_at=%s")
+        args.append(now)
     args.append(page_id)
     with conn.cursor() as cur:
         cur.execute(f"UPDATE source_pages SET {', '.join(sets)} WHERE id=%s", args)

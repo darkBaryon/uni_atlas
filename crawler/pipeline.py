@@ -23,11 +23,11 @@ PROGRESS_EVERY = 50   # 非 TTY 时每 N 页写一行进度日志
 
 class Report:
     def __init__(self):
-        self.counts = Counter()
-        self.no_parser = Counter()
+        self.counts: Counter[str] = Counter()
+        self.no_parser: Counter[str] = Counter()
         self.failures = []      # (url, note)
         self.new_tasks = 0
-        self.loader_stats = Counter()
+        self.loader_stats: Counter[str] = Counter()
         self.changes = []
 
     def show(self, skipped):
@@ -139,7 +139,8 @@ def _handle_fetched(conn, ldr, task, res, report):
 
 def _school_list(tasks):
     """[(uni_code, 中文名, 任务数)]，按任务表顺序。"""
-    order, counts, labels = [], Counter(), {}
+    order, labels = [], {}
+    counts: Counter[str] = Counter()
     for t in tasks:
         code = t["uni_code"]
         if code not in counts:
@@ -150,7 +151,7 @@ def _school_list(tasks):
 
 
 def run_fetch(conn, tasks, report):
-    ldr_by_uni = {}
+    ldr_by_uni: dict = {}
     state = {"done": 0}
     total = len(tasks)
 
@@ -183,7 +184,7 @@ def run_fetch(conn, tasks, report):
 
 
 def run_reparse(conn, tasks, report):
-    ldr_by_uni = {}
+    ldr_by_uni: dict = {}
     with progress.crawl_bars(_school_list(tasks), mode="重放") as bar:
         for task in tasks:
             bar.describe(task["uni_code"], progress.page_desc(task))

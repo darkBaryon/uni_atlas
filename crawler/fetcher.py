@@ -32,9 +32,13 @@ def _domain(url):
 
 def _same_page(a, b):
     """301 到 https/斜杠/加 www 等价页不算搬家。"""
+    def host(s):
+        return s.netloc.lower().removeprefix("www.")
+
+    def path(s):
+        return (s.path.rstrip("/") or "/") + ("?" + s.query if s.query else "")
+
     sa, sb = urlsplit(a), urlsplit(b)
-    host = lambda s: s.netloc.lower().removeprefix("www.")
-    path = lambda s: (s.path.rstrip("/") or "/") + ("?" + s.query if s.query else "")
     return host(sa) == host(sb) and path(sa) == path(sb)
 
 
@@ -67,7 +71,7 @@ async def _fetch_one(session, task):
                 return FetchResult(task, "error", resp.status,
                                    note=f"HTTP {resp.status}")
             return FetchResult(task, "ok", 200, body, final_url=final)
-    except asyncio.TimeoutError:
+    except TimeoutError:
         return FetchResult(task, "error", note=f"timeout {config.TIMEOUT}s")
     except aiohttp.ClientError as e:
         return FetchResult(task, "error", note=f"{type(e).__name__}: {e}")
@@ -107,7 +111,7 @@ async def _domain_worker(domain, queue, session, handle, sem, log):
 
 
 async def _run(tasks, handle, log):
-    queues = {}
+    queues: dict[str, list] = {}
     for t in tasks:
         queues.setdefault(_domain(t["url"]), []).append(t)
     sem = asyncio.Semaphore(config.MAX_DOMAINS)

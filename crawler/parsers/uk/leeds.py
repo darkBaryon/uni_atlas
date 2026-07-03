@@ -5,7 +5,7 @@ from urllib.parse import urlparse
 from parsers.base import BaseParser
 from parsers.models import CalendarData, DeadlineData, DiscoveredPage, ModuleRef, ProgramData
 from parsers.page import norm_ws, parse_date
-from parsers.uk.common import (dedupe_discovered, event_type, facts, fee_near, ielts,
+from parsers.uk.common import (dedupe_discovered, facts, fee_near, ielts,
                                keyword_check, known_name, pick, scan_term_lines,
                                section_text, title_from, unwrap_funnelback)
 from config.codes import UniCode
@@ -19,7 +19,7 @@ class Leeds(BaseParser):
     def program_catalog(self, page, res):
         seen = set()
         for a in page.soup.find_all("a", href=True):
-            url = unwrap_funnelback(page.abs(a["href"]))
+            url = _canonical_detail(unwrap_funnelback(page.abs(a["href"])))
             if _is_detail(url) and url not in seen:
                 seen.add(url)
                 res.discovered.append(DiscoveredPage(
@@ -100,6 +100,14 @@ def _is_detail(url):
         re.search(r"^/(?:20\d{4}/)?[a-z]\d{3,4}/[a-z0-9-]+/?$", p.path))
 
 
+def _canonical_detail(url):
+    p = urlparse(url)
+    m = re.match(r"^/20\d{4}/([a-z]\d{3,4}/[a-z0-9-]+)/?$", p.path)
+    if p.netloc == "courses.leeds.ac.uk" and m:
+        return f"{p.scheme or 'https'}://{p.netloc}/{m.group(1)}"
+    return url
+
+
 def _level(name, url):
     return "PGT" if "/masters" in url or re.search(rf"\b(?:{PG_AWARDS})\b", name) else "UG"
 
@@ -112,4 +120,3 @@ def _entry_year(url, txt, default):
 def _window(txt, needle, size=220):
     pos = txt.find(needle)
     return norm_ws(txt[max(0, pos - size):pos + size]) if pos >= 0 else ""
-

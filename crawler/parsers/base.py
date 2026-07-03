@@ -51,7 +51,7 @@ class BaseParser:
     不影响整轮——与 pipeline 的兜底一致，但日志里能看到堆栈）。
     """
 
-    uni_code = None
+    uni_code: str | None = None
 
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
@@ -106,7 +106,9 @@ class BaseParser:
         u = self.conf
         if not u or not u.faculties:
             return None
-        norm = lambda s: re.sub(r"\s+", " ", s.lower().replace(" and ", " & ")).strip()
+        def norm(s):
+            return re.sub(r"\s+", " ", s.lower().replace(" and ", " & ")).strip()
+
         canon = {norm(k): k for k in u.faculties}
         for m in re.finditer(pattern, txt):
             cand = norm(m.group(0))

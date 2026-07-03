@@ -3,7 +3,6 @@
 字段抓不到显式置 None，并在 notes/note() 里说明（信息不存在要写清楚）。
 """
 from dataclasses import dataclass, field
-from typing import Optional
 
 
 @dataclass
@@ -12,16 +11,16 @@ class DeadlineData:
     deadline_type: str                # application | equal_consideration | round | ...
     deadline_at: str                  # 'YYYY-MM-DD HH:MM:SS'
     entry_year: str
-    note: Optional[str] = None
-    round_no: Optional[int] = None    # 分轮录取的轮次（deadline_type='round' 时必填）
+    note: str | None = None
+    round_no: int | None = None    # 分轮录取的轮次（deadline_type='round' 时必填）
 
 
 @dataclass
 class ModuleRef:
     """专业页上的课程引用（只有名称/代码/链接，详情靠课程页任务补齐）。"""
     name: str
-    code: Optional[str] = None
-    url: Optional[str] = None
+    code: str | None = None
+    url: str | None = None
     module_type: str = "core"         # core | optional | elective
 
 
@@ -31,20 +30,20 @@ class ProgramData:
     level: str                        # UG | PGT | PGR
     url: str
     entry_year: str
-    ucas_code: Optional[str] = None
-    duration: Optional[str] = None
-    campus: Optional[str] = None
-    faculty: Optional[str] = None
-    dept: Optional[str] = None
-    tuition_home: Optional[float] = None
-    tuition_intl: Optional[float] = None
+    ucas_code: str | None = None
+    duration: str | None = None
+    campus: str | None = None
+    faculty: str | None = None
+    dept: str | None = None
+    tuition_home: float | None = None
+    tuition_intl: float | None = None
     currency: str = "GBP"
-    fee_year_label: Optional[str] = None
-    entry_req_text: Optional[str] = None
-    language_band: Optional[str] = None    # UCL 式分级；无分级制的学校为 None
-    ielts_overall: Optional[float] = None  # 直接给分的学校（如格拉斯哥）
-    ielts_min_each: Optional[float] = None
-    app_open_date: Optional[str] = None    # 'YYYY-MM-DD'
+    fee_year_label: str | None = None
+    entry_req_text: str | None = None
+    language_band: str | None = None    # UCL 式分级；无分级制的学校为 None
+    ielts_overall: float | None = None  # 直接给分的学校（如格拉斯哥）
+    ielts_min_each: float | None = None
+    app_open_date: str | None = None    # 'YYYY-MM-DD'
     deadlines: list = field(default_factory=list)     # [DeadlineData]
     modules: list = field(default_factory=list)       # [ModuleRef]
     notes: list = field(default_factory=list)
@@ -55,14 +54,14 @@ class ModuleData:
     name_en: str
     url: str
     entry_year: str
-    code: Optional[str] = None
-    credits: Optional[int] = None
-    level: Optional[str] = None       # 'FHEQ Level 7' 等
-    semester: Optional[str] = None
-    leader: Optional[str] = None
-    description: Optional[str] = None
-    assessment: Optional[list] = None  # [{'weight': 75, 'type': 'Exam'}]
-    prerequisites: Optional[str] = None
+    code: str | None = None
+    credits: int | None = None
+    level: str | None = None       # 'FHEQ Level 7' 等
+    semester: str | None = None
+    leader: str | None = None
+    description: str | None = None
+    assessment: list | None = None  # [{'weight': 75, 'type': 'Exam'}]
+    prerequisites: str | None = None
     notes: list = field(default_factory=list)
 
 
@@ -72,7 +71,7 @@ class CalendarData:
     event_type: str                   # teaching_period | exam_period | ...
     name: str
     start_date: str
-    end_date: Optional[str] = None
+    end_date: str | None = None
     calendar_track: str = "standard"
 
 
@@ -81,8 +80,8 @@ class DiscoveredPage:
     """discover 任务的产出：写回 source_pages 的新任务行。"""
     url: str
     category: str
-    title: Optional[str] = None
-    note: Optional[str] = None
+    title: str | None = None
+    note: str | None = None
     crawl_freq: str = "monthly"
     fetch_method: str = "html"
 

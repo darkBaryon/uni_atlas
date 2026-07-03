@@ -2,3 +2,8 @@ pymysql>=1.2
 aiohttp>=3.9
 beautifulsoup4>=4.12
 pyyaml>=6.0
+types-PyMySQL
+types-PyYAML
+ruff
+mypy
+pre-commit

@@ -10,8 +10,8 @@ import re
 
 logger = logging.getLogger(__name__)
 
-_translate = None          # 惰性加载：import argos 要 2s+，不用不加载
-_cache = {}
+_translate = None          # 惰性加载：可调用 | False(不可用) | None(未初始化)
+_cache: dict[str, str] = {}
 
 # 学位/资格缩写：截下来不翻，译完贴回
 _DEGREE_RE = re.compile(
@@ -39,11 +39,13 @@ def _ensure_model():
         import argostranslate.translate as tr
         # 触发一次以确认 en->zh 模型可用
         tr.translate("test", "en", "zh")
-        _translate = lambda s: tr.translate(s, "en", "zh")
+        def _do(s):
+            return tr.translate(s, "en", "zh")
+        _translate = _do
     except Exception as e:
         logger.warning("argos 翻译模型不可用（%s）；名称将保留英文。"
                        "安装: pip install argostranslate 并下载 en->zh 包", e)
-        _translate = False
+        _translate = False  # type: ignore[assignment]  # False=模型不可用哨兵
     return _translate
 
 

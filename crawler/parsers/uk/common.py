@@ -128,7 +128,7 @@ def ielts(txt):
     只认雅思有效分数区间 4.0–9.0，且优先带小数点形式（'6.5'），
     避免 '4 years'、'2 semesters' 之类的整数污染最低分。
     """
-    nums = []
+    nums: list[float] = []
     for m in re.finditer(r"IELTS.{0,260}", txt or "", re.I | re.S):
         seg = m.group(0)
         vals = [float(x) for x in re.findall(r"\b([4-9]\.[05])\b", seg)]
@@ -143,7 +143,7 @@ def ielts(txt):
 def section_text(page, heading_re, stop_re=None, limit=800):
     heading = page.soup.find(re.compile(r"h[1-6]"), string=re.compile(heading_re, re.I))
     if heading:
-        parts = []
+        parts: list[str] = []
         for node in heading.find_all_next(["h2", "h3", "h4", "p", "li", "td"]):
             if node is heading:
                 continue
@@ -276,5 +276,10 @@ def keyword_check(res, page, pattern, label):
 
 def dedupe_discovered(items):
     """DiscoveredPage 按 URL 去重（保序）。"""
-    seen = set()
-    items[:] = [d for d in items if not (d.url in seen or seen.add(d.url))]
+    seen: set[str] = set()
+    out = []
+    for d in items:
+        if d.url not in seen:
+            seen.add(d.url)
+            out.append(d)
+    items[:] = out
