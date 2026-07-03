@@ -12,13 +12,9 @@ entry_year: "2026"
 domains:
   www.ucl.ac.uk: 3.0
 
-# 抓取范围：核心数据而非全站镜像（见 ARCHITECTURE.md 第八节）
+# 抓取范围 = 数据层级而非院系：全部学院的专业页都抓（不设 focus_depts）；
+# 不抓底层细节——模块详情页（大纲/考核/负责人），专业页自带模块名单已够用
 scope:
-  # 关注院系：与目录页学位卡上的系名子串匹配（卡片文本不带 "UCL" 前缀）
-  focus_depts:
-    - Computer Science
-    - School of Management
-  # 模块详情页（大纲/考核/负责人）默认不抓；专业页自带模块名单
   crawl_module_details: false
 
 # 入口页种子：python3 run.py --seed ucl 时登记进 source_pages（已存在的跳过）

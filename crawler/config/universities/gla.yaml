@@ -15,25 +15,8 @@ domains:
   www.gla.ac.uk: 3.0
 
 scope:
-  # 格拉目录卡上没有院系信息（实测 2026-07），改按【专业名称关键词】圈定范围，
-  # 近似覆盖 School of Computing Science + Adam Smith Business School
-  focus_depts:
-    - Computing
-    - Computer
-    - Software
-    - Data Science
-    - Data Analytics
-    - Artificial Intelligence
-    - Robotics
-    - Information Technology
-    - Business
-    - Management
-    - Finance
-    - Financial
-    - Accounting
-    - Marketing
-    - Economics
-    - MBA
+  # 范围 = 数据层级而非院系：全部学院的专业页都抓（不设 focus_depts），
+  # 不抓的是底层细节（课程大纲/考核/书单等模块详情页）
   crawl_module_details: false
 
 seed_pages:
