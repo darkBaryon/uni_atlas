@@ -1,0 +1,44 @@
+# 格拉斯哥大学 —— 入口页来自 docs/英国院校公开信息调研.md 第 4 节（2026-07 调研）
+# 状态：解析器 parsers/gla.py 尚未编写。--seed 登记与抓取快照可用；
+#       解析入库前运行报告会显示「无解析器跳过」，属预期。
+code: gla
+name: University of Glasgow
+name_zh: 格拉斯哥大学
+website: https://www.gla.ac.uk
+country: UK
+city: Glasgow
+
+entry_year: "2026"
+
+# 未实测反爬阈值，先沿用 3s 保守节奏（调研时页面结构统一、抓取难度低）
+domains:
+  www.gla.ac.uk: 3.0
+
+scope:
+  # 与目录页项目卡上的院系文本子串匹配；格拉斯哥是 4 College → School 结构，
+  # 名称待首次 discover 后按实际卡片文本核对（对齐 UCL 的 CS+商学院范围）
+  focus_depts:
+    - Computing Science
+    - Adam Smith Business School
+  crawl_module_details: false
+
+seed_pages:
+  # 校历：按学年归档（/session2025-26/），历年可回溯
+  - {category: term_dates, crawl_freq: monthly,
+     url: "https://www.gla.ac.uk/myglasgow/apg/sessiondates/"}
+  # 本科目录+招生（UCAS 截止 2026-01-14 18:00，明确不受理逾期）
+  - {category: program_catalog, crawl_freq: monthly,
+     url: "https://www.gla.ac.uk/undergraduate/degrees/"}
+  - {category: ug_admissions, crawl_freq: weekly,
+     url: "https://www.gla.ac.uk/undergraduate/"}
+  # 授课硕士 A-Z（400+ 项目，费用/语言/截止集中在项目页）
+  - {category: program_catalog, crawl_freq: monthly,
+     url: "https://www.gla.ac.uk/postgraduate/taught/"}
+  - {category: pg_admissions, crawl_freq: weekly,
+     url: "https://www.gla.ac.uk/postgraduate/"}
+  # 中国专页：含中国大学认可名单+分数对照、14 所合作大学、授权中介名单
+  - {category: china_page, crawl_freq: monthly,
+     url: "https://www.gla.ac.uk/international/country/china/"}
+  # 学院列表（4 College）
+  - {category: faculty_list, crawl_freq: monthly,
+     url: "https://www.gla.ac.uk/colleges/"}
