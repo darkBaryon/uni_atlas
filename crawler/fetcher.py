@@ -6,6 +6,8 @@ tasks 按域名分队列，每域一个 worker 串行抓取（interval + 抖动�
 """
 import asyncio
 import random
+from enum import Enum
+from http import HTTPStatus
 from urllib.parse import urlsplit
 
 import aiohttp
@@ -13,10 +15,20 @@ import aiohttp
 import config
 
 
-class FetchResult:
-    """kind: ok | unchanged_hint | cloudflare | dead | moved | error"""
+class FetchKind(str, Enum):
+    """抓取结果分类——fetcher 与 pipeline 之间的协议，勿用裸字符串比较。"""
+    OK = "ok"                    # 200，正文可用
+    CLOUDFLARE = "cloudflare"    # 反爬挑战 / 429 限流（域内退避重试后仍未过）
+    TRANSIENT = "transient"      # 5xx 瞬时错误（fetcher 内部重试一次，不外泄）
+    DEAD = "dead"                # 404，任务标 dead
+    MOVED = "moved"              # 301/302 跨页，登记新地址
+    ERROR = "error"              # 其他失败（超时/连接错误/非 200）
 
-    def __init__(self, task, kind, http_status=None, body=b"",
+    __str__ = str.__str__
+
+
+class FetchResult:
+    def __init__(self, task, kind: FetchKind, http_status=None, body=b"",
                  final_url=None, note=None):
         self.task = task
         self.kind = kind
@@ -43,7 +55,8 @@ def _same_page(a, b):
 
 
 def _is_cloudflare(status, text_head):
-    if status in (403, 503) and any(m in text_head for m in config.CF_MARKERS):
+    if (status in (HTTPStatus.FORBIDDEN, HTTPStatus.SERVICE_UNAVAILABLE)
+            and any(m in text_head for m in config.CF_MARKERS)):
         return True
     return any(m in text_head for m in config.CF_MARKERS)
 
@@ -55,26 +68,26 @@ async def _fetch_one(session, task):
             body = await resp.read()
             head = body[:4096].decode("utf-8", "ignore")
             if _is_cloudflare(resp.status, head):
-                return FetchResult(task, "cloudflare", resp.status)
-            if resp.status == 429:   # 对方限流：与 Cloudflare 同样退避重试
-                return FetchResult(task, "cloudflare", 429,
+                return FetchResult(task, FetchKind.CLOUDFLARE, resp.status)
+            if resp.status == HTTPStatus.TOO_MANY_REQUESTS:   # 限流：同反爬退避重试
+                return FetchResult(task, FetchKind.CLOUDFLARE, resp.status,
                                    note="HTTP 429 对方限流")
-            if resp.status == 404:
-                return FetchResult(task, "dead", 404)
+            if resp.status == HTTPStatus.NOT_FOUND:
+                return FetchResult(task, FetchKind.DEAD, resp.status)
             final = str(resp.url)
             if resp.history and not _same_page(url, final):
-                return FetchResult(task, "moved", resp.status, body, final_url=final)
-            if 500 <= resp.status <= 599:   # 5xx 多为瞬时（如 CF 520），可重试
-                return FetchResult(task, "transient", resp.status,
+                return FetchResult(task, FetchKind.MOVED, resp.status, body, final_url=final)
+            if resp.status >= HTTPStatus.INTERNAL_SERVER_ERROR:   # 5xx 多为瞬时（如 CF 520）
+                return FetchResult(task, FetchKind.TRANSIENT, resp.status,
                                    note=f"HTTP {resp.status} 服务端瞬时错误")
-            if resp.status != 200:
-                return FetchResult(task, "error", resp.status,
+            if resp.status != HTTPStatus.OK:
+                return FetchResult(task, FetchKind.ERROR, resp.status,
                                    note=f"HTTP {resp.status}")
-            return FetchResult(task, "ok", 200, body, final_url=final)
+            return FetchResult(task, FetchKind.OK, resp.status, body, final_url=final)
     except TimeoutError:
-        return FetchResult(task, "error", note=f"timeout {config.TIMEOUT}s")
+        return FetchResult(task, FetchKind.ERROR, note=f"timeout {config.TIMEOUT}s")
     except aiohttp.ClientError as e:
-        return FetchResult(task, "error", note=f"{type(e).__name__}: {e}")
+        return FetchResult(task, FetchKind.ERROR, note=f"{type(e).__name__}: {e}")
 
 
 async def _domain_worker(domain, queue, session, handle, sem, log):
@@ -89,21 +102,21 @@ async def _domain_worker(domain, queue, session, handle, sem, log):
 
             result = await _fetch_one(session, task)
             # 5xx 瞬时错误：短暂等待重试一次
-            if result.kind == "transient":
+            if result.kind is FetchKind.TRANSIENT:
                 await asyncio.sleep(20)
                 retry = await _fetch_one(session, task)
-                result = retry if retry.kind == "ok" else FetchResult(
-                    task, "error", retry.http_status,
+                result = retry if retry.kind is FetchKind.OK else FetchResult(
+                    task, FetchKind.ERROR, retry.http_status,
                     note=f"{result.note}（重试 1 次仍失败）")
             # Cloudflare / 429 限流：指数退避重试，用尽则失败留痕（只影响本域）
             for backoff in config.CF_BACKOFFS:
-                if result.kind != "cloudflare":
+                if result.kind is not FetchKind.CLOUDFLARE:
                     break
                 log(f"  [{domain}] 反爬/限流({result.note or 'CF 挑战'})，"
                     f"退避 {backoff}s: {task.url[:80]}")
                 await asyncio.sleep(backoff)
                 result = await _fetch_one(session, task)
-            if result.kind == "cloudflare":
+            if result.kind is FetchKind.CLOUDFLARE:
                 result.note = (f"{result.note or 'Cloudflare 挑战'}"
                                f" {len(config.CF_BACKOFFS)+1} 次未过，待下轮")
 

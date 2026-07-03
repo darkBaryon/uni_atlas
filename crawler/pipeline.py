@@ -9,6 +9,7 @@ from collections import Counter
 
 import discover
 import fetcher
+from fetcher import FetchKind
 import progress
 import registry
 import snapshots
@@ -100,11 +101,11 @@ def _parse_and_load(conn, ldr, task, body, snapshot_id, report):
 
 def _handle_fetched(conn, ldr, task, res, report):
     short = task.url[:80]
-    if res.kind == "dead":
+    if res.kind is FetchKind.DEAD:
         registry.mark_dead(conn, task.id, "404")
         report.counts["dead"] += 1
         logger.warning("[404] %s", short)
-    elif res.kind == "moved":
+    elif res.kind is FetchKind.MOVED:
         registry.mark_moved(conn, task.id, res.final_url)
         _, created = registry.add_page(
             conn, task.university_id, task.category, res.final_url,
@@ -113,7 +114,7 @@ def _handle_fetched(conn, ldr, task, res, report):
         report.new_tasks += created
         report.counts["moved"] += 1
         logger.info("[301] %s -> %s", short, res.final_url[:60])
-    elif res.kind in ("error", "cloudflare"):
+    elif res.kind in (FetchKind.ERROR, FetchKind.CLOUDFLARE):
         registry.mark_failed(conn, task.id, res.note)
         report.counts["failed"] += 1
         report.failures.append((task.url, res.note))
