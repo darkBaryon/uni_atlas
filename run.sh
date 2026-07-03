@@ -29,6 +29,23 @@ case "$cmd" in
   web)
     exec ./web/start.sh "$@"
     ;;
+  check)
+    # 解析器验收：试抓 N 页（默认 15）后按字段覆盖率打分——单样本会撒谎，覆盖率不会
+    [ $# -ge 1 ] || { echo "用法: ./run.sh check <校代码> [页数]" >&2; exit 2; }
+    python3 crawler/run.py --uni "$1" --category program_detail --limit "${2:-15}"
+    mysql study_abroad --table -e "
+      SELECT COUNT(*) 专业数,
+             CONCAT(SUM(pd.tuition_intl IS NOT NULL),'/',COUNT(*)) 国际学费,
+             CONCAT(SUM(pd.ielts_overall IS NOT NULL OR pd.language_band IS NOT NULL),'/',COUNT(*)) 语言要求,
+             CONCAT(SUM(pd.entry_req_text IS NOT NULL),'/',COUNT(*)) 学术要求,
+             CONCAT(SUM(p.faculty_id IS NOT NULL),'/',COUNT(*)) 院系归属,
+             (SELECT COUNT(*) FROM deadlines d JOIN programs p2 ON p2.id=d.program_id
+               WHERE p2.university_id=u.id) 截止日期条数
+        FROM programs p
+        JOIN program_details pd ON pd.program_id=p.id
+        JOIN universities u ON u.id=p.university_id
+       WHERE u.code='$1' GROUP BY u.id;"
+    ;;
   status)
     python3 crawler/run.py --due --dry-run | head -1 || true
     mysql study_abroad --table -e "
