@@ -8,12 +8,17 @@ import config
 import registry
 
 
-def _in_focus(uni_code, dept_note):
-    """dept_note: 目录页学位卡的院系文本，如 'Faculty of X | Computer Science'。"""
+def _in_focus(uni_code, dept_note, title=None):
+    """按院系文本或专业名匹配 focus_depts。
+
+    UCL 式目录卡带院系（note='Faculty of X | Computer Science'）按院系匹配；
+    格拉式目录卡只有专业名，则按 title 关键词匹配。
+    """
     u = config.uni(uni_code)
     if u is None or not u.focus_depts:   # 未配置范围的学校 = 全部在范围内
         return True
-    return bool(dept_note) and any(d in dept_note for d in u.focus_depts)
+    text = " ".join(filter(None, [dept_note, title]))
+    return bool(text) and any(d.lower() in text.lower() for d in u.focus_depts)
 
 
 def register_discovered(conn, university_id, uni_code, discovered):
@@ -21,7 +26,7 @@ def register_discovered(conn, university_id, uni_code, discovered):
     n_new = 0
     for d in discovered:
         freq = d.crawl_freq
-        if d.category == "program_detail" and not _in_focus(uni_code, d.note):
+        if d.category == "program_detail" and not _in_focus(uni_code, d.note, d.title):
             freq = "manual"
         _, created = registry.add_page(
             conn, university_id, d.category, d.url, title=d.title,

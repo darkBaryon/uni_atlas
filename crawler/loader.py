@@ -10,7 +10,7 @@ from datetime import datetime
 # 各实体记入 change_log 的字段
 TRACKED = {
     "program_detail": ("tuition_home", "tuition_intl", "entry_req_text",
-                       "language_band", "app_open_date"),
+                       "language_band", "ielts_overall", "app_open_date"),
     "module": ("credits", "leader", "assessment", "semester"),
     "deadline": ("deadline_at",),
 }
@@ -139,6 +139,9 @@ class Loader:
         detail_vals = {
             "tuition_home": p.tuition_home, "tuition_intl": p.tuition_intl,
             "entry_req_text": p.entry_req_text, "language_band": p.language_band,
+            "ielts_overall": p.ielts_overall,
+            "ielts_detail": (json.dumps({"minimum_each": p.ielts_min_each})
+                             if p.ielts_min_each else None),
             "app_open_date": p.app_open_date,
             "extra": json.dumps(extra, ensure_ascii=False) if extra else None,
             "source_page_id": source_page_id,

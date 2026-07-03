@@ -15,11 +15,25 @@ domains:
   www.gla.ac.uk: 3.0
 
 scope:
-  # 与目录页项目卡上的院系文本子串匹配；格拉斯哥是 4 College → School 结构，
-  # 名称待首次 discover 后按实际卡片文本核对（对齐 UCL 的 CS+商学院范围）
+  # 格拉目录卡上没有院系信息（实测 2026-07），改按【专业名称关键词】圈定范围，
+  # 近似覆盖 School of Computing Science + Adam Smith Business School
   focus_depts:
-    - Computing Science
-    - Adam Smith Business School
+    - Computing
+    - Computer
+    - Software
+    - Data Science
+    - Data Analytics
+    - Artificial Intelligence
+    - Robotics
+    - Information Technology
+    - Business
+    - Management
+    - Finance
+    - Financial
+    - Accounting
+    - Marketing
+    - Economics
+    - MBA
   crawl_module_details: false
 
 seed_pages:

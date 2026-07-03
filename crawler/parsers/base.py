@@ -55,7 +55,9 @@ class ProgramData:
     currency: str = "GBP"
     fee_year_label: Optional[str] = None
     entry_req_text: Optional[str] = None
-    language_band: Optional[str] = None   # 'level-1' .. 'level-5'
+    language_band: Optional[str] = None   # UCL 式分级 'level-1'..'level-5'（无分级制的学校为 None）
+    ielts_overall: Optional[float] = None  # 直接给分的学校（如格拉斯哥）
+    ielts_min_each: Optional[float] = None
     app_open_date: Optional[str] = None   # 'YYYY-MM-DD'
     deadlines: list = field(default_factory=list)     # [DeadlineData]
     modules: list = field(default_factory=list)       # [ModuleRef]
