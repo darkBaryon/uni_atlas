@@ -8,12 +8,13 @@ from parsers.page import norm_ws, parse_date
 from parsers.uk.common import (dedupe_discovered, event_type, facts, fee_near, ielts,
                                keyword_check, known_name, pick, scan_term_lines,
                                section_text, title_from, unwrap_funnelback)
+from config import codes
 
 PG_AWARDS = r"MSc|MA|MBA|LLM|MRes|MEd|MPH|PGDip|PGCert|Masters"
 
 
 class Leeds(BaseParser):
-    uni_code = "leeds"
+    uni_code = codes.LEEDS
 
     def program_catalog(self, page, res):
         seen = set()

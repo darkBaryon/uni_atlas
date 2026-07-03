@@ -10,13 +10,14 @@ from parsers.models import CalendarData, DeadlineData, DiscoveredPage, ProgramDa
 from parsers.uk.common import (band, fee_near, find_links, first, ielts,
                                keyword_check, known_name, scan_term_lines,
                                section_text, standard_deadlines, title_from)
+from config import codes
 
 COURSE_RE = (r"/study/undergraduate/courses-20\d{2}/[a-z0-9-]+/?$|"
              r"/study/postgraduate/courses(?:-20\d{2})?/(?!course-list/?$)[a-z0-9-]+/?$")
 
 
 class Warwick(BaseParser):
-    uni_code = "warwick"
+    uni_code = codes.WARWICK
 
     def program_catalog(self, page, res):
         for url, title, _ in find_links(page, COURSE_RE):

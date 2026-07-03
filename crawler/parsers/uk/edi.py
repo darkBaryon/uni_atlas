@@ -6,12 +6,13 @@ from parsers.models import CalendarData, DeadlineData, DiscoveredPage, ProgramDa
 from parsers.page import norm_ws, parse_date
 from parsers.uk.common import (date_range, event_type, ielts, keyword_check,
                                section_text)
+from config import codes
 
 PROGRAM_RE = r"/programmes/(?:undergraduate/(?:\d{4}/)?\d+|postgraduate-taught/\d+)-[^/?#]+/?$"
 
 
 class Edinburgh(BaseParser):
-    uni_code = "edi"
+    uni_code = codes.EDI
 
     def program_catalog(self, page, res):
         for row in page.soup.select(".views-row"):

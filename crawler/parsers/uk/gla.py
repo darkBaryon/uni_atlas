@@ -13,12 +13,13 @@ from datetime import datetime
 from parsers.base import BaseParser
 from parsers.models import CalendarData, DeadlineData, DiscoveredPage, ProgramData
 from parsers.page import parse_date
+from config import codes
 
 SCHOOL_RE = r"(Adam Smith Business School|School of [A-Z][A-Za-z ,&\-]{3,70})"
 
 
 class Glasgow(BaseParser):
-    uni_code = "gla"
+    uni_code = codes.GLA
 
     # ---------------- 目录页 ----------------
     def program_catalog(self, page, res):

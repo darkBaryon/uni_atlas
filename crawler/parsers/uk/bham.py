@@ -6,13 +6,14 @@ from parsers.models import CalendarData, DiscoveredPage, ModuleRef, ProgramData
 from parsers.page import norm_ws
 from parsers.uk.common import (date_range, event_type, fee_near, find_links,
                                ielts, keyword_check, section_text, title_from)
+from config import codes
 
 COURSE_RE = r"/study/(?:undergraduate|postgraduate)/subjects/.+-courses/[^/?#]+/?$"
 COLLEGE_RE = r"College of (?:Arts and Law|Engineering and Physical Sciences|Life and Environmental Sciences|Medicine and Health|Social Sciences)"
 
 
 class Birmingham(BaseParser):
-    uni_code = "bham"
+    uni_code = codes.BHAM
 
     def program_catalog(self, page, res):
         for url, title, _ in find_links(page, COURSE_RE):
