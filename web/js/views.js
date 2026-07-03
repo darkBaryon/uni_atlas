@@ -51,11 +51,19 @@
 
     h += VIEWS._calendarSection(uni);
     h += VIEWS._facultyGrid(uni);
-    h += VIEWS._deadlineSection(uni);
-    h += VIEWS._bandSection(uni);
-    h += VIEWS._policySection(uni);
+    h += fold("未截止的关键日期", VIEWS._deadlineBody(uni));
+    h += fold("语言要求分档", VIEWS._bandBody(uni));
+    h += fold("中国学生政策要点", VIEWS._policyBody(uni));
     return h;
   };
+
+  /* 折叠板块：默认收起，点标题展开 */
+  function fold(title, body, open) {
+    if (!body) return "";
+    return '<details class="fold"' + (open ? " open" : "") + ">" +
+      "<summary><h2>" + title + "</h2></summary>" +
+      '<div class="fold-body">' + body + "</div></details>";
+  }
 
   /* ---- 学院聚合：专业挂在系上时向上归并到顶层学院 ---- */
   VIEWS.facTop = function (uni) {
@@ -171,18 +179,16 @@
     return h + "</table></div></section>";
   };
 
-  VIEWS._deadlineSection = function (uni) {
+  VIEWS._deadlineBody = function (uni) {
     var rows = uni.deadlines.map(function (d) { return { d: d, prog: null }; });
     uni.programs.forEach(function (p) {
       p.deadlines.forEach(function (d) { rows.push({ d: d, prog: p }); });
     });
-    if (!rows.length) return "";
     var now = new Date();
     var future = rows.filter(function (r) { return new Date(r.d.deadline_at) >= now; });
     future.sort(function (a, b) { return a.d.deadline_at < b.d.deadline_at ? -1 : 1; });
     if (!future.length) return "";
-    return "<section><h2>未截止的关键日期</h2>" +
-      '<p class="h2note">已截止的记录在各专业详情页仍可见</p><div class="dl-list">' +
+    return '<p class="h2note">最近 15 项 · 已截止的记录在各专业详情页仍可见</p><div class="dl-list">' +
       future.slice(0, 15).map(function (r) {
         var d = r.d;
         var title = r.prog
@@ -191,7 +197,7 @@
         return '<div class="dl"><span class="dl-date">' + d.deadline_at.slice(0, 10) + "</span>" +
           '<span class="dl-what">' + title + "<small>" + (d.note ? esc(d.note) : "") + "</small></span>" +
           UI.dlStatus(d.deadline_at) + "</div>";
-      }).join("") + "</div></section>";
+      }).join("") + "</div>";
   };
 
   VIEWS._calendarSection = function (uni) {
@@ -203,8 +209,15 @@
     uni.calendar.forEach(function (e) {
       (byYear[e.academic_year] = byYear[e.academic_year] || []).push(e);
     });
+    // 只显示当前学年和下一学年（更远的先留在库里）
+    var now = new Date(), sy = now.getMonth() + 1 >= 9 ? now.getFullYear() : now.getFullYear() - 1;
+    var wanted = [sy, sy + 1].map(function (y) {
+      return y + "/" + String((y + 1) % 100).padStart(2, "0");
+    });
+    var years = Object.keys(byYear).filter(function (y) { return wanted.indexOf(y) >= 0; });
+    if (!years.length) years = Object.keys(byYear);   // 全不匹配时兜底全显示
     var h = "<section><h2>学期日历</h2>";
-    Object.keys(byYear).sort().forEach(function (y) {
+    years.sort().forEach(function (y) {
       h += "<h3>" + esc(y) + " 学年</h3>" +
         '<div class="scroll"><table><tr><th>起</th><th>止</th><th>事项</th><th>类型</th></tr>';
       byYear[y].forEach(function (e) {
@@ -217,10 +230,9 @@
     return h + "</section>";
   };
 
-  VIEWS._bandSection = function (uni) {
+  VIEWS._bandBody = function (uni) {
     if (!uni.language_bands.length) return "";
-    return "<section><h2>语言要求分档</h2>" +
-      '<p class="h2note">专业列表的"语言"列即按档位换算</p>' +
+    return '<p class="h2note">专业列表的"语言"列即按档位换算</p>' +
       '<div class="scroll"><table><tr><th>档位</th><th>IELTS 总分</th><th>单项</th><th>说明</th></tr>' +
       uni.language_bands.map(function (b) {
         var each = b.ielts_detail && b.ielts_detail.minimum_each;
@@ -228,13 +240,13 @@
           "<td class='num'>" + (b.ielts_overall || "—") + "</td>" +
           "<td class='num'>" + (each || "—") + "</td>" +
           "<td>" + esc((b.band_label || "").replace(/^Level \d ?/, "")) + "</td></tr>";
-      }).join("") + "</table></div></section>";
+      }).join("") + "</table></div>";
   };
 
-  VIEWS._policySection = function (uni) {
+  VIEWS._policyBody = function (uni) {
     var c = uni.china_policy;
     if (!c) return "";
-    var h = "<section><h2>中国学生政策要点（" + esc(c.entry_year) + " Entry）</h2><div class='policy'>";
+    var h = '<p class="h2note">' + esc(c.entry_year) + " Entry</p><div class='policy'>";
     h += "<p style='margin:0'>高考成绩：" +
       (c.gaokao_accepted ? "<span class='yes'>接受</span>" : "<span class='no'>不接受</span>直接申请本科") +
       (c.gaokao_req ? " — " + esc(c.gaokao_req) : "") + "</p>";
@@ -244,7 +256,7 @@
     if (c.agent_list && c.agent_list.note) notes.push(esc(c.agent_list.note));
     if (c.china_office) notes.push(esc(c.china_office));
     if (notes.length) h += '<p class="note">' + notes.join("；") + "</p>";
-    return h + "</div></section>";
+    return h + "</div>";
   };
 
   /* ---------------- 专业详情页 ---------------- */
