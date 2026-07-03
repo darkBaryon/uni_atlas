@@ -1,0 +1,23 @@
+{
+ "programs": [
+  {
+   "deadlines": [],
+   "dept": null,
+   "duration": "4 Years (Full time)",
+   "entry_req_head": null,
+   "entry_year": "2026",
+   "faculty": "Faculty of Biological Sciences",
+   "ielts": [
+    6.0,
+    5.5
+   ],
+   "language_band": null,
+   "level": "UG",
+   "n_modules": 0,
+   "name_en": "Zoology MBiol, BSc",
+   "tuition_home": 10050.0,
+   "tuition_intl": 10050.0,
+   "ucas_code": "C309"
+  }
+ ]
+}

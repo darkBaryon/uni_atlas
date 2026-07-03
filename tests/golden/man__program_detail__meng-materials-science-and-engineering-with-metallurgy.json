@@ -1,0 +1,30 @@
+{
+ "programs": [
+  {
+   "deadlines": [
+    [
+     "all",
+     "equal_consideration",
+     "2026-01-14 18:00:00",
+     null
+    ]
+   ],
+   "dept": "Department of Materials",
+   "duration": "4 years",
+   "entry_req_head": "AAA including two from Mathematics, Physics and Chemistry. If you are not taking",
+   "entry_year": "2026",
+   "faculty": null,
+   "ielts": [
+    6.0,
+    null
+   ],
+   "language_band": null,
+   "level": "UG",
+   "n_modules": 57,
+   "name_en": "MEng Materials Science and Engineering with Metallurgy",
+   "tuition_home": 9790.0,
+   "tuition_intl": 39900.0,
+   "ucas_code": "F200"
+  }
+ ]
+}

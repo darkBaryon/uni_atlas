@@ -1,0 +1,74 @@
+[
+ {
+  "uni": "bham",
+  "category": "program_detail",
+  "url": "https://www.birmingham.ac.uk/study/postgraduate/subjects/medicine-courses/advanced-clinical-practice-advanced-critical-care-practitioner-msc-degree-apprenticeship/",
+  "file": "bham__program_detail__advanced-clinical-practice-advanced-critical-care-practitioner-msc-degree-apprenticeship.html"
+ },
+ {
+  "uni": "bristol",
+  "category": "program_detail",
+  "url": "https://www.bristol.ac.uk/study/undergraduate/2026/accounting-finance/bsc-economics-and-accounting-with-study-abroad/",
+  "file": "bristol__program_detail__bsc-economics-and-accounting-with-study-abroad.html"
+ },
+ {
+  "uni": "edi",
+  "category": "program_detail",
+  "url": "https://study.ed.ac.uk/programmes/undergraduate/2026/669-fine-art",
+  "file": "edi__program_detail__669-fine-art.html"
+ },
+ {
+  "uni": "gla",
+  "category": "program_detail",
+  "url": "https://www.gla.ac.uk/undergraduate/degrees/celticcivilisation/",
+  "file": "gla__program_detail__celticcivilisation.html"
+ },
+ {
+  "uni": "kcl",
+  "category": "program_detail",
+  "url": "https://www.kcl.ac.uk/study/postgraduate-taught/courses/advanced-cyber-security/",
+  "file": "kcl__program_detail__advanced-cyber-security.html"
+ },
+ {
+  "uni": "leeds",
+  "category": "program_detail",
+  "url": "https://courses.leeds.ac.uk/202627/g273/zoology-mbiol-bsc",
+  "file": "leeds__program_detail__zoology-mbiol-bsc.html"
+ },
+ {
+  "uni": "man",
+  "category": "program_detail",
+  "url": "https://www.manchester.ac.uk/study/undergraduate/courses/2026/09898/meng-materials-science-and-engineering-with-metallurgy/",
+  "file": "man__program_detail__meng-materials-science-and-engineering-with-metallurgy.html"
+ },
+ {
+  "uni": "shef",
+  "category": "program_detail",
+  "url": "https://www.sheffield.ac.uk/postgraduate/taught/courses/2026/advanced-mechanical-engineering-msc/",
+  "file": "shef__program_detail__advanced-mechanical-engineering-msc.html"
+ },
+ {
+  "uni": "ucl",
+  "category": "program_detail",
+  "url": "https://www.ucl.ac.uk/prospective-students/graduate/taught-degrees/law-llm",
+  "file": "ucl__program_detail__law-llm.html"
+ },
+ {
+  "uni": "gla",
+  "category": "term_dates",
+  "url": "https://www.gla.ac.uk/myglasgow/apg/sessiondates/session2025-26/",
+  "file": "gla__term_dates__session2025-26.html"
+ },
+ {
+  "uni": "ucl",
+  "category": "module_catalog",
+  "url": "https://www.ucl.ac.uk/module-catalogue/modules/algorithms-COMP0005",
+  "file": "ucl__module_catalog__algorithms-COMP0005.html"
+ },
+ {
+  "uni": "edi",
+  "category": "program_detail",
+  "url": "https://study.ed.ac.uk/programmes/undergraduate/2026/10-biological-sciences-genetics/entry-requirements",
+  "file": "edi__program_detail__entry-requirements.html"
+ }
+]

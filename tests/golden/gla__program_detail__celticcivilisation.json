@@ -1,0 +1,36 @@
+{
+ "programs": [
+  {
+   "deadlines": [
+    [
+     "all",
+     "equal_consideration",
+     "2027-01-13 18:00:00",
+     null
+    ],
+    [
+     "international",
+     "application",
+     "2027-06-30 23:59:00",
+     null
+    ]
+   ],
+   "dept": "School of Modern Languages & Cultures",
+   "duration": "4 years",
+   "entry_req_head": "You should refer to the entry requirements for both subjects and the degree awar",
+   "entry_year": "2027",
+   "faculty": null,
+   "ielts": [
+    6.5,
+    6.0
+   ],
+   "language_band": null,
+   "level": "UG",
+   "n_modules": 0,
+   "name_en": "Celtic Civilisation",
+   "tuition_home": null,
+   "tuition_intl": null,
+   "ucas_code": "Q821"
+  }
+ ]
+}

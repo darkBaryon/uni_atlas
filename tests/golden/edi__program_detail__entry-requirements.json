@@ -1,0 +1,23 @@
+{
+ "programs": [
+  {
+   "deadlines": [],
+   "dept": null,
+   "duration": null,
+   "entry_req_head": "These are the standard A level entry requirements for this programme. To view th",
+   "entry_year": "2026",
+   "faculty": null,
+   "ielts": [
+    7.0,
+    7.0
+   ],
+   "language_band": null,
+   "level": "UG",
+   "n_modules": 0,
+   "name_en": "Veterinary Medicine (Graduate Entry Programme - 4-year programme) BVM&S",
+   "tuition_home": null,
+   "tuition_intl": null,
+   "ucas_code": null
+  }
+ ]
+}

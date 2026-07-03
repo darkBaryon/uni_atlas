@@ -1,0 +1,109 @@
+{
+ "calendar": [
+  [
+   "2025/26",
+   "other",
+   "academic year / Orientation",
+   "2025-09-15",
+   "2026-09-11"
+  ],
+  [
+   "2025/26",
+   "teaching_period",
+   "Semester 1 teaching",
+   "2025-09-22",
+   "2025-12-05"
+  ],
+  [
+   "2025/26",
+   "graduation",
+   "Start of graduation period",
+   "2025-12-01",
+   null
+  ],
+  [
+   "2025/26",
+   "exam_period",
+   "revision and examination period",
+   "2025-12-08",
+   "2025-12-19"
+  ],
+  [
+   "2025/26",
+   "closure",
+   "Winter Vacation",
+   "2025-12-22",
+   "2026-01-09"
+  ],
+  [
+   "2025/26",
+   "teaching_period",
+   "Semester 2 teaching",
+   "2026-01-12",
+   "2026-03-27"
+  ],
+  [
+   "2025/26",
+   "closure",
+   "Spring Vacation",
+   "2026-03-30",
+   "2026-04-17"
+  ],
+  [
+   "2025/26",
+   "exam_period",
+   "Start of revision period",
+   "2026-04-20",
+   null
+  ],
+  [
+   "2025/26",
+   "exam_period",
+   "examination period",
+   "2026-04-27",
+   "2026-05-22"
+  ],
+  [
+   "2025/26",
+   "holiday",
+   "May Day Holiday",
+   "2026-05-04",
+   null
+  ],
+  [
+   "2025/26",
+   "holiday",
+   "Spring Bank Holiday",
+   "2026-05-25",
+   null
+  ],
+  [
+   "2025/26",
+   "other",
+   "End of Semester 2",
+   "2026-05-29",
+   null
+  ],
+  [
+   "2025/26",
+   "graduation",
+   "Start of graduation period (Jun)",
+   "2026-06-24",
+   null
+  ],
+  [
+   "2025/26",
+   "holiday",
+   "Fair Monday Holiday",
+   "2026-07-20",
+   null
+  ],
+  [
+   "2025/26",
+   "resit_period",
+   "examination period (Jul)",
+   "2026-07-27",
+   "2026-08-14"
+  ]
+ ]
+}

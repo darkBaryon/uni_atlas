@@ -1,0 +1,31 @@
+{
+ "n_discovered": 1,
+ "programs": [
+  {
+   "deadlines": [
+    [
+     "all",
+     "equal_consideration",
+     "2026-01-14 18:00:00",
+     null
+    ]
+   ],
+   "dept": "Edinburgh College of Art",
+   "duration": "3 years, 4 years",
+   "entry_req_head": null,
+   "entry_year": "2026",
+   "faculty": "College of Arts, Humanities and Social Sciences",
+   "ielts": [
+    null,
+    null
+   ],
+   "language_band": null,
+   "level": "UG",
+   "n_modules": 0,
+   "name_en": "Fine Art BA (Hons)",
+   "tuition_home": null,
+   "tuition_intl": null,
+   "ucas_code": "BAFA"
+  }
+ ]
+}

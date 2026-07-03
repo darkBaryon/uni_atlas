@@ -1,0 +1,36 @@
+{
+ "programs": [
+  {
+   "deadlines": [
+    [
+     "international",
+     "application",
+     "2026-06-26 17:00:00",
+     null
+    ],
+    [
+     "home",
+     "application",
+     "2026-08-28 17:00:00",
+     null
+    ]
+   ],
+   "dept": null,
+   "duration": "10 months",
+   "entry_req_head": null,
+   "entry_year": "2026",
+   "faculty": null,
+   "ielts": [
+    null,
+    null
+   ],
+   "language_band": "level-4",
+   "level": "PGT",
+   "n_modules": 42,
+   "name_en": "Law LLM",
+   "tuition_home": null,
+   "tuition_intl": null,
+   "ucas_code": null
+  }
+ ]
+}

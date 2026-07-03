@@ -1,0 +1,23 @@
+{
+ "programs": [
+  {
+   "deadlines": [],
+   "dept": null,
+   "duration": null,
+   "entry_req_head": null,
+   "entry_year": "2026",
+   "faculty": null,
+   "ielts": [
+    null,
+    null
+   ],
+   "language_band": null,
+   "level": "PGT",
+   "n_modules": 0,
+   "name_en": "Advanced Cyber Security (Online)",
+   "tuition_home": null,
+   "tuition_intl": null,
+   "ucas_code": null
+  }
+ ]
+}

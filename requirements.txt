@@ -7,3 +7,4 @@ types-PyYAML
 ruff
 mypy
 pre-commit
+pytest

@@ -1,0 +1,22 @@
+{
+ "modules": [
+  {
+   "assessment": [
+    {
+     "type": "Exam",
+     "weight": 80
+    },
+    {
+     "type": "Group activity",
+     "weight": 20
+    }
+   ],
+   "code": "COMP0005",
+   "credits": 15,
+   "leader": "Professor James Brotherston",
+   "level": "FHEQ Level 4",
+   "name_en": "Algorithms (COMP0005)",
+   "semester": "              Term 2                 "
+  }
+ ]
+}
