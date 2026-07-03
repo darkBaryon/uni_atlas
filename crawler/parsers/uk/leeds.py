@@ -3,7 +3,7 @@ import re
 from urllib.parse import urlparse
 
 from parsers.base import BaseParser, CalendarData, DeadlineData, DiscoveredPage, ModuleRef, ProgramData, norm_ws, parse_date
-from parsers.uk_common import date_range, event_type, facts, fee_near, ielts, known_name, pick, section_text, title_from, unwrap_funnelback
+from parsers.uk.common import date_range, event_type, facts, fee_near, ielts, known_name, pick, section_text, title_from, unwrap_funnelback
 
 PG_AWARDS = r"MSc|MA|MBA|LLM|MRes|MEd|MPH|PGDip|PGCert|Masters"
 

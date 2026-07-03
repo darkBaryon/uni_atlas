@@ -2,7 +2,7 @@
 import re
 
 from parsers.base import BaseParser, CalendarData, DeadlineData, DiscoveredPage, ProgramData, norm_ws, parse_date
-from parsers.uk_common import date_range, event_type, ielts, section_text
+from parsers.uk.common import date_range, event_type, ielts, section_text
 
 PROGRAM_RE = r"/programmes/(?:undergraduate/(?:\d{4}/)?\d+|postgraduate-taught/\d+)-[^/?#]+/?$"
 

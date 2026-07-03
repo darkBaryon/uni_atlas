@@ -3,7 +3,7 @@ import re
 
 from parsers.base import (BaseParser, CalendarData, DeadlineData, DiscoveredPage,
                           ModuleRef, ProgramData, norm_ws, parse_date)
-from parsers.uk_common import date_loose, event_type, fee_near, find_links, first, ielts, section_text
+from parsers.uk.common import date_loose, event_type, fee_near, find_links, first, ielts, section_text
 
 COURSE_RE = r"/study/(?:undergraduate/courses/2026|masters/courses/list)/\d{4,6}/[^/?#]+/?$"
 MODULE_CODE_RE = re.compile(r"\b[A-Z]{4}\d{4,5}\b")

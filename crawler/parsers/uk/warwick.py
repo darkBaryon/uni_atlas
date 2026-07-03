@@ -2,7 +2,7 @@
 import re
 
 from parsers.base import BaseParser, CalendarData, DeadlineData, DiscoveredPage, ProgramData, parse_date
-from parsers.uk_common import date_range, event_type, fee_near, find_links, first, ielts, known_name, section_text, title_from
+from parsers.uk.common import date_range, event_type, fee_near, find_links, first, ielts, known_name, section_text, title_from
 
 COURSE_RE = (r"/study/undergraduate/courses-20\d{2}/[a-z0-9-]+/?$|"
              r"/study/postgraduate/courses(?:-20\d{2})?/(?!course-list/?$)[a-z0-9-]+/?$")

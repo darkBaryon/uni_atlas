@@ -77,23 +77,32 @@ def _merge(base, over):
     return out
 
 
+def _load_yaml(path):
+    with open(path, encoding="utf-8") as f:
+        return yaml.safe_load(f) or {}
+
+
 @functools.lru_cache(maxsize=None)
 def all_unis():
-    """code -> UniConfig，装载 config/universities/ 下全部 YAML。
+    """code -> UniConfig，递归装载 config/universities/**/*.yaml。
 
-    _defaults.yaml 是所有学校的默认层（下划线开头的文件不算学校）。
+    目录 = 国家层；默认层按链合并：全局 _defaults.yaml → 国家目录
+    _defaults.yaml → 学校文件（下划线开头的文件不算学校）。
     """
-    defaults = {}
-    dpath = os.path.join(_UNI_DIR, "_defaults.yaml")
-    if os.path.exists(dpath):
-        with open(dpath, encoding="utf-8") as f:
-            defaults = yaml.safe_load(f) or {}
+    global_defaults = {}
+    gpath = os.path.join(_UNI_DIR, "_defaults.yaml")
+    if os.path.exists(gpath):
+        global_defaults = _load_yaml(gpath)
     out = {}
-    for path in sorted(glob.glob(os.path.join(_UNI_DIR, "*.yaml"))):
+    for path in sorted(glob.glob(os.path.join(_UNI_DIR, "**", "*.yaml"),
+                                 recursive=True)):
         if os.path.basename(path).startswith("_"):
             continue
-        with open(path, encoding="utf-8") as f:
-            data = yaml.safe_load(f) or {}
+        defaults = global_defaults
+        cpath = os.path.join(os.path.dirname(path), "_defaults.yaml")
+        if os.path.dirname(path) != _UNI_DIR and os.path.exists(cpath):
+            defaults = _merge(global_defaults, _load_yaml(cpath))
+        data = _load_yaml(path)
         if "code" not in data:
             raise ValueError(f"{path} 缺少 code 字段")
         out[data["code"]] = UniConfig(_merge(defaults, data), path)

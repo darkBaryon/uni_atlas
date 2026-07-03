@@ -2,7 +2,7 @@
 import re
 
 from parsers.base import BaseParser, CalendarData, DiscoveredPage, ModuleRef, ProgramData, norm_ws
-from parsers.uk_common import date_range, event_type, fee_near, find_links, ielts, section_text, title_from
+from parsers.uk.common import date_range, event_type, fee_near, find_links, ielts, section_text, title_from
 
 COURSE_RE = r"/study/(?:undergraduate|postgraduate)/subjects/.+-courses/[^/?#]+/?$"
 COLLEGE_RE = r"College of (?:Arts and Law|Engineering and Physical Sciences|Life and Environmental Sciences|Medicine and Health|Social Sciences)"
