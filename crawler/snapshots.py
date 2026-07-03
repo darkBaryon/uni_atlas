@@ -29,7 +29,14 @@ def save(conn, task, body_bytes, http_status):
     哈希与库中 last_content_hash 一致 → 未变更：不写盘不登记，返回 snapshot_id=None。
     """
     content_hash = hashlib.sha256(body_bytes).hexdigest()
-    if content_hash == task.last_content_hash:
+    # 以库中最近快照为准判断"未变"——任务行的 last_content_hash 是取任务时的
+    # 旧值，双进程并跑/中途崩溃会让它落后，曾造成 461 组重复快照
+    with conn.cursor() as cur:
+        cur.execute("SELECT content_hash FROM page_snapshots WHERE source_page_id=%s"
+                    " ORDER BY id DESC LIMIT 1", (task.id,))
+        row = cur.fetchone()
+    prev_hash = row["content_hash"] if row else task.last_content_hash
+    if content_hash == prev_hash:
         return content_hash, False, None
 
     fpath = path_for(task.uni_code, task.category, task.url)

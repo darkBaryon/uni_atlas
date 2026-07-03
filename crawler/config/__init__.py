@@ -62,6 +62,8 @@ class UniConfig:
         self.seed_pages = data.get("seed_pages") or []
         # 官方院系清单 {英文名: 中文名}：解析器用来规范化院系提及，loader 用来填 name_zh
         self.faculties = data.get("faculties") or {}
+        # 页面叫法 -> 官方名的别名映射（如 UCL 目录页把计算机系写作 'Computer Science'）
+        self.faculty_alias = data.get("faculty_alias") or {}
         # 通用解析器的声明式配置（parsers/generic.py）；无专属解析器时凭它接管
         self.generic = data.get("generic")
 

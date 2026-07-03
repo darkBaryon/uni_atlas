@@ -35,3 +35,7 @@ seed_pages:
      url: "https://www.ucl.ac.uk/prospective-students/international/china"}
   - {category: faculty_list, crawl_freq: monthly,
      url: "https://www.ucl.ac.uk/about/who-we-are/faculties-and-departments"}
+
+# 目录页学位卡上的叫法 -> faculties 表官方名（loader 归属用）
+faculty_alias:
+  "Computer Science": UCL Computer Science

@@ -214,12 +214,17 @@ def event_type(name, start=None):
 
 
 def known_name(names, text):
+    """在正文中匹配官方院系名；带词边界，长名优先。
+
+    纯子串匹配会让 'School of Art' 吞掉 'School of Arts and Cultures'（实测 bug）；
+    词边界挡住复数/延长形，长名优先保证清单内互为前缀时取最长命中。
+    """
     if not names or not text:
         return None
     hay = norm_ws(text).lower().replace(" and ", " & ")
-    for name in names:
+    for name in sorted(names, key=len, reverse=True):
         needle = norm_ws(name).lower().replace(" and ", " & ")
-        if needle in hay:
+        if re.search(re.escape(needle) + r"(?![a-z])", hay):
             return name
     return None
 

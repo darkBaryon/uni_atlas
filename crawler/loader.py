@@ -17,15 +17,13 @@ TRACKED = {
     "deadline": ("deadline_at",),
 }
 
-FACULTY_ALIAS = {"Computer Science": "UCL Computer Science"}  # 库中既有行的别名
-
-
 class Loader:
     def __init__(self, conn, university_id, uni_code=None):
         self.conn = conn
         self.uid = university_id
         uconf = config.uni(uni_code) if uni_code else None
         self.faculty_zh = uconf.faculties if uconf else {}   # 英文名 -> 中文名
+        self.faculty_alias = uconf.faculty_alias if uconf else {}  # 页面叫法 -> 官方名
         self.stats = {"programs": 0, "modules": 0, "deadlines": 0,
                       "calendar": 0, "changes": 0}
         self.changes = []          # 报告用: (entity, name, field, old, new)
@@ -75,7 +73,7 @@ class Loader:
     def faculty_id(self, name, parent_id=None, level="faculty"):
         if not name:
             return None
-        name = FACULTY_ALIAS.get(name, name)
+        name = self.faculty_alias.get(name, name)
         name_zh = self.faculty_zh.get(name)
         with self._cur() as cur:
             cur.execute("SELECT id, name_zh FROM faculties WHERE university_id=%s AND name_en=%s",

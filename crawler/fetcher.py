@@ -6,6 +6,7 @@ tasks 按域名分队列，每域一个 worker 串行抓取（interval + 抖动�
 """
 import asyncio
 import random
+from collections import deque
 from enum import Enum
 from http import HTTPStatus
 from urllib.parse import urlsplit
@@ -95,7 +96,7 @@ async def _domain_worker(domain, queue, session, handle, sem, log):
     async with sem:
         first = True
         while queue:
-            task = queue.pop(0)
+            task = queue.popleft()
             if not first:
                 await asyncio.sleep(interval + random.random() * config.JITTER)
             first = False
@@ -124,9 +125,9 @@ async def _domain_worker(domain, queue, session, handle, sem, log):
 
 
 async def _run(tasks, handle, log):
-    queues: dict[str, list] = {}
+    queues: dict[str, deque] = {}
     for t in tasks:
-        queues.setdefault(_domain(t.url), []).append(t)
+        queues.setdefault(_domain(t.url), deque()).append(t)
     sem = asyncio.Semaphore(config.MAX_DOMAINS)
     timeout = aiohttp.ClientTimeout(total=config.TIMEOUT)
     # trust_env 默认 False：绕开本机代理环境变量（anaconda requests 曾因此出错）
