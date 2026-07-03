@@ -50,7 +50,9 @@ def get_tasks(conn, uni_code=None, category=None, due_only=False,
                    " OR sp.last_fetched_at < NOW() - INTERVAL"
                    " (CASE sp.crawl_freq WHEN 'daily' THEN 1 WHEN 'weekly' THEN 7"
                    " ELSE 30 END) DAY)")
-    sql.append("ORDER BY sp.last_fetched_at IS NOT NULL, sp.last_fetched_at, sp.id")
+    prio = ", ".join(f"'{c}'" for c in config.CATEGORY_PRIORITY)
+    sql.append(f"ORDER BY FIELD(sp.category, {prio}),"
+               " sp.last_fetched_at IS NOT NULL, sp.last_fetched_at, sp.id")
     if limit:
         sql.append("LIMIT %s"); args.append(int(limit))
     with conn.cursor() as cur:

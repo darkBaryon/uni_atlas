@@ -9,10 +9,14 @@
   python3 run.py --dry-run                # 只列出将执行的任务
 """
 import argparse
+import logging
 import sys
 
+import logging_setup
 import pipeline
 import registry
+
+logger = logging.getLogger(__name__)
 
 
 def main():
@@ -24,8 +28,11 @@ def main():
     ap.add_argument("--discover", action="store_true", help="只跑目录类任务（展开新页面）")
     ap.add_argument("--reparse", action="store_true", help="离线重放最近快照，不联网")
     ap.add_argument("--dry-run", action="store_true", help="只列出将执行的任务")
+    ap.add_argument("--verbose", action="store_true", help="控制台也输出逐页 DEBUG 日志")
     args = ap.parse_args()
 
+    if not args.dry_run:
+        logging_setup.setup(verbose=args.verbose)
     conn = registry.connect()
     tasks = registry.get_tasks(
         conn, uni_code=args.uni, category=args.category,
@@ -34,15 +41,16 @@ def main():
     if not tasks:
         print("没有符合条件的任务。")
         return 0
-    mode = "重放" if args.reparse else "抓取"
-    print(f"{mode}任务 {len(tasks)} 个"
-          + (f" (uni={args.uni})" if args.uni else "")
-          + (f" (category={args.category})" if args.category else ""))
-
     if args.dry_run:
+        print(f"将执行 {len(tasks)} 个任务:")
         for t in tasks:
             print(f"  [{t['uni_code']}/{t['category']}] {t['url']}")
         return 0
+
+    mode = "重放" if args.reparse else "抓取"
+    logger.info("%s任务 %d 个%s%s", mode, len(tasks),
+                f" (uni={args.uni})" if args.uni else "",
+                f" (category={args.category})" if args.category else "")
 
     report = pipeline.Report()
     if args.reparse:
@@ -50,7 +58,8 @@ def main():
     else:
         pipeline.run_fetch(conn, tasks, report)
     report.show(registry.count_skipped(conn, args.uni))
-    return 1 if report.counts["failed"] else 0
+    # 页面级失败已在报告与任务表留痕，进程本身跑完即为成功（退出码 0）
+    return 0
 
 
 if __name__ == "__main__":

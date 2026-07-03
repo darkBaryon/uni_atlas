@@ -21,5 +21,13 @@ CF_MARKERS = ("Just a moment", "cf-challenge", "Checking your browser")
 
 DEFAULT_ENTRY_YEAR = "2026"   # 页面未标注申请季时的默认值
 
+# 抓取优先级：越靠前越先抓（申请决策直接依赖的排前，课程大纲类殿后）
+CATEGORY_PRIORITY = [
+    "deadlines", "term_dates", "ug_admissions", "pg_admissions",
+    "language_req", "china_page", "fees", "program_detail",
+    "program_catalog", "faculty_list", "module_catalog",
+    "staff_list", "research", "news", "other",
+]
+
 DB_NAME = "study_abroad"
 MY_CNF = os.path.expanduser("~/.my.cnf")

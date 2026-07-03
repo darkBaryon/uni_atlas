@@ -16,3 +16,6 @@ snapshots/
 
 # 试点期的一次性脚本与中间数据（已被 crawler/ 框架取代，仅本地留档）
 crawler/legacy/
+
+# 运行日志
+logs/

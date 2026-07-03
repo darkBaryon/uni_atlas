@@ -115,14 +115,14 @@ class Loader:
                 self._diff_update(
                     "programs", "program", prog_id, (),
                     {"faculty_id": fac_id, "url": p.url, "slug": slug,
-                     "ucas_code": p.ucas_code, "duration": p.duration},
+                     "ucas_code": p.ucas_code, "duration": _trunc(p.duration, 64)},
                     snapshot_id, p.name_en)
             else:
                 cur.execute(
                     "INSERT INTO programs (university_id, faculty_id, level, name_en,"
                     " slug, url, ucas_code, duration) VALUES (%s,%s,%s,%s,%s,%s,%s,%s)",
-                    (self.uid, fac_id, p.level, p.name_en, slug, p.url,
-                     p.ucas_code, p.duration))
+                    (self.uid, fac_id, p.level, _trunc(p.name_en, 255), slug, p.url,
+                     p.ucas_code, _trunc(p.duration, 64)))
                 prog_id = cur.lastrowid
                 self._log("program", prog_id, "insert", None, None,
                           p.name_en, snapshot_id)
@@ -203,8 +203,10 @@ class Loader:
 
     def load_module(self, m, source_page_id, snapshot_id):
         vals = {
-            "credits": m.credits, "level": m.level, "semester": m.semester,
-            "leader": m.leader, "prerequisites": m.prerequisites,
+            "credits": m.credits, "level": _trunc(m.level, 16),
+            "semester": _trunc(m.semester, 32),
+            "leader": _trunc(m.leader, 255),
+            "prerequisites": _trunc(m.prerequisites, 512),
             "assessment": json.dumps(m.assessment) if m.assessment else None,
             "description": m.description, "url": m.url,
             "source_page_id": source_page_id,
@@ -290,6 +292,13 @@ class Loader:
                     (self.uid, c.academic_year, c.calendar_track, c.event_type,
                      c.name, c.start_date, c.end_date, source_page_id, now))
         self.stats["calendar"] += 1
+
+
+def _trunc(v, n):
+    """VARCHAR 防御截断：页面偶有超长文本（如一页列多种学制），截断并保留可读性。"""
+    if isinstance(v, str) and len(v) > n:
+        return v[: n - 1] + "…"
+    return v
 
 
 def _neq(old, new):
