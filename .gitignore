@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# macOS
+.DS_Store
+
+# 本地凭据（数据库密码在 ~/.my.cnf，永远不进仓）
+*.cnf
+.env
+
+# 抓取的原始网页快照（体积大，存数据库或本地，不进仓）
+snapshots/

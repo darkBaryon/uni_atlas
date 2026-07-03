@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>留学申请信息库</title>
+<style>
+  :root{
+    --ink:#262030; --ink-soft:#5c5468; --paper:#faf9fc; --card:#ffffff;
+    --accent:#4b1e78; --accent-soft:#efe9f6; --line:#e5e0ec;
+    --ok:#1e6e46; --warn:#a05a00; --past:#8b8494; --danger:#a12b23;
+    --serif:"Songti SC","Noto Serif SC",Georgia,serif;
+    --sans:"PingFang SC","Hiragino Sans GB","Microsoft YaHei",-apple-system,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{background:var(--paper);color:var(--ink);font-family:var(--sans);
+       line-height:1.65;margin:0;padding:0 24px 64px}
+  .wrap{max-width:920px;margin:0 auto}
+
+  nav.unis{display:flex;gap:8px;flex-wrap:wrap;padding-top:20px}
+  nav.unis button{font:inherit;font-size:14px;padding:6px 16px;border-radius:99px;cursor:pointer;
+    border:1px solid var(--line);background:var(--card);color:var(--ink-soft)}
+  nav.unis button.on{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+  nav.unis button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+  header.hero{padding:36px 0 28px;border-bottom:2px solid var(--accent)}
+  .eyebrow{font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);font-weight:600}
+  h1{font-family:var(--serif);font-size:clamp(28px,4.5vw,40px);margin:.25em 0 .1em;text-wrap:balance;font-weight:600}
+  h1 .zh{font-weight:400;color:var(--ink-soft)}
+  .hero .sub{color:var(--ink-soft);margin:0 0 18px;font-size:15px}
+  .chips{display:flex;flex-wrap:wrap;gap:8px}
+  .chip{background:var(--accent-soft);color:var(--accent);border-radius:3px;
+        padding:3px 10px;font-size:13px;font-weight:500}
+
+  section{margin-top:44px}
+  h2{font-family:var(--serif);font-size:22px;font-weight:600;margin:0 0 4px}
+  .h2note{color:var(--ink-soft);font-size:13.5px;margin:0 0 16px}
+
+  .dl-list{display:flex;flex-direction:column;gap:10px}
+  .dl{display:grid;grid-template-columns:150px 1fr auto;gap:14px;align-items:baseline;
+      background:var(--card);border:1px solid var(--line);border-left:4px solid var(--accent);
+      padding:12px 16px;border-radius:4px}
+  .dl.past{border-left-color:var(--past);color:var(--past)}
+  .dl.past .dl-date,.dl.past .dl-what small{color:var(--past)}
+  .dl-date{font-family:var(--serif);font-size:17px;font-weight:600;
+           font-variant-numeric:tabular-nums;color:var(--accent);white-space:nowrap}
+  .dl-what{font-size:14.5px}
+  .dl-what small{display:block;color:var(--ink-soft);font-size:12.5px}
+  .tag{font-size:12px;font-weight:600;padding:2px 9px;border-radius:99px;white-space:nowrap}
+  .tag.past{background:#efedf2;color:var(--past)}
+  .tag.open{background:#e3f0e9;color:var(--ok)}
+  .tag.soon{background:#f6ecdd;color:var(--warn)}
+
+  .prog-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:720px){.prog-grid{grid-template-columns:1fr}
+    .dl{grid-template-columns:1fr;gap:4px}}
+  .prog{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:22px 22px 18px}
+  .prog .level{font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;
+               color:var(--accent);font-weight:700}
+  .prog h3{font-family:var(--serif);font-size:19px;margin:4px 0 0;line-height:1.35;text-wrap:balance}
+  .prog h3 a{color:inherit;text-decoration:none}
+  .prog h3 a:hover{text-decoration:underline}
+  .prog .zh{color:var(--ink-soft);font-size:13.5px;margin:2px 0 14px}
+  .fees{display:flex;border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin-bottom:14px}
+  .fee{flex:1;padding:10px 0}
+  .fee+.fee{border-left:1px solid var(--line);padding-left:16px}
+  .fee b{display:block;font-family:var(--serif);font-size:20px;font-weight:600;
+         font-variant-numeric:tabular-nums}
+  .fee span{font-size:12px;color:var(--ink-soft)}
+  .kv{margin:0;font-size:14px}
+  .kv dt{font-weight:600;font-size:12.5px;color:var(--ink-soft);margin-top:10px}
+  .kv dd{margin:1px 0 0}
+  .ielts{display:inline-block;background:var(--accent-soft);color:var(--accent);
+         border-radius:3px;padding:1px 8px;font-weight:600;font-size:13px}
+
+  .mods{margin-top:14px;border-top:1px dashed var(--line);padding-top:12px}
+  .mods .mtitle{font-weight:600;font-size:12.5px;color:var(--ink-soft);margin-bottom:6px}
+  .mod-tags{display:flex;flex-wrap:wrap;gap:6px}
+  .mod{border:1px solid var(--line);border-radius:3px;padding:2px 8px;font-size:12.5px;
+       color:var(--ink-soft);background:var(--paper)}
+  .mod.core{border-color:var(--accent);color:var(--accent);background:var(--accent-soft);font-weight:500}
+
+  .scroll{overflow-x:auto}
+  table{border-collapse:collapse;width:100%;font-size:14px;background:var(--card)}
+  th,td{border:1px solid var(--line);padding:8px 12px;text-align:left;vertical-align:top}
+  th{background:var(--accent-soft);color:var(--accent);font-size:12.5px;letter-spacing:.05em;font-weight:600}
+  td.date{font-variant-numeric:tabular-nums;white-space:nowrap;font-family:var(--serif);font-weight:600}
+  .etype{font-size:11.5px;font-weight:600;padding:1px 8px;border-radius:99px;white-space:nowrap}
+  .etype.teach{background:var(--accent-soft);color:var(--accent)}
+  .etype.rest{background:#f3eee6;color:var(--warn)}
+  .etype.exam{background:#f7e8e6;color:var(--danger)}
+
+  .policy{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:20px 22px}
+  .policy .no{color:var(--danger);font-weight:700}
+  .policy .yes{color:var(--ok);font-weight:700}
+  .note{font-size:13px;color:var(--ink-soft);margin-top:10px;padding-top:10px;border-top:1px dashed var(--line)}
+
+  footer{margin-top:56px;padding-top:16px;border-top:1px solid var(--line);
+         color:var(--ink-soft);font-size:12.5px}
+  a{color:var(--accent)}
+  a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .empty{color:var(--ink-soft);font-size:14px;background:var(--card);
+         border:1px dashed var(--line);border-radius:6px;padding:16px;text-align:center}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav class="unis" id="uniTabs" hidden></nav>
+  <main id="app"><p class="empty">加载中…（若一直显示，请先运行 <code>python3 web/export.py</code> 生成 data.js）</p></main>
+  <footer id="foot"></footer>
+</div>
+
+<script src="data.js"></script>
+<script>
+(function () {
+  var DATA = window.STUDY_ABROAD_DATA;
+  if (!DATA || !DATA.universities || !DATA.universities.length) return;
+
+  function esc(s) {
+    return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c];
+    });
+  }
+  var LEVEL_LABEL = { UG: "本科 · UG", PGT: "授课型硕士 · PGT", PGR: "研究型 · PGR", foundation: "预科" };
+  var AUD_LABEL = { all: "全部申请者", international: "国际学生", home: "本土学生" };
+  var DL_LABEL = { equal_consideration: "UCAS 常规截止（equal consideration）", application: "申请截止", deposit: "押金", scholarship: "奖学金", other: "其他" };
+  var ETYPE = {
+    teaching_period: ["教学期", "teach"], reading_week: ["阅读周", "rest"],
+    closure: ["闭校", "rest"], exam_period: ["考试季", "exam"],
+    welcome: ["迎新", "teach"], graduation: ["毕业典礼", "teach"]
+  };
+
+  function fmtMoney(v, cur) {
+    if (v == null) return null;
+    var sym = { GBP: "£", USD: "$", EUR: "€", CNY: "¥" }[cur] || (cur + " ");
+    return sym + Number(v).toLocaleString("en-GB");
+  }
+  function dlStatus(iso) {
+    var days = Math.ceil((new Date(iso) - new Date()) / 86400000);
+    if (days < 0) return '<span class="tag past">已截止</span>';
+    if (days <= 30) return '<span class="tag soon">还剩 ' + days + " 天</span>";
+    return '<span class="tag open">还剩 ' + days + " 天</span>";
+  }
+
+  function renderDeadlines(uni) {
+    var rows = [];
+    uni.deadlines.forEach(function (d) { rows.push({ d: d, prog: null }); });
+    uni.programs.forEach(function (p) {
+      p.deadlines.forEach(function (d) { rows.push({ d: d, prog: p }); });
+    });
+    if (!rows.length) return "";
+    rows.sort(function (a, b) { return a.d.deadline_at < b.d.deadline_at ? -1 : 1; });
+    var items = rows.map(function (r) {
+      var d = r.d, past = new Date(d.deadline_at) < new Date();
+      var title = r.prog ? esc(r.prog.name_en) + " — " + (AUD_LABEL[d.audience] || esc(d.audience))
+                         : (DL_LABEL[d.deadline_type] || esc(d.deadline_type));
+      var sub = [r.prog ? (LEVEL_LABEL[r.prog.level] || r.prog.level).split(" ·")[0] : "校级",
+                 d.note ? esc(d.note) : null].filter(Boolean).join(" · ");
+      return '<div class="dl' + (past ? " past" : "") + '">' +
+        '<span class="dl-date">' + d.deadline_at.slice(0, 10) + "</span>" +
+        '<span class="dl-what">' + title + "<small>" + sub + "</small></span>" +
+        dlStatus(d.deadline_at) + "</div>";
+    }).join("");
+    return "<section><h2>关键截止日期</h2>" +
+      '<p class="h2note">校级与专业级合并 · 按今天日期实时标注状态</p>' +
+      '<div class="dl-list">' + items + "</div></section>";
+  }
+
+  function renderProgram(p) {
+    var d = p.detail || {};
+    var h = '<div class="prog"><span class="level">' +
+      esc(LEVEL_LABEL[p.level] || p.level) + (p.ucas_code ? " · UCAS " + esc(p.ucas_code) : "") + "</span>" +
+      "<h3>" + (p.url ? '<a href="' + esc(p.url) + '">' + esc(p.name_en) + "</a>" : esc(p.name_en)) + "</h3>" +
+      '<p class="zh">' + esc([p.name_zh, p.duration, p.faculty_name].filter(Boolean).join(" · ")) + "</p>";
+
+    var intl = fmtMoney(d.tuition_intl, d.currency), home = fmtMoney(d.tuition_home, d.currency);
+    if (intl || home) {
+      var unit = p.level === "UG" ? " / 年" : "（全程）";
+      h += '<div class="fees">' +
+        (intl ? '<div class="fee"><b>' + intl + "</b><span>国际学生学费" + unit + "</span></div>" : "") +
+        (home ? '<div class="fee"><b>' + home + "</b><span>本土学生学费" + unit + "</span></div>" : "") + "</div>";
+    }
+    h += '<dl class="kv">';
+    if (d.entry_req_text) h += "<dt>学术要求</dt><dd>" + esc(d.entry_req_text) + "</dd>";
+    if (d.china_req_text) h += "<dt>中国学生要求</dt><dd>" + esc(d.china_req_text) + "</dd>";
+    if (d.extra && d.extra.admissions_test) h += "<dt>入学测试</dt><dd>" + esc(d.extra.admissions_test) + "</dd>";
+    if (d.ielts_overall) {
+      var each = d.ielts_detail && d.ielts_detail.minimum_each;
+      h += "<dt>语言要求" + (d.language_band ? "（" + esc(d.language_band) + " 档）" : "") + "</dt>" +
+        '<dd><span class="ielts">IELTS ' + d.ielts_overall + "</span>" +
+        (each ? " 单项不低于 " + each : "") + "</dd>";
+    }
+    if (d.app_open_date) h += "<dt>开放申请</dt><dd>" + d.app_open_date + "</dd>";
+    h += "</dl>";
+
+    if (p.modules && p.modules.length) {
+      h += '<div class="mods"><div class="mtitle">课程模块（紫色为必修）</div><div class="mod-tags">' +
+        p.modules.map(function (m) {
+          return '<span class="mod' + (m.module_type === "core" ? " core" : "") + '">' +
+            esc(m.code || "") + " " + esc(m.name_zh || m.name_en) + "</span>";
+        }).join("") + "</div></div>";
+    }
+    return h + "</div>";
+  }
+
+  function renderCalendar(uni) {
+    if (!uni.calendar.length) return "";
+    var years = uni.calendar.map(function (e) { return e.academic_year; });
+    var rows = uni.calendar.map(function (e) {
+      var t = ETYPE[e.event_type] || [e.event_type, "teach"];
+      return "<tr><td class='date'>" + e.start_date + "</td><td class='date'>" + (e.end_date || "—") +
+        "</td><td>" + esc(e.name) + "</td><td><span class='etype " + t[1] + "'>" + esc(t[0]) + "</span></td></tr>";
+    }).join("");
+    return "<section><h2>" + esc(years[0]) + ' 学期日历</h2><div class="scroll"><table>' +
+      "<tr><th>起</th><th>止</th><th>事项</th><th>类型</th></tr>" + rows + "</table></div></section>";
+  }
+
+  function renderBands(uni) {
+    if (!uni.language_bands.length) return "";
+    var rows = uni.language_bands.map(function (b) {
+      var each = b.ielts_detail && b.ielts_detail.minimum_each;
+      return "<tr><td><b>" + esc(b.band_label || b.band_code) + "</b></td>" +
+        "<td class='date'>" + (b.ielts_overall || "—") + "</td>" +
+        "<td class='date'>" + (each || "—") + "</td></tr>";
+    }).join("");
+    return "<section><h2>语言要求分档</h2>" +
+      '<p class="h2note">每个专业对应一档，档位见专业卡片</p>' +
+      '<div class="scroll"><table><tr><th>档位</th><th>IELTS 总分</th><th>IELTS 单项</th></tr>' +
+      rows + "</table></div></section>";
+  }
+
+  function renderPolicy(uni) {
+    var c = uni.china_policy;
+    if (!c) return "";
+    var h = "<section><h2>中国学生政策要点（" + c.entry_year + " Entry）</h2><div class='policy'>";
+    h += "<p style='margin:0'>高考成绩：" +
+      (c.gaokao_accepted ? "<span class='yes'>接受</span>" : "<span class='no'>不接受</span>直接申请本科") +
+      (c.gaokao_req ? " — " + esc(c.gaokao_req) : "") + "</p>";
+    if (c.ug_pathway) h += "<p><b>本科路径：</b>" + esc(c.ug_pathway) + "</p>";
+    if (c.pgt_gpa_rule) h += "<p><b>硕士均分：</b>" + esc(c.pgt_gpa_rule) + "</p>";
+    var notes = [];
+    if (c.agent_list && c.agent_list.note) notes.push(esc(c.agent_list.note));
+    if (c.china_office) notes.push(esc(c.china_office));
+    if (notes.length) h += '<p class="note">' + notes.join("；") + "</p>";
+    return h + "</div></section>";
+  }
+
+  function renderUni(uni) {
+    var ex = uni.extra || {};
+    var chips = [ex.group, ex.ug_programs && "本科专业 " + ex.ug_programs + " 个",
+      ex.pgt_programs && "授课型硕士 " + ex.pgt_programs + " 个", uni.cn_student_note]
+      .filter(Boolean).map(function (c) { return '<span class="chip">' + esc(c) + "</span>"; }).join("");
+    var h = '<header class="hero"><div class="eyebrow">study_abroad 数据库</div>' +
+      "<h1>" + esc(uni.name_en) + (uni.name_zh ? ' <span class="zh">' + esc(uni.name_zh) + "</span>" : "") + "</h1>" +
+      '<p class="sub">' + esc([uni.city, uni.country, uni.term_system].filter(Boolean).join(" · ")) +
+      (uni.website ? ' · <a href="' + esc(uni.website) + '">' + esc(uni.website.replace(/^https?:\/\//, "")) + "</a>" : "") +
+      "</p>" + (chips ? '<div class="chips">' + chips + "</div>" : "") + "</header>";
+
+    h += renderDeadlines(uni);
+    if (uni.programs.length) {
+      h += "<section><h2>专业档案</h2><div class='prog-grid'>" +
+        uni.programs.map(renderProgram).join("") + "</div></section>";
+    } else {
+      h += "<section><h2>专业档案</h2><p class='empty'>该校暂无专业数据</p></section>";
+    }
+    h += renderCalendar(uni) + renderBands(uni) + renderPolicy(uni);
+    return h;
+  }
+
+  var app = document.getElementById("app");
+  var tabs = document.getElementById("uniTabs");
+  var unis = DATA.universities;
+
+  function show(i) {
+    app.innerHTML = renderUni(unis[i]);
+    Array.prototype.forEach.call(tabs.children, function (b, j) {
+      b.classList.toggle("on", i === j);
+    });
+    document.getElementById("foot").innerHTML =
+      "数据来源：study_abroad 数据库（本地 MySQL）· 导出于 " + esc(DATA.generated_at) +
+      " · 更新数据后运行 <code>python3 web/export.py</code> 并刷新本页";
+  }
+
+  if (unis.length > 1) {
+    tabs.hidden = false;
+    unis.forEach(function (u, i) {
+      var b = document.createElement("button");
+      b.textContent = u.name_zh || u.name_en;
+      b.addEventListener("click", function () { show(i); });
+      tabs.appendChild(b);
+    });
+  }
+  show(0);
+})();
+</script>
+</body>
+</html>
