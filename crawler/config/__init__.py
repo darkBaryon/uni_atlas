@@ -32,11 +32,15 @@ JITTER = 1.0
 class DomainPolicy(NamedTuple):
     interval: float
     concurrency: int
+    prime: tuple = ()   # 会话预热 URL（老式有状态站点：每次运行先按序 GET 一遍）
 
 MAX_DOMAINS = 10              # 同时并发的域名数上限
 TIMEOUT = 30                  # 单请求超时（秒）
-CF_BACKOFFS = [30, 60, 120]   # Cloudflare 挑战退避序列；用尽后放弃本轮
-CF_MARKERS = ("Just a moment", "cf-challenge", "Checking your browser")
+CF_BACKOFFS = [30, 60, 120]   # 反爬挑战退避序列；用尽后放弃本轮
+# 各家 WAF 挑战页标记：Cloudflare 三种 + Imperva/Distil 式
+# （墨尔本 handbook 实测 2026-07：连发 ~6 请求触发，冷却后自动恢复）
+CF_MARKERS = ("Just a moment", "cf-challenge", "Checking your browser",
+              "Pardon Our Interruption")
 
 DEFAULT_ENTRY_YEAR = "2026"   # 学校 YAML 未指定申请季时的默认值
 
@@ -89,7 +93,8 @@ def _parse_domain_policy(domain, v):
         raise ValueError(
             f"domains.{domain} 须写成 {{interval: 秒, concurrency: N}} 形式，实际: {v!r}")
     return DomainPolicy(float(v["interval"]),
-                        int(v.get("concurrency", DEFAULT_CONCURRENCY)))
+                        int(v.get("concurrency", DEFAULT_CONCURRENCY)),
+                        tuple(v.get("prime", ())))
 
 
 def _merge(base, over):
@@ -145,4 +150,4 @@ def domain_policy(domain):
     for u in all_unis().values():
         if domain in u.domains:
             return u.domains[domain]
-    return DomainPolicy(DEFAULT_INTERVAL, DEFAULT_CONCURRENCY)
+    return DomainPolicy(DEFAULT_INTERVAL, DEFAULT_CONCURRENCY, ())

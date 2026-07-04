@@ -25,6 +25,9 @@ class UniCode(str, Enum):
     BHAM = "bham"          # 伯明翰大学
     SHEF = "shef"          # 谢菲尔德大学
 
+    # 澳洲（Go8，逐校接入）
+    MELB = "melb"          # 墨尔本大学
+
     __str__ = str.__str__      # 日志/格式化输出 'bristol' 而非 'UniCode.BRISTOL'
 
 

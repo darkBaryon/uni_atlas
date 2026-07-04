@@ -152,14 +152,30 @@ class Edinburgh(BaseParser):
         if not ym:
             m = re.search(r"/(\d{4})(\d{2})/?$", page.url)
             ym = f"{m.group(1)}/{m.group(2)}" if m else None
-        for tr in page.soup.select("table tr"):
-            cells = [norm_ws(td.get_text(" ", strip=True)) for td in tr.find_all("td")]
-            if len(cells) != 2 or not ym:
+        # 页面按学期分两张表，S1/S2 各有同名的 Revision/Examinations；
+        # 事件名是入库匹配键的一部分，扁平扫行会让两学期互相覆盖（丢 S1 考试期），
+        # 故携带表格前置标题（Semester 1/2），对重名事件前缀学期消歧。
+        rows = []
+        for table in page.soup.select("table"):
+            heading = table.find_previous(["h2", "h3", "h4"])
+            sem = norm_ws(heading.get_text(" ", strip=True)) if heading else ""
+            for tr in table.select("tr"):
+                cells = [norm_ws(td.get_text(" ", strip=True))
+                         for td in tr.find_all("td")]
+                if len(cells) == 2:
+                    rows.append((sem, cells[0], cells[1]))
+        dup = {n for n in {r[2] for r in rows}
+               if sum(1 for r in rows if r[2] == n) > 1}
+        for sem, date_cell, name in rows:
+            if not ym:
                 continue
-            start, end = date_range(cells[0])
-            if start:
-                res.calendar.append(CalendarData(
-                    ym, event_type(cells[1], start), cells[1], start, end))
+            start, end = date_range(date_cell)
+            if not start:
+                continue
+            etype = event_type(name, start)
+            if name in dup and re.fullmatch(r"Semester \d", sem) and sem not in name:
+                name = f"{sem} {name}"
+            res.calendar.append(CalendarData(ym, etype, name, start, end))
         if not res.calendar:
             res.note("semester-dates 未解析出校历事件")
 

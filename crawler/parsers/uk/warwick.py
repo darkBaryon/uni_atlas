@@ -6,7 +6,9 @@ Band A-C 分级制；课程列表部分 JS 渲染。
 import re
 
 from parsers.base import BaseParser
-from parsers.models import CalendarData, DeadlineData, DiscoveredPage, ProgramData
+from parsers.page import norm_ws
+from parsers.models import (CalendarData, DeadlineData, DiscoveredPage,
+                            ModuleData, ProgramData)
 from parsers.uk.common import (band, fee_near, find_links, first, ielts,
                                keyword_check, known_name, scan_term_lines,
                                section_text, standard_deadlines, title_from)
@@ -52,6 +54,64 @@ class Warwick(BaseParser):
         if p.tuition_intl is None:
             p.notes.append("未解析出国际学费")
         res.programs.append(p)
+
+    # ---------------- 官方课程目录（courses.warwick.ac.uk，全开放但慢）----------------
+    # 实测 2026-07-05：无反爬（"429" 系当年并发过猛的误判）。表单页 departments
+    # 下拉（~164 系代码+全名）→ 搜索页 ?departments=<code>&academicYears=2025
+    # &page=N（0 起，每页 50，页满则懒发现下一页）。行 = 代码链接(CS130-15)+
+    # 课名+系缩写；系全名经 uaDept 附加参数沿链传递（站点容忍未知参数）。
+    CATALOGUE = "https://courses.warwick.ac.uk/modules"
+    CATALOGUE_YEAR = "2025"       # 25/26 教学年（select 值）
+    PAGE_SIZE = 50
+
+    def module_catalog(self, page, res):
+        from urllib.parse import parse_qs, quote, urlsplit
+        q = parse_qs(urlsplit(page.url).query)
+        if "departments" not in q:        # 表单页：枚举系下拉
+            sel = page.soup.select_one('select[name="departments"]')
+            for o in (sel.select("option") if sel else []):
+                code = str(o.get("value") or "").strip()
+                name = o.get_text(" ", strip=True)
+                if not code:
+                    continue
+                res.discovered.append(DiscoveredPage(
+                    url=(f"{self.CATALOGUE}?departments={code}"
+                         f"&academicYears={self.CATALOGUE_YEAR}&page=0"
+                         f"&uaDept={quote(name)}"),
+                    category=Category.MODULE_CATALOG,
+                    title=f"{name} 课程名单"))
+            if not res.discovered:
+                res.note("目录表单页未枚举到 departments 下拉")
+            return
+        dept = (q.get("uaDept") or [None])[0]
+        seen = set()
+        for a in page.soup.select(f'a[href^="/modules/{self.CATALOGUE_YEAR}/"]'):
+            slug = page.abs(a["href"]).rstrip("/").rsplit("/", 1)[-1]   # CS130-15
+            m = re.fullmatch(r"([A-Z]{2,4}\d{2,4}[A-Z]?)-(\d+(?:\.\d+)?)", slug)
+            if not m or slug in seen:
+                continue
+            cell = a.find_parent("td")
+            nxt = cell.find_next_sibling("td") if cell else None
+            name = norm_ws(nxt.get_text(" ", strip=True)) if nxt else ""
+            if not name:
+                continue
+            seen.add(slug)
+            credits = float(m.group(2))
+            res.modules.append(ModuleData(
+                name_en=name, url=page.abs(a["href"]), entry_year=self.entry_year,
+                code=m.group(1), dept=dept,
+                credits=int(credits) if credits == int(credits) else None))
+        if len(seen) >= self.PAGE_SIZE:   # 页满 → 懒发现下一页
+            nxt_page = int((q.get("page") or ["0"])[0]) + 1
+            from urllib.parse import quote as _q
+            res.discovered.append(DiscoveredPage(
+                url=(f"{self.CATALOGUE}?departments={q['departments'][0]}"
+                     f"&academicYears={self.CATALOGUE_YEAR}&page={nxt_page}"
+                     f"&uaDept={_q(dept or '')}"),
+                category=Category.MODULE_CATALOG,
+                title=f"{dept} 课程名单 p{nxt_page}"))
+        if not res.modules:
+            res.info("该系本学年无课程行（小单位常见）")
 
     def term_dates(self, page, res):
         scan_term_lines(page, res, CalendarData,

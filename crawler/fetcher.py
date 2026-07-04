@@ -74,13 +74,17 @@ async def _request(session, task):
     """按 fetch_method 发请求。portlet_post: uPortal 的 cookiecheck 302 会把
     POST 变 GET 丢参数，须先 GET 同 portlet 的 render.uP 预热（每域一次），
     之后参数全在任务 URL query 里 POST 即可（实测 2026-07）。"""
-    if task.fetch_method == FetchMethod.PORTLET_POST:
-        domain = _domain(task.url)
-        if domain not in _PRIMED:
+    domain = _domain(task.url)
+    if domain not in _PRIMED:
+        for prime in config.domain_policy(domain).prime:   # 配置声明的会话预热链
+            async with session.get(prime, allow_redirects=True):
+                pass
+        if task.fetch_method == FetchMethod.PORTLET_POST:  # uPortal 固定预热 render.uP
             prime = task.url.split("/action.uP")[0] + "/render.uP"
             async with session.get(prime, allow_redirects=True):
                 pass
-            _PRIMED.add(domain)
+        _PRIMED.add(domain)
+    if task.fetch_method == FetchMethod.PORTLET_POST:
         return session.post(task.url, allow_redirects=True)
     return session.get(task.url, allow_redirects=True)
 

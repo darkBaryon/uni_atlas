@@ -47,20 +47,44 @@ case "$cmd" in
        WHERE u.code='$1' GROUP BY u.id;"
     ;;
   status)
-    python3 crawler/run.py --due --dry-run | head -1 || true
+    # 三段：① 待抓任务数 ② 每校核心数据体检（按数据策略四件套） ③ 最近变更
+    python3 crawler/run.py --due --dry-run 2>/dev/null | head -1 || true
+    echo
+    echo "▸ 每校核心数据（专业+归属 / 课程名单+链接 / 校历考试期 / 抓取健康）"
+    echo "  「未抓过」= 登记在册但一次都没抓到的页面，>0 说明有漏页要补"
     mysql study_abroad --table -e "
       SELECT u.code 学校,
              (SELECT COUNT(*) FROM programs p
                WHERE p.university_id=u.id AND p.is_active=1) 专业,
-             (SELECT COUNT(*) FROM deadlines d
-               WHERE d.university_id=u.id) 截止日期,
+             IFNULL((SELECT CONCAT(ROUND(100*SUM(p.faculty_id IS NOT NULL)/COUNT(*)),'%')
+               FROM programs p WHERE p.university_id=u.id AND p.is_active=1),'—') 院系归属,
+             (SELECT COUNT(*) FROM modules m
+               WHERE m.university_id=u.id AND m.is_active=1) 课程,
+             IFNULL((SELECT CONCAT(ROUND(100*SUM(m.url IS NOT NULL)/COUNT(*)),'%')
+               FROM modules m WHERE m.university_id=u.id AND m.is_active=1),'—') 课程带链接,
+             (SELECT COUNT(*) FROM calendar_events ce
+               WHERE ce.university_id=u.id) 校历事件,
+             (SELECT COUNT(*) FROM calendar_events ce
+               WHERE ce.university_id=u.id AND ce.event_type='exam_period') 其中考试期,
              (SELECT COUNT(*) FROM source_pages sp
                WHERE sp.university_id=u.id AND sp.status='active'
-                 AND sp.crawl_freq!='manual') 核心页面
-        FROM universities u;
-      SELECT entity_type 变更对象, field_name 字段, old_value 旧值, new_value 新值, detected_at 时间
-        FROM change_log WHERE change_type='update'
-       ORDER BY detected_at DESC LIMIT 5;"
+                 AND sp.crawl_freq!='manual') 在抓页面,
+             (SELECT COUNT(*) FROM source_pages sp
+               WHERE sp.university_id=u.id AND sp.status='active'
+                 AND sp.crawl_freq!='manual' AND sp.last_fetched_at IS NULL) 未抓过
+        FROM universities u
+       WHERE u.is_active=1
+       ORDER BY u.country, u.code;"
+    echo "▸ 最近变更（同一对象反复出现同样的对调 = 解析器不稳，要查）"
+    mysql study_abroad --table -e "
+      SELECT uu.code 学校, cl.entity_type 对象, cl.field_name 字段,
+             CONCAT(LEFT(IFNULL(cl.old_value,''),21),' → ',
+                    LEFT(IFNULL(cl.new_value,''),21)) 变更,
+             cl.detected_at 时间
+        FROM change_log cl
+        JOIN universities uu ON uu.id=cl.university_id
+       WHERE cl.change_type='update'
+       ORDER BY cl.detected_at DESC LIMIT 8;"
     ;;
   seed)
     [ $# -ge 1 ] || { echo "用法: ./run.sh seed <校代码>" >&2; exit 2; }

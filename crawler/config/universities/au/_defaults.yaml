@@ -1,0 +1,8 @@
+# 澳洲国家层默认（覆盖全局 _defaults 的 UK 值）。
+# 学年制：2 月开学，S1 二至六月、S2 七至十一月（前端「当前学年」过滤需按 country 分支）。
+country: AU
+entry_year: "2026"
+
+scope:
+  # 同英国策略：课程只采名单+链接，详情页不镜像（见 docs/数据策略.md）
+  crawl_module_details: false

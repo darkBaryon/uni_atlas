@@ -2,7 +2,7 @@
 import re
 
 from parsers.base import BaseParser
-from parsers.models import CalendarData, DiscoveredPage, ModuleRef, ProgramData
+from parsers.models import ModuleData, CalendarData, DiscoveredPage, ModuleRef, ProgramData
 from parsers.page import norm_ws
 from parsers.uk.common import (date_range, event_type, fee_near, find_links,
                                ielts, keyword_check, section_text, title_from)
@@ -59,6 +59,54 @@ class Birmingham(BaseParser):
             title = norm_ws(node.get_text(" ", strip=True))
             if 6 <= len(title) <= 140 and not re.search(r"module information|optional|compulsory|fees|apply", title, re.I):
                 p.modules.append(ModuleRef(name=title, url=page.abs(node["href"]) if node.name == "a" and node.get("href") else None))
+
+    # ---------------- 官方课程目录（Programmes & Modules Handbook）----------------
+    # WebHandbooks servlet（探明 2026-07-05）：getSchoolList（52 院系）→
+    # getProgramList（专业变体，含 FT/PT）→ getModuleList（模块名单：名称+代码
+    # +详情链接）。会话态：须先按序访问 schoolList + 任一 programList（域级
+    # prime 链在 yaml domains 配置）；院系名经 uaSchool 附加参数沿链传递
+    # （servlet 容忍未知参数，实测）。只收名单，详情存链接不镜像。
+    def module_catalog(self, page, res):
+        from urllib.parse import parse_qs, quote, urlsplit
+        q = parse_qs(urlsplit(page.url).query)
+        action = (q.get("Action") or [""])[0]
+        if action == "getSchoolList":
+            for href, text in page.links(href_re=r"Action=getProgramList"):
+                res.discovered.append(DiscoveredPage(
+                    url=href, category=Category.MODULE_CATALOG,
+                    title=f"{text} 专业列表（手册）"))
+            if not res.discovered:
+                res.note("手册学校列表未解析出院系链接")
+            return
+        if action == "getProgramList":
+            school = (q.get("pgDdesc") or [""])[0]
+            seen = set()
+            for href, _t in page.links(href_re=r"Action=getModuleList"):
+                if href in seen:
+                    continue
+                seen.add(href)
+                res.discovered.append(DiscoveredPage(
+                    url=f"{href}&uaSchool={quote(school)}",
+                    category=Category.MODULE_CATALOG,
+                    title=f"{school} 模块名单（手册）"))
+            if not res.discovered:
+                res.info(f"{school} 手册无专业模块链接（小院系可能确实没有）")
+            return
+        if action == "getModuleList":
+            dept = (q.get("uaSchool") or [None])[0]
+            for a in page.soup.select('a[href*="getModuleDetailsList"]'):
+                aq = parse_qs(urlsplit(page.abs(a["href"])).query)
+                subj = (aq.get("pgSubj") or [""])[0]
+                crse = (aq.get("pgCrse") or [""])[0]
+                name = norm_ws(a.get_text(" ", strip=True))
+                # 每模块两个锚点（名称行 + 代码行），只取名称行；null 行跳过
+                if subj in ("", "null") or not name or re.fullmatch(r"[0-9 ]+", name):
+                    continue
+                res.modules.append(ModuleData(
+                    name_en=name, url=page.abs(a["href"]),
+                    entry_year=self.entry_year, code=f"{subj} {crse}", dept=dept))
+            if not res.modules:
+                res.note("手册模块名单页无模块行")
 
     def term_dates(self, page, res):
         year = None

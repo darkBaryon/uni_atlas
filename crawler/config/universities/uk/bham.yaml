@@ -10,7 +10,15 @@ domains:
   www.birmingham.ac.uk: {interval: 1.0, concurrency: 3}
   # 官方 Programmes & Modules Handbook：JSESSIONID servlet，无反爬纯 200，但会话态 +
   # 后端偏慢，并发别开太猛以免 session 争用，取中低档。
-  program-and-modules-handbook.bham.ac.uk: {interval: 1.5, concurrency: 2}
+  program-and-modules-handbook.bham.ac.uk:
+    interval: 1.5
+    concurrency: 2
+    # 会话态 servlet：模块名单页只对「访问过 schoolList+任一 programList」的
+    # 会话渲染（实测 2026-07-05），每次运行先按序预热
+    prime:
+      - "https://program-and-modules-handbook.bham.ac.uk/webhandbooks/WebHandbooks-control-servlet?Action=getSchoolList"
+      - "https://program-and-modules-handbook.bham.ac.uk/webhandbooks/WebHandbooks-control-servlet?Action=getProgramList&pgDeptId=027&pgDdesc=Law"
+
 
 scope:
   crawl_module_details: false
@@ -23,6 +31,9 @@ faculties:
   College of Social Sciences: 社会科学学院
 
 seed_pages:
+  # 官方 Programmes & Modules Handbook：模块名单权威源（52 院系）
+  - {category: module_catalog, crawl_freq: monthly,
+     url: "https://program-and-modules-handbook.bham.ac.uk/webhandbooks/WebHandbooks-control-servlet?Action=getSchoolList"}
   - category: program_catalog
     url: https://www.birmingham.ac.uk/study/undergraduate/course-search
     crawl_freq: monthly

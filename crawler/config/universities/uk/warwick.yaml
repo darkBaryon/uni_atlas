@@ -26,6 +26,9 @@ faculties:
   "Faculty of Social Sciences": 社会科学学院
 
 seed_pages:
+  # 官方课程目录（全开放）：表单页枚举系 → 搜索页收名单
+  - {category: module_catalog, crawl_freq: monthly,
+     url: "https://courses.warwick.ac.uk/modules"}
   - {category: program_catalog, crawl_freq: monthly,
      url: "https://warwick.ac.uk/study/undergraduate/courses-2026/"}
   - {category: program_catalog, crawl_freq: monthly,
