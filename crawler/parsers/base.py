@@ -15,6 +15,7 @@
 """
 import logging
 import re
+from collections.abc import Callable
 
 import config
 from config.codes import Category
@@ -26,18 +27,16 @@ logger = logging.getLogger(__name__)
 # BaseParser 子类实现与 Category 成员值同名的方法即注册
 CATEGORIES = tuple(Category)
 
-PARSERS = {}   # (uni_code, category) -> fn(html, url) -> ParseResult
+# 解析函数签名：吃快照字节与页面 URL，产出标准数据对象
+ParserFn = Callable[[bytes, str], ParseResult]
+
+# 注册表：包内由 BaseParser.__init_subclass__ 写入；包外只经 get_parser 读
+PARSERS: dict[tuple[str, str], ParserFn] = {}
 
 
-def register(uni_code, category):
-    """函数式注册（BaseParser 之外的兜底用法）。"""
-    def deco(fn):
-        PARSERS[(uni_code, category)] = fn
-        return fn
-    return deco
-
-
-def get_parser(uni_code, category):
+def get_parser(uni_code: str, category: str) -> ParserFn | None:
+    """注册表的唯一对外查询口——pipeline 不直接摸字典，
+    将来注册表要加校验/懒加载/统计，只改这一处。"""
     return PARSERS.get((uni_code, category))
 
 
