@@ -2,6 +2,7 @@
 
 解析器只吃这里落盘的文件，从不直接吃网络响应（可离线重放）。
 """
+import gzip
 import hashlib
 import os
 import re
@@ -24,7 +25,8 @@ def _slug(url):
 
 
 def path_for(uni_code, category, url):
-    return os.path.join(config.SNAP_ROOT, uni_code, category, _slug(url) + ".html")
+    # gzip 落盘：HTML 压缩比 ~6:1（12,530 页 1.5G → ~250M，实测 2026-07）
+    return os.path.join(config.SNAP_ROOT, uni_code, category, _slug(url) + ".html.gz")
 
 
 def save(conn, task, body_bytes, http_status):
@@ -45,7 +47,7 @@ def save(conn, task, body_bytes, http_status):
 
     fpath = path_for(task.uni_code, task.category, task.url)
     os.makedirs(os.path.dirname(fpath), exist_ok=True)
-    with open(fpath, "wb") as f:
+    with gzip.open(fpath, "wb", compresslevel=6) as f:
         f.write(body_bytes)
 
     with conn.cursor() as cur:
@@ -74,5 +76,6 @@ def mark_parsed(conn, snapshot_id, ok=True):
 
 
 def read(content_path):
-    with open(content_path, "rb") as f:
+    opener = gzip.open if content_path.endswith(".gz") else open   # 兼容未压缩旧快照
+    with opener(content_path, "rb") as f:
         return f.read()
