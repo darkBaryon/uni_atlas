@@ -126,13 +126,27 @@
   }
 
   function renderNav(route) {
+    // 顶部只放地区（学校多了标签没法用）；点地区回总览并滚到对应分节
+    var regions = [];
+    INDEX.universities.forEach(function (u) {
+      if (regions.indexOf(u.country || "其他") < 0) regions.push(u.country || "其他");
+    });
     nav.innerHTML = '<a class="brand" href="#/">留学辅导课程库</a>' +
-      '<a class="tab' + (route.view === "overview" ? " on" : "") + '" href="#/">总览</a>' +
-      INDEX.universities.map(function (u) {
-        var on = route.code === u.code;
-        return '<a class="tab' + (on ? " on" : "") + '" href="#/u/' + u.code + '">' +
-          UI.esc(u.name_zh || u.name_en) + "</a>";
+      regions.map(function (r) {
+        return '<a class="tab" href="#/" data-region="' + UI.esc(r) + '">' +
+          UI.esc((VIEWS.REGION && VIEWS.REGION[r]) || r) + "</a>";
       }).join("");
+    nav.querySelectorAll("[data-region]").forEach(function (a) {
+      a.addEventListener("click", function (e) {
+        e.preventDefault();
+        var go = function () {
+          var el = document.getElementById("region-" + a.dataset.region);
+          if (el) el.scrollIntoView({ behavior: "smooth" });
+        };
+        if (parseHash().view === "overview") { go(); }
+        else { location.hash = "#/"; setTimeout(go, 50); }
+      });
+    });
   }
 
   function bindEvents(route, uni) {

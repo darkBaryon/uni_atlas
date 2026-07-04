@@ -10,6 +10,7 @@
 
   /* ---------------- 总览页（吃 index 摘要，按地区分组）---------------- */
   var REGION = { UK: "英国", AU: "澳大利亚", HK: "香港" };
+  VIEWS.REGION = REGION;
 
   VIEWS.overview = function (index) {
     var h = '<header class="hero"><div class="eyebrow">study_abroad · 留学辅导课程库</div>' +
@@ -30,7 +31,7 @@
     });
 
     order.forEach(function (key) {
-      h += "<section><h2>" + esc(REGION[key] || key) + "</h2>" +
+      h += '<section id="region-' + esc(key) + '"><h2>' + esc(REGION[key] || key) + "</h2>" +
         '<div class="uni-grid">' + groups[key].map(function (u) {
           return '<a class="uni-card" href="#/u/' + esc(u.code) + '">' +
             '<span class="country">' + esc(u.city || "") + "</span>" +
