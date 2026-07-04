@@ -4,10 +4,14 @@
 js_render 待 Playwright）；语言要求为 Band A-E 分级制。
 """
 from parsers.base import BaseParser
+from parsers.page import norm_ws
 from parsers.models import CalendarData, DeadlineData, DiscoveredPage, ProgramData
-from parsers.uk.common import (band, fee_near, find_links, first, ielts,
-                               keyword_check, known_name, scan_term_lines,
+from parsers.uk.common import (band, date_range, event_type, fee_near,
+                               find_links, first, ielts,
+                               keyword_check, known_name,
                                section_text, standard_deadlines, title_from)
+import re
+
 from config.codes import Category, UniCode
 
 COURSE_RE = (r"/study/(?:undergraduate|postgraduate-taught)/courses/"
@@ -51,10 +55,33 @@ class KCL(BaseParser):
         res.programs.append(p)
 
     def term_dates(self, page, res):
-        scan_term_lines(page, res, CalendarData,
-                        r"welcome|semester|exam|teaching|holiday")
+        """版式（实测 2026-07）：'2025-26 Academic Calendar' 学年标题 →
+        'Semester N' 小节 → '标签: Weekday DD – Weekday DD Month YYYY' 行。"""
+        year = sem = None
+        for line in page.txt.splitlines():
+            line = norm_ws(line)
+            m = re.match(r"(20\d{2})-(\d{2}) Academic Calendar", line)
+            if m:
+                year, sem = f"{m.group(1)}/{m.group(2)}", None
+                continue
+            if re.fullmatch(r"Semester \d", line):
+                sem = line
+                continue
+            if ":" not in line or not year:
+                continue
+            label, _, rest = line.partition(":")
+            label = norm_ws(label)
+            if label.lower() == "academic year":   # 学年整体区间，噪音
+                continue
+            start, end = date_range(rest)
+            if not start:
+                continue
+            name = f"{sem} {label}" if sem else label
+            res.calendar.append(CalendarData(
+                year, event_type(name, start), name, start, end))
         if not res.calendar:
             res.note("KCL 校历页未解析出日期区间")
+
 
     def ug_admissions(self, page, res):
         keyword_check(res, page, r"deadline|UCAS", "KCL UG 招生页")

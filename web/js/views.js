@@ -337,10 +337,13 @@
     years.sort().forEach(function (y) {
       h += "<h3>" + esc(y) + " 学年</h3>" +
         '<div class="scroll"><table><tr><th>起</th><th>止</th><th>事项</th><th>类型</th></tr>';
+      var TRACK = { ioe: "教育学院轨", pharmacy: "药学院轨", medicine: "医学院轨" };
       byYear[y].forEach(function (e) {
         var t = UI.ETYPE[e.event_type] || [e.event_type, "teach"];
+        var trk = (e.calendar_track && e.calendar_track !== "standard")
+          ? ' <span class="sub">（' + esc(TRACK[e.calendar_track] || e.calendar_track) + '）</span>' : "";
         h += "<tr><td class='date'>" + e.start_date + "</td><td class='date'>" + (e.end_date || "—") +
-          "</td><td>" + esc(e.name) + "</td><td><span class='etype " + t[1] + "'>" + t[0] + "</span></td></tr>";
+          "</td><td>" + esc(e.name) + trk + "</td><td><span class='etype " + t[1] + "'>" + t[0] + "</span></td></tr>";
       });
       h += "</table></div>";
     });

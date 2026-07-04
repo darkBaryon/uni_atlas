@@ -141,20 +141,29 @@ class UCL(BaseParser):
 
     # ---------------- 校历 ----------------
     def term_dates(self, page, res):
-        """表格版式（实测 2026-07）：标题 'Term dates 2025-26' + Term/Dates 两列表；
-        IOE/药学院有独立轨道表。官网当前只挂当年，未来学年发布后月度复查自动接住。"""
+        """版式（实测 2026-07）：h2 'Term dates 2025-26' 后接主表，
+        h3 'UCL Institute of Education'/'UCL School of Pharmacy' 后接独立轨道表。
+        年份按文档顺序追踪（表格自己的标题可能不带年份，禁止全页回退——
+        否则会抓到导航存档链接里的 2022-23）。"""
         from parsers.uk.common import date_range, event_type
-        for tb in page.soup.find_all("table"):
-            head = tb.find_previous(["h2", "h3"])
-            head_txt = head.get_text(" ", strip=True) if head else ""
-            m = re.search(r"(20\d{2})-(\d{2})", head_txt) or re.search(
-                r"(20\d{2})-(\d{2})", page.txt)
-            if not m:
+        year = None
+        track = "standard"
+        for el in page.soup.find_all(["h2", "h3", "table"]):
+            if el.name in ("h2", "h3"):
+                head = el.get_text(" ", strip=True)
+                m = re.search(r"(20\d{2})-(\d{2})", head)
+                if m:
+                    year = f"{m.group(1)}/{m.group(2)}"
+                if "Education" in head:
+                    track = "ioe"
+                elif "Pharmacy" in head:
+                    track = "pharmacy"
+                elif m:
+                    track = "standard"
                 continue
-            year = f"{m.group(1)}/{m.group(2)}"
-            track = ("ioe" if "Education" in head_txt
-                     else "pharmacy" if "Pharmacy" in head_txt else "standard")
-            for tr in tb.find_all("tr"):
+            if year is None:
+                continue   # 年份未知的表格宁可跳过，不猜
+            for tr in el.find_all("tr"):
                 cells = [c.get_text(" ", strip=True) for c in tr.find_all("td")]
                 if len(cells) < 2:
                     continue
@@ -165,6 +174,7 @@ class UCL(BaseParser):
                         calendar_track=track))
         if not res.calendar:
             res.note("UCL 校历页未解析出任何表格日期")
+
 
     # ---------------- 课程（模块）页 ----------------
     def module_catalog(self, page, res):
