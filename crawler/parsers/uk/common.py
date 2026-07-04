@@ -10,6 +10,8 @@ Keep this file boring: selectors and school-specific rules stay in each parser.
 import re
 
 from config.codes import EventType
+from parsers.uk.vocab import (EVENT_RULES, FEE_EXCLUDE, FEE_MAX, FEE_MIN,
+                              RESIT_MONTHS)
 from urllib.parse import parse_qs, unquote, urlparse, urlsplit, urlunsplit
 
 from parsers.page import money, norm_ws, parse_date
@@ -88,18 +90,13 @@ def first(txt, *patterns, flags=re.I):
     return None
 
 
-# 学费语境的排除词：这些词附近的 £ 金额不是学费
-_FEE_EXCLUDE = ("deposit", "application fee", "scholarship", "discount",
-                "bursar", "living cost", "accommodation", "per year for books")
-# 英国大学学年学费的合理区间（区间外视为误抓：奖学金/杂费/总生活费等）
-_FEE_MIN, _FEE_MAX = 3500, 70000
 
 
 def _fee_ok(val, ctx):
-    if val is None or not (_FEE_MIN <= val <= _FEE_MAX):
+    if val is None or not (FEE_MIN <= val <= FEE_MAX):
         return False
     low = ctx.lower()
-    return not any(w in low for w in _FEE_EXCLUDE)
+    return not any(w in low for w in FEE_EXCLUDE)
 
 
 def fee_near(txt, labels):
@@ -203,28 +200,12 @@ def date_range(text):
     return None, None
 
 
-# 校历事件分类词典（按序首中即停；措辞是数据，见 ARCHITECTURE 七点六）
-_EVENT_RULES: tuple = (
-    (("welcome", "induction"),                EventType.WELCOME_WEEK),
-    # 学年整体区间（"academic year 9月至次年9月"）必须先于 orientation：
-    # "academic year / Orientation" 是全年区间，不是迎新周
-    (("academic year",),                      EventType.OTHER),
-    (("orientation",),                        EventType.WELCOME_WEEK),
-    (("reading week",),                       EventType.READING_WEEK),
-    (("resit",),                              EventType.RESIT_PERIOD),
-    (("exam", "assessment", "revision"),      EventType.EXAM_PERIOD),
-    (("holiday",),                            EventType.HOLIDAY),
-    (("vacation", "closure", "break"),        EventType.CLOSURE),
-    (("graduation",),                         EventType.GRADUATION),
-    (("term", "semester", "teaching"),        EventType.TEACHING_PERIOD),
-)
-RESIT_MONTHS = ("07", "08")   # 英国主考试在春/冬，7-8 月的考试期即补考季
 
 
 def event_type(name, start=None):
-    """事件名（+起始月辅助）→ EventType；词典见 _EVENT_RULES。"""
+    """事件名（+起始月辅助）→ EventType；词典见 vocab.EVENT_RULES。"""
     n = (name or "").lower()
-    for keywords, etype in _EVENT_RULES:
+    for keywords, etype in EVENT_RULES:
         if any(k in n for k in keywords):
             if etype is EventType.EXAM_PERIOD and start and start[5:7] in RESIT_MONTHS:
                 return EventType.RESIT_PERIOD

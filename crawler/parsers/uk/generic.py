@@ -33,22 +33,11 @@ from parsers.base import BaseParser, get_parser
 from parsers.models import DeadlineData, DiscoveredPage, ProgramData
 from parsers.page import parse_date
 from parsers.uk.common import fee_near, first, ielts, section_text
+from parsers.uk.vocab import (ENTRY_REQ_HEADING, ENTRY_REQ_STOP, FACULTY_RE,
+                              FEE_HOME_LABELS, FEE_INTL_LABELS, PG_URL_RE)
 
 logger = logging.getLogger(__name__)
 
-# 缺省措辞/模式：10 校观察的高频值（长的在前，先精确后宽泛）。
-# 这些是英国经验，所以住在 parsers/uk/ 而不是 config 层。
-FEE_INTL_LABELS = ["International & EU", "Overseas students", "International students",
-                   "Overseas fee", "International fee", "Overseas", "International"]
-FEE_HOME_LABELS = ["Home & RUK", "UK students", "Home students", "Home fee",
-                   "Home (UK)", "Home"]
-PG_URL_RE = r"/postgraduate|/masters|/taught|/pgt|-msc\b|-ma\b"
-ENTRY_REQ_HEADING = (r"Entry requirements?|Academic requirements?|Qualifications|"
-                     r"Academic entry qualification overview|Typical (?:A-level )?offer")
-ENTRY_REQ_STOP = (r"English language|Fees|How to apply|Application and selection|"
-                  r"Programme structure")
-FACULTY_RE = (r"((?:Adam Smith Business School|(?:School|Faculty|College|Department)"
-              r" of [A-Z][A-Za-z ,&\-]{3,70}))")
 MIN_NAME_LEN = 3          # 短于此的"专业名"视为解析失败（如空 h1 抓到装饰字符）
 
 
