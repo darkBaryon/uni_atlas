@@ -91,3 +91,18 @@ faculty_overrides:
   ecology-environmental-monitoring: School of Biodiversity, One Health & Veterinary Medicine
   central-east-european-russian-eurasian-studies: School of Social & Political Sciences
   # Gadjah Mada 联合办学 5 个与 UPES/SIT 合作项目故意留空（跨校归属不明）
+
+# 官方课程目录(coursecatalogue)的学院叫法变体 → faculties 官方名
+faculty_alias:
+  "School of Biodiversity One Health Vet Med": School of Biodiversity, One Health & Veterinary Medicine
+  "School of Cardiovascular and Metabolic": School of Cardiovascular & Metabolic Health
+  "School of Culture and Creative Arts": School of Culture & Creative Arts
+  "School of Geographical and Earth Sciences": School of Geographical & Earth Sciences
+  "School of Health and Wellbeing": School of Health & Wellbeing
+  "School of Infection and Immunity": School of Infection & Immunity
+  "School of Mathematics and Statistics": School of Mathematics & Statistics
+  "School of Modern Languages and Cultures": School of Modern Languages & Cultures
+  "School of Physics and Astronomy": School of Physics & Astronomy
+  "School of Psychology and Neuroscience": School of Psychology & Neuroscience
+  "School of Social and Environmental Sustainability": School of Social & Environmental Sustainability
+  "School of Social and Political Sciences": School of Social & Political Sciences

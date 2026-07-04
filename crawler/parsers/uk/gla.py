@@ -11,7 +11,7 @@ import re
 from datetime import datetime
 
 from parsers.base import BaseParser
-from parsers.models import ModuleRef
+from parsers.models import ModuleData, ModuleRef
 from parsers.uk.common import keyword_check, event_type, modules_from_credit_lis
 from parsers.models import CalendarData, DeadlineData, DiscoveredPage, ProgramData
 from parsers.page import parse_date
@@ -117,6 +117,42 @@ class Glasgow(BaseParser):
                     "international", "application", d + " 23:59:00",
                     p.entry_year, "国际学生截止"))
         p.ucas_code = page.re(r"Apply to ([A-Z]{1,2}\d{2}[A-Z0-9]?)\b")
+
+    # ---------------- 官方课程目录（名单+链接，不镜像详情）----------------
+    def module_catalog(self, page, res):
+        """coursecatalogue（实测 2026-07）：browsebyschool 根页 → 27 个
+        courselist/?code=REGxx&name=学院名 → 全校课程名单（代码/名称/链接，
+        自带院系归属）。策略：只收名单，详情点链接看官网。"""
+        from urllib.parse import parse_qs, unquote_plus, urlsplit
+        if "browsebyschool" in page.url:
+            for href, text in page.links(href_re=r"/coursecatalogue/courselist/"):
+                res.discovered.append(DiscoveredPage(
+                    url=href, category=Category.MODULE_CATALOG,
+                    title=f"{text} 课程名单"))
+            if not res.discovered:
+                res.note("browsebyschool 未解析出学院课程清单链接")
+            return
+        if "/courselist/" in page.url:
+            q = parse_qs(urlsplit(page.url).query)
+            school_raw = unquote_plus(q.get("name", [""])[0])
+            # 变体名经 faculty_alias 规范化在 loader 内完成；服务型单位（非学院）跳过
+            if not school_raw.startswith(("School of", "Adam Smith")):
+                res.note(f"非学院课程清单，跳过: {school_raw}")
+                return
+            for href, text in page.links(href_re=r"/coursecatalogue/course/\?code="):
+                code = parse_qs(urlsplit(href).query).get("code", [None])[0]
+                name = re.sub(r"\s+", " ", text).strip()
+                if name and code:
+                    res.modules.append(ModuleData(
+                        name_en=name, url=href, entry_year=self.entry_year,
+                        code=code, dept=school_raw))
+            if not res.modules:
+                res.note(f"{school_raw} 课程清单页无课程链接")
+            return
+        # 目录首页：发现 browsebyschool
+        for href, _t in page.links(href_re=r"/coursecatalogue/browsebyschool/?$"):
+            res.discovered.append(DiscoveredPage(
+                url=href, category=Category.MODULE_CATALOG, title="按学院浏览课程"))
 
     # ---------------- 学院归属反向索引 ----------------
     def faculty_list(self, page, res):

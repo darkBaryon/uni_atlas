@@ -230,7 +230,9 @@ class Loader:
             return cur.lastrowid
 
     def load_module(self, m, source_page_id, snapshot_id):
+        fac_id = self.faculty_id(getattr(m, "dept", None), level="department")
         vals = {
+            "faculty_id": fac_id,
             "credits": m.credits, "level": _trunc(m.level, 16),
             "semester": _trunc(m.semester, 32),
             "leader": _trunc(m.leader, 255),

@@ -177,12 +177,14 @@
       }
       return h;
     }
-    h += VIEWS._moduleSection(uni, direct);   // 无系的学院：课程列表在上
+    var facIds = {}; facIds[facId] = 1;
+    (uni.faculties || []).forEach(function (f) { if (f.parent_id === facId) facIds[f.id] = 1; });
+    h += VIEWS._moduleSection(uni, direct, facIds);   // 无系的学院：课程列表在上
     return h + VIEWS._programSection(uni, filters, direct, "专业列表");
   };
 
-  /* 课程（模块）列表：该组专业引用到的全部单门课，去重 */
-  VIEWS._moduleSection = function (uni, progs) {
+  /* 课程（模块）列表：专业课表引用 ∪ 按院系归属的官方名单（facIds 给定时） */
+  VIEWS._moduleSection = function (uni, progs, facIds) {
     var seen = {}, mods = [];
     progs.forEach(function (p) {
       (p.modules || []).forEach(function (pm) {
@@ -190,6 +192,14 @@
         if (m && !seen[m.id]) { seen[m.id] = 1; mods.push(m); }
       });
     });
+    if (facIds) {
+      Object.keys(uni.modules).forEach(function (id) {
+        var m = uni.modules[id];
+        if (m.faculty_id != null && facIds[m.faculty_id] && !seen[m.id]) {
+          seen[m.id] = 1; mods.push(m);
+        }
+      });
+    }
     if (!mods.length) {
       var cat = (uni.extra || {}).module_catalogue_url;
       return "<section><h2>课程列表</h2><p class='empty'>" +
@@ -227,7 +237,8 @@
       (dept && dept.name_zh ? ' <span class="zh">' + esc(dept.name_zh) + "</span>" : "") + "</h1>" +
       (dept && dept.url ? '<p class="sub"><a href="' + esc(dept.url) +
         '" target="_blank" rel="noopener">官网 ↗</a></p>' : "") + "</header>";
-    h += VIEWS._moduleSection(uni, progs);
+    var facIds = {}; facIds[deptId] = 1;
+    h += VIEWS._moduleSection(uni, progs, facIds);
     return h + VIEWS._programSection(uni, filters, progs, "专业列表");
   };
 

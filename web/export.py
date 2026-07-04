@@ -83,7 +83,7 @@ def main():
 
         # ---- 模块全量（一次导出，专业里只放引用，避免 620 条关联重复膨胀）----
         modules = fetch_all(
-            cur, "SELECT id, code, name_en, name_zh, credits, level, semester, "
+            cur, "SELECT id, code, name_en, name_zh, credits, level, semester, faculty_id, "
                  "       description, assessment, prerequisites, leader, extra, url, entry_year "
                  "FROM modules WHERE university_id=%s AND is_active=1", (uid,))
         contents = fetch_all(

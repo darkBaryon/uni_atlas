@@ -55,6 +55,7 @@ class ModuleData:
     url: str
     entry_year: str
     code: str | None = None
+    dept: str | None = None           # 开课院系（官方目录按院列课时可得）
     credits: int | None = None
     level: str | None = None       # 'FHEQ Level 7' 等
     semester: str | None = None
