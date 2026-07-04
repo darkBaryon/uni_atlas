@@ -98,12 +98,20 @@ class Sydney(BaseParser):
         except json.JSONDecodeError:
             res.note("units 枚举非 JSON")
             return
+        # Coveo 给的是带学期后缀的 offering URL，但 2026 的 offering 页大量未上线
+        # （302→/errors/500.html）；改发现**裸 /units/{code}** —— 实测直接 200
+        # 返回当前有效开课内容，且天然按代码去重（一门课多 offering 只留一个任务）。
+        seen = set()
         for r in data.get("results", []):
-            uri = r.get("clickUri") or (r.get("raw") or {}).get("uri")
-            if uri and "/units/" in uri:
-                res.discovered.append(DiscoveredPage(
-                    url=uri, category=Category.MODULE_CATALOG,
-                    title=norm_ws(r.get("title") or "")))
+            uri = r.get("clickUri") or (r.get("raw") or {}).get("uri") or ""
+            m = re.search(r"/units/([A-Z]{2,4}\d{4})", uri)
+            if not m or m.group(1) in seen:
+                continue
+            seen.add(m.group(1))
+            res.discovered.append(DiscoveredPage(
+                url=f"https://www.sydney.edu.au/units/{m.group(1)}",
+                category=Category.MODULE_CATALOG,
+                title=norm_ws(r.get("title") or "")))
         for u in _next_coveo_urls(page.url, data.get("totalCount", 0)):
             res.discovered.append(DiscoveredPage(
                 url=u, category=Category.MODULE_CATALOG, title="units 枚举分页"))
@@ -119,8 +127,9 @@ class Sydney(BaseParser):
         # /units/{code}/{2026-S1C-…} → 学期段
         seg = page.url.rstrip("/").split("/")[-1]
         sess = seg if re.match(r"20\d\d-", seg) else None
-        credits = page.re(r"Credit points\s*</[^>]+>\s*<[^>]+>\s*(\d+)") \
-            or page.re(r"(\d+)\s*credit point", flags=re.I)
+        # 只认标注的 "Credit points" 字段；松散的 "N credit point" 会抓到学位总学分
+        # （如 144），不用。
+        credits = page.re(r"Credit points\s*</[^>]+>\s*<[^>]+>\s*(\d+)")
         dept = page.re(r"(School of [A-Z][A-Za-z ,&]{3,45})\s+Student Portal")
         res.modules.append(ModuleData(
             name_en=name, url=page.url, entry_year=self.entry_year,

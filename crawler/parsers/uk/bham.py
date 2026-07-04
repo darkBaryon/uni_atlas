@@ -175,4 +175,12 @@ def _entry_year(page, default):
 
 def _dept(page):
     m = re.search(r"\b(Birmingham Business School|School of [A-Z][A-Za-z &,\-]{3,80}|Department of [A-Z][A-Za-z &,\-]{3,80})\b", page.txt)
-    return norm_ws(m.group(1)) if m else None
+    if not m:
+        return None
+    # 正文散句里提到的院系名会连着谓语被吞进来（"Department of X was ranked..."
+    # 曾造出 125 条散文院系行，2026-07-05）——逗号/谓语处截断，限长
+    name = re.split(r",| (?:was|is|are|has|have|means|covers|enjoys|examines|"
+                    r"stretches|offers|provides|at the|and (?:develop|work|clinical)|"
+                    r"student-run|ranked|based)\b", norm_ws(m.group(1)))[0].strip()
+    name = re.sub(r"\s+(?:and|in|to|of|the)$", "", name)
+    return name if 8 <= len(name) <= 60 else None

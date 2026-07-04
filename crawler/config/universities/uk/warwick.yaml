@@ -12,8 +12,9 @@ entry_year: "2026"
 domains:
   # 2026-07 复核：此前“429 限流”系误判——20 路并发实测全 200/404、零 429、无 challenge。
   # 唯一特征是响应慢（首访 ~8s，之后 2-3s/页），故靠并发提吞吐、间隔收紧。
-  # 主站实测会 429（2026-07-05 termdates 中招）——高并发只适用 courses 子域
-  warwick.ac.uk: {interval: 3.0, concurrency: 1}
+  # 主站实测会 429（termdates 中招；两进程叠加 3.0×2 也中招，2026-07-05 两次）
+  # ——单进程 5s 起步，且华威任务永远串行跑，别开并行进程
+  warwick.ac.uk: {interval: 12.0, concurrency: 1}   # 5s 仍每几页一个 429（罚睡比慢发更亏），12s 压线
   # 官方模块目录（courses.warwick.ac.uk/modules）：并发容忍度实测最高（20 路并发全 200）；
   # 单页慢（2-3s），多开并发收益最大，推到高档。interval 保留 0.5s 作兜底。
   courses.warwick.ac.uk: {interval: 0.5, concurrency: 8}
