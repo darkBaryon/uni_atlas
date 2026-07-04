@@ -7,7 +7,7 @@ website: https://www.birmingham.ac.uk
 entry_year: "2026"
 
 domains:
-  www.birmingham.ac.uk: 3.0
+  www.birmingham.ac.uk: {interval: 3.0, concurrency: 1}
 
 scope:
   crawl_module_details: false

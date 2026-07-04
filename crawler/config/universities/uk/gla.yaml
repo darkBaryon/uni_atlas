@@ -12,7 +12,7 @@ entry_year: "2026"
 
 # 未实测反爬阈值，先沿用 3s 保守节奏（调研时页面结构统一、抓取难度低）
 domains:
-  www.gla.ac.uk: 3.0
+  www.gla.ac.uk: {interval: 3.0, concurrency: 1}
 
 scope:
   # 范围 = 数据层级而非院系：全部学院的专业页都抓（不设 focus_depts），

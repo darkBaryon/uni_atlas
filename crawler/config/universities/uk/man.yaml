@@ -9,8 +9,8 @@ city: Manchester
 entry_year: "2026"
 
 domains:
-  www.manchester.ac.uk: 3.0
-  portal.manchester.ac.uk: 3.0
+  www.manchester.ac.uk: {interval: 3.0, concurrency: 1}
+  portal.manchester.ac.uk: {interval: 3.0, concurrency: 1}
 
 scope:
   crawl_module_details: false

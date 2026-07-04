@@ -3,7 +3,8 @@ import re
 from urllib.parse import urlparse
 
 from parsers.base import BaseParser
-from parsers.models import CalendarData, DeadlineData, DiscoveredPage, ModuleRef, ProgramData
+from parsers.models import (CalendarData, DeadlineData, DiscoveredPage,
+                            ModuleData, ModuleRef, ProgramData)
 from parsers.page import norm_ws, parse_date
 from parsers.uk.common import (date_range,
                                dedupe_discovered, facts, fee_near, ielts,
@@ -70,6 +71,51 @@ class Leeds(BaseParser):
             m = re.match(r"(.{5,120}?)\s+(?:[–-]|\()\s*(\d{1,3})\s+credits?\)?$", line, re.I)
             if m and not re.search(r"\b(year|semester|choose|select)\b", m.group(1), re.I):
                 p.modules.append(ModuleRef(name=norm_ws(m.group(1)), module_type="core"))
+
+    # ---------------- 官方课程目录（名单+链接，不镜像详情）----------------
+    # catalogue.leeds.ac.uk 全开放无反爬（探明 2026-07-04，学年 202627 生效）。
+    # 表单页 /ModuleSearch/{UG|TP} 枚举 School 下拉（~147 代码）→ 结果页
+    # GET /ModuleSearch/results/{level}/{year}/ALL/{SCHOOL}/False/ALL/False
+    # 每行 = 代码链接 + 课名；学院名在区块 h2（含联办区块，同院照收）。
+    CATALOGUE = "https://catalogue.leeds.ac.uk"
+    CATALOGUE_YEAR = "202627"
+    MODULE_LEVELS = ("UG", "TP")     # 本科 + 授课研究生
+
+    def module_catalog(self, page, res):
+        if "/ModuleSearch/results/" in page.url:
+            dept = None
+            for h2 in page.soup.select("h2"):
+                t = norm_ws(h2.get_text(" ", strip=True))
+                if t and not t.startswith("Taught by") and "navigation" not in t.lower():
+                    dept = t
+                    break
+            lvl = page.url.split("/ModuleSearch/results/")[1].split("/")[0]
+            for a in page.soup.select('a[href^="/Module/"]'):
+                code = norm_ws(a.get_text(" ", strip=True))
+                tr = a.find_parent("tr")
+                cells = [norm_ws(td.get_text(" ", strip=True)) for td in tr.select("td")] if tr else []
+                name = cells[1] if len(cells) > 1 else ""
+                if not re.fullmatch(r"[A-Z]{2,6}\d{4}", code) or not name:
+                    continue
+                res.modules.append(ModuleData(
+                    name_en=name, url=page.abs(a["href"]), entry_year=self.entry_year,
+                    code=code, dept=dept, level="PGT" if lvl == "TP" else lvl))
+            if not res.modules:
+                res.note("目录结果页无课程行（该学院×层级可能确实无课）")
+            return
+        # 表单页：School 下拉 → 各学院结果页任务
+        codes = {str(o.get("value") or "").strip()
+                 for o in page.soup.select('select#School option')}
+        codes = {c for c in codes if re.fullmatch(r"[A-Z]{2,6}", c)}
+        for code in sorted(codes):
+            for lvl in self.MODULE_LEVELS:
+                res.discovered.append(DiscoveredPage(
+                    url=(f"{self.CATALOGUE}/ModuleSearch/results/{lvl}/"
+                         f"{self.CATALOGUE_YEAR}/ALL/{code}/False/ALL/False?keyMatch=any"),
+                    category=Category.MODULE_CATALOG,
+                    title=f"{code} 课程名单（{lvl}）"))
+        if not res.discovered:
+            res.note("目录表单页未枚举到 School 下拉（站点结构变了？）")
 
     def term_dates(self, page, res):
         """版式（实测 2026-07）：'Autumn term:' 标签行，日期区间在下一行；

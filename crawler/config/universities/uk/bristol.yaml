@@ -9,7 +9,7 @@ city: Bristol
 entry_year: "2026"
 
 domains:
-  www.bristol.ac.uk: 3.0
+  www.bristol.ac.uk: {interval: 3.0, concurrency: 1}
 
 scope:
   crawl_module_details: false

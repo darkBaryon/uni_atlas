@@ -7,6 +7,7 @@
 import functools
 import glob
 import os
+from typing import NamedTuple
 
 import yaml
 
@@ -18,10 +19,19 @@ _UNI_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "universitie
 USER_AGENT = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
               "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36")
 
-# 域内请求间隔兜底（秒）；各校 YAML 的 domains 可按域覆盖。
-# 实际间隔 = interval + random(0, JITTER)
+# 域抓取策略兜底；各校 YAML 的 domains 可按域覆盖，写法：
+#   domains:
+#     www.example.ac.uk: {interval: 3.0, concurrency: 1}
+# interval = 同域两次请求发起的最小间隔（秒），实际间隔 += random(0, JITTER)；
+# concurrency = 域内并发 worker 数，仅对实测无限流的域调大（>1 即牺牲礼貌换速度）。
 DEFAULT_INTERVAL = 3.0
+DEFAULT_CONCURRENCY = 1
 JITTER = 1.0
+
+
+class DomainPolicy(NamedTuple):
+    interval: float
+    concurrency: int
 
 MAX_DOMAINS = 10              # 同时并发的域名数上限
 TIMEOUT = 30                  # 单请求超时（秒）
@@ -57,7 +67,8 @@ class UniConfig:
         self.country = data.get("country")
         self.city = data.get("city")
         self.entry_year = str(data.get("entry_year", DEFAULT_ENTRY_YEAR))
-        self.domains = {k: float(v) for k, v in (data.get("domains") or {}).items()}
+        self.domains = {k: _parse_domain_policy(k, v)
+                        for k, v in (data.get("domains") or {}).items()}
         scope = data.get("scope") or {}
         # focus_depts=None 表示不限院系（全校专业页都自动抓）
         self.focus_depts = scope.get("focus_depts")
@@ -71,6 +82,14 @@ class UniConfig:
         self.faculty_overrides = data.get("faculty_overrides") or {}
         # 通用解析器的声明式配置（parsers/generic.py）；无专属解析器时凭它接管
         self.generic = data.get("generic")
+
+
+def _parse_domain_policy(domain, v):
+    if not isinstance(v, dict) or "interval" not in v:
+        raise ValueError(
+            f"domains.{domain} 须写成 {{interval: 秒, concurrency: N}} 形式，实际: {v!r}")
+    return DomainPolicy(float(v["interval"]),
+                        int(v.get("concurrency", DEFAULT_CONCURRENCY)))
 
 
 def _merge(base, over):
@@ -121,9 +140,9 @@ def uni(code):
     return all_unis().get(code)
 
 
-def domain_interval(domain):
-    """域内请求间隔：先查各校 YAML 的 domains 覆盖，否则全局兜底。"""
+def domain_policy(domain):
+    """域抓取策略（间隔+并发）：先查各校 YAML 的 domains 覆盖，否则全局兜底。"""
     for u in all_unis().values():
         if domain in u.domains:
             return u.domains[domain]
-    return DEFAULT_INTERVAL
+    return DomainPolicy(DEFAULT_INTERVAL, DEFAULT_CONCURRENCY)

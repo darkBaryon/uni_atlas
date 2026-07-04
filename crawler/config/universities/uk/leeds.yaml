@@ -9,8 +9,10 @@ city: Leeds
 entry_year: "2026"
 
 domains:
-  www.leeds.ac.uk: 3.0
-  courses.leeds.ac.uk: 3.0
+  www.leeds.ac.uk: {interval: 3.0, concurrency: 1}
+  courses.leeds.ac.uk: {interval: 3.0, concurrency: 1}
+  # 课程目录实测全开放无限流（2026-07 审核），放开域内并发
+  catalogue.leeds.ac.uk: {interval: 1.0, concurrency: 3}
 
 scope:
   crawl_module_details: false
@@ -26,6 +28,11 @@ faculties:
   "Leeds University Business School": 利兹大学商学院
 
 seed_pages:
+  # 官方课程目录（全开放）：UG/TP 两张表单页 → 按学院结果页
+  - {category: module_catalog, crawl_freq: monthly,
+     url: "https://catalogue.leeds.ac.uk/ModuleSearch/UG"}
+  - {category: module_catalog, crawl_freq: monthly,
+     url: "https://catalogue.leeds.ac.uk/ModuleSearch/TP"}
   - {category: program_catalog, crawl_freq: monthly,
      url: "https://courses.leeds.ac.uk/course-search/undergraduate-courses?query=&type=UG&term=202627"}
   - {category: program_catalog, crawl_freq: monthly,

@@ -10,8 +10,8 @@ city: London
 entry_year: "2026"
 
 domains:
-  www.kcl.ac.uk: 3.0
-  self-service.kcl.ac.uk: 3.0
+  www.kcl.ac.uk: {interval: 3.0, concurrency: 1}
+  self-service.kcl.ac.uk: {interval: 3.0, concurrency: 1}
 
 scope:
   crawl_module_details: false
@@ -27,7 +27,39 @@ faculties:
   "Institute of Psychiatry, Psychology & Neuroscience": 精神病学、心理学与神经科学学院
   "Faculty of Social Science & Public Policy": 社会科学与公共政策学院
 
+# 交换生模块目录 Department 字段措辞 → 官方学部名
+faculty_alias:
+  "Arts & Humanities": Faculty of Arts & Humanities
+  "Dentistry, Oral & Craniofacial Sciences": Faculty of Dentistry, Oral & Craniofacial Sciences
+  "Life Sciences & Medicine": Faculty of Life Sciences & Medicine
+  "Natural, Mathematical & Engineering Sciences": Faculty of Natural, Mathematical & Engineering Sciences
+  "Nursing, Midwifery & Palliative Care": Florence Nightingale Faculty of Nursing, Midwifery & Palliative Care
+  "Psychiatry, Psychology & Neuroscience": Institute of Psychiatry, Psychology & Neuroscience
+  "Social Science & Public Policy": Faculty of Social Science & Public Policy
+  "Law": The Dickson Poon School of Law
+  "Business": King's Business School
+
 seed_pages:
+  # 模块目录（交换生公开子集，KCL 唯一公开模块源）
+  - {category: module_catalog, crawl_freq: monthly,
+     url: "https://www.kcl.ac.uk/abroad/module-options/browse"}
+  # 专业全量清单：A-Z 是 React SPA 抓不全，权威源是编号 sitemap（2026-07 实测 382 个）
+  - {category: program_catalog, crawl_freq: monthly,
+     url: "https://www.kcl.ac.uk/sitemap1.xml"}
+  - {category: program_catalog, crawl_freq: monthly,
+     url: "https://www.kcl.ac.uk/sitemap2.xml"}
+  - {category: program_catalog, crawl_freq: monthly,
+     url: "https://www.kcl.ac.uk/sitemap3.xml"}
+  - {category: program_catalog, crawl_freq: monthly,
+     url: "https://www.kcl.ac.uk/sitemap4.xml"}
+  - {category: program_catalog, crawl_freq: monthly,
+     url: "https://www.kcl.ac.uk/sitemap5.xml"}
+  - {category: program_catalog, crawl_freq: monthly,
+     url: "https://www.kcl.ac.uk/sitemap6.xml"}
+  - {category: program_catalog, crawl_freq: monthly,
+     url: "https://www.kcl.ac.uk/sitemap7.xml"}
+  - {category: program_catalog, crawl_freq: monthly,
+     url: "https://www.kcl.ac.uk/sitemap8.xml"}
   - {category: program_catalog, crawl_freq: monthly,
      url: "https://www.kcl.ac.uk/study/undergraduate/courses"}
   - {category: program_catalog, crawl_freq: monthly,
