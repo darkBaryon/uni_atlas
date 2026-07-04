@@ -4,8 +4,9 @@ import re
 from parsers.base import BaseParser
 from parsers.models import CalendarData, DeadlineData, DiscoveredPage, ModuleRef, ProgramData
 from parsers.page import norm_ws
+from config.codes import EventType
 from parsers.uk.common import (modules_from_credit_lis,
-                               date_loose, date_range, event_type, find_links,
+                               date_loose, date_range, find_links,
                                ielts, keyword_check, section_text, title_from)
 from config.codes import Category, UniCode
 
@@ -61,6 +62,9 @@ class Sheffield(BaseParser):
         modules_from_credit_lis(page, p, ModuleRef)   # PGT 页是 li 直列版式
 
     def term_dates(self, page, res):
+        """dates 枢纽页 → 子页任务；学期页 = 每学年 Autumn/Spring 两张表
+        （列: [Welcome week,] Start, End, Vacation, Weeks；实测 2026-07）。
+        注：谢菲公开页不单列考试期（12 张表全为学期表），此为源站粒度上限。"""
         if re.search(r"/about/dates/?$", page.url):
             for url, title, _ in find_links(page, r"/about/dates/(?:current-and-future-semester|past|non-standard-semesters)"):
                 res.discovered.append(DiscoveredPage(
@@ -68,18 +72,37 @@ class Sheffield(BaseParser):
             if not res.discovered:
                 res.note("dates hub 未解析到子页面")
             return
-        year = None
-        for node in page.soup.find_all(["h2", "h3", "dt", "tr"]):
-            text = norm_ws(node.get_text(" ", strip=True))
-            y = re.search(r"\b(20\d{2})-(\d{2})\b", text)
-            if y:
-                year = f"{y.group(1)}/{y.group(2)}"
-            start, end = _row_dates(node) if node.name == "tr" else date_range(text)
-            if year and start:
-                name = "Semester date" if node.name == "tr" else re.sub(r"\d{1,2}.*$", "", text).strip(" :-")
-                res.calendar.append(CalendarData(year, event_type(name, start), name or "Semester date", start, end))
+        for tb in page.soup.find_all("table"):
+            head = tb.find_previous(["h2", "h3"])
+            season = norm_ws(head.get_text(" ", strip=True)) if head else "Semester"
+            rows = []
+            for tr in tb.find_all("tr"):
+                cells = [norm_ws(td.get_text(" ", strip=True)) for td in tr.find_all("td")]
+                if not cells:
+                    continue
+                has_welcome = len(cells) >= 5
+                start = date_loose(cells[1] if has_welcome else cells[0])
+                end = date_loose(cells[2] if has_welcome else cells[1])
+                if not start:
+                    continue
+                ay = _academic_year(start)
+                if has_welcome and cells[0]:
+                    w0, w1 = date_range(cells[0])
+                    if w0:
+                        res.calendar.append(CalendarData(
+                            ay, EventType.WELCOME_WEEK, "Welcome week", w0, w1))
+                vac = cells[3] if has_welcome else (cells[2] if len(cells) > 2 else "")
+                rows.append((ay, start, end, vac))
+            for i, (ay, start, end, vac) in enumerate(rows):
+                res.calendar.append(CalendarData(
+                    ay, EventType.TEACHING_PERIOD, f"{season} 教学段{i+1}", start, end))
+                # 假期区间 = 本段结束到下一段开始（源站只给假期名不给日期）
+                if vac and i + 1 < len(rows):
+                    res.calendar.append(CalendarData(
+                        ay, EventType.CLOSURE, vac, end, rows[i+1][1]))
         if not res.calendar:
             res.note("Sheffield term dates 未解析出日期")
+
 
     def deadlines(self, page, res):
         for tr in page.soup.find_all("tr"):
@@ -153,3 +176,10 @@ def _row_dates(tr):
         return date_loose(cells[headers.index("Start date")]), date_loose(cells[headers.index("End date")])
     except (ValueError, IndexError, AttributeError):
         return None, None
+
+
+def _academic_year(start_date):
+    """9-12 月开始 → 当年启学年；1-8 月 → 上一年启学年。"""
+    y, mth = int(start_date[:4]), int(start_date[5:7])
+    sy = y if mth >= 9 else y - 1
+    return f"{sy}/{str(sy + 1)[2:]}"

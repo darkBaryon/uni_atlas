@@ -9,6 +9,12 @@ from parsers.uk.common import (date_range, event_type, fee_near, find_links,
 from config.codes import Category, UniCode
 
 COURSE_RE = r"/study/(?:undergraduate|postgraduate)/subjects/.+-courses/[^/?#]+/?$"
+# 校历页整句措辞 → 短名（实测 2026-07；页面不单列考试期，为源站粒度上限）
+EVENT_NAME_MAP = {
+    "For undergraduates, the summer student vacation begins on": "Summer vacation begins (UG)",
+    "For taught postgraduates, the summer research period begins on": "Summer research period begins (PGT)",
+}
+
 COLLEGE_RE = r"College of (?:Arts and Law|Engineering and Physical Sciences|Life and Environmental Sciences|Medicine and Health|Social Sciences)"
 
 
@@ -65,6 +71,7 @@ class Birmingham(BaseParser):
             start, end = date_range(text)
             if year and start:
                 label = re.sub(r"\d{1,2}.*$", "", text).strip(" :-") or "Term date"
+                label = EVENT_NAME_MAP.get(label, label)
                 res.calendar.append(CalendarData(year, event_type(label, start), label, start, end))
         if not res.calendar:
             res.note("Birmingham academic year dates 未解析出日期")
