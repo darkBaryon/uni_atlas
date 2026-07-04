@@ -1,4 +1,9 @@
-"""Small helpers shared by UK university parsers.
+"""英国大学公共提取函数库。
+
+与 generic.py 的分工：本文件是**函数库**（fee_near/ielts/scan_term_lines/...），
+专属解析器（ucl.py 等）和声明式通用解析器（generic.py）都从这里取件；
+generic.py 是一个**完整解析器**，只服务「零 Python、纯 YAML」的学校。
+新逻辑何时下沉到这里：两所以上学校出现同款提取需求时。
 
 Keep this file boring: selectors and school-specific rules stay in each parser.
 """

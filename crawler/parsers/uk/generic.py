@@ -1,30 +1,34 @@
-"""通用英国大学解析器：YAML 声明式驱动，新校零 Python 接入。
+"""声明式通用解析器：YAML `generic:` 段驱动，新校零 Python 接入。
 
-10 校实战沉淀的经验：英国大学官网的共性远大于个性——
-目录页 = 一批匹配某 URL 模式的链接；专业页 = 学费(£ 靠近 Home/Overseas
-标签)、雅思、学制、UCAS code、Entry requirements 区块。个性只剩下
-URL 模式和标签措辞，这些放 YAML 就够了。
+与 common.py 的分工（勿混淆）：
+- common.py  = 提取函数库（fee_near/ielts/...），专属解析器和本文件**都**调用；
+- generic.py = 一个完整的解析器实现，服务「只有 YAML、没有 <code>.py」的学校。
 
-启用方式：学校 YAML 加 generic 段（且不存在 parsers/<code>.py 时自动注册）：
+10 校实战结论:英国大学官网共性远大于个性——目录页 = 一批匹配某 URL 模式
+的链接；专业页 = 学费(£ 靠近 Home/Overseas 标签)、雅思、学制、UCAS code、
+Entry requirements 区块。个性只剩 URL 模式和标签措辞，放 YAML 即可：
 
     generic:
       catalog:
         link_re: "/courses/2026/[a-z0-9-]+/?$"   # 必填：专业页 URL 特征
         scope_css: "main"                         # 选填：限定搜索范围
-      detail:                                     # 全部选填，有默认值
-        name_source: h1            # h1(默认) | title_tail
-        pg_url_re: "/masters/"     # URL 判级正则（默认见 PG_URL_RE）
+      detail:                                     # 全部选填，缺省用 10 校高频值
+        name_source: title_tail    # 默认 h1
+        pg_url_re: "/masters/"
         fee_intl_labels: ["Overseas students"]
         fee_home_labels: ["UK students"]
-        deadline_label: "Application deadline"    # kv 版式的截止日期
+        entry_req_heading: "Entry requirements"
+        deadline_label: "Application deadline"
 
+YAML 键有拼写校验（GenericSpec，未知键导入时报错——与 UniCode 同原则）。
 验收照旧：./run.sh check <code>——覆盖率不达标再降级写专属解析器。
 """
 import logging
 import re
-from config.codes import Category
+from dataclasses import dataclass, fields
 
 import config
+from config.codes import Category
 from parsers.base import BaseParser, get_parser
 from parsers.models import DeadlineData, DiscoveredPage, ProgramData
 from parsers.page import parse_date
@@ -32,32 +36,84 @@ from parsers.uk.common import fee_near, first, ielts, section_text
 
 logger = logging.getLogger(__name__)
 
-# 默认标签/模式：按 10 校观察到的高频措辞排序（长的在前，先精确后宽泛）
+# 缺省措辞/模式：10 校观察的高频值（长的在前，先精确后宽泛）。
+# 这些是英国经验，所以住在 parsers/uk/ 而不是 config 层。
 FEE_INTL_LABELS = ["International & EU", "Overseas students", "International students",
                    "Overseas fee", "International fee", "Overseas", "International"]
 FEE_HOME_LABELS = ["Home & RUK", "UK students", "Home students", "Home fee",
                    "Home (UK)", "Home"]
 PG_URL_RE = r"/postgraduate|/masters|/taught|/pgt|-msc\b|-ma\b"
+ENTRY_REQ_HEADING = (r"Entry requirements?|Academic requirements?|Qualifications|"
+                     r"Academic entry qualification overview|Typical (?:A-level )?offer")
+ENTRY_REQ_STOP = (r"English language|Fees|How to apply|Application and selection|"
+                  r"Programme structure")
 FACULTY_RE = (r"((?:Adam Smith Business School|(?:School|Faculty|College|Department)"
               r" of [A-Z][A-Za-z ,&\-]{3,70}))")
+MIN_NAME_LEN = 3          # 短于此的"专业名"视为解析失败（如空 h1 抓到装饰字符）
+
+
+def _from_dict(cls, raw, where):
+    """dict -> dataclass，未知键立刻报错（拼错不允许静默落默认值）。"""
+    raw = raw or {}
+    known = {f.name for f in fields(cls)}
+    unknown = set(raw) - known
+    if unknown:
+        raise ValueError(f"{where} 含未知键 {sorted(unknown)}（合法: {sorted(known)}）")
+    return cls(**raw)
+
+
+@dataclass
+class CatalogSpec:
+    link_re: str | None = None     # 必填；缺省时目录页解析直接报备注
+    scope_css: str | None = None
+
+
+@dataclass
+class DetailSpec:
+    name_source: str = "h1"        # h1 | title_tail
+    pg_url_re: str = PG_URL_RE
+    fee_intl_labels: list | None = None
+    fee_home_labels: list | None = None
+    entry_req_heading: str = ENTRY_REQ_HEADING
+    deadline_label: str | None = None
+
+
+@dataclass
+class GenericSpec:
+    catalog: CatalogSpec
+    detail: DetailSpec
+
+    @classmethod
+    def parse(cls, raw, uni_code):
+        raw = raw or {}
+        unknown = set(raw) - {"catalog", "detail"}
+        if unknown:
+            raise ValueError(f"{uni_code} 的 generic 段含未知键 {sorted(unknown)}")
+        return cls(
+            catalog=_from_dict(CatalogSpec, raw.get("catalog"), f"{uni_code}.generic.catalog"),
+            detail=_from_dict(DetailSpec, raw.get("detail"), f"{uni_code}.generic.detail"))
 
 
 class GenericUK(BaseParser):
-    """不直接注册；由 register_for_configured() 按 YAML 动态派生子类。"""
+    """不直接注册；由 register_for_configured() 按 YAML 动态派生每校子类。"""
     abstract = True
+    _spec: GenericSpec | None = None
 
     @property
-    def g(self):
-        return (self.conf.generic if self.conf else None) or {}
+    def spec(self) -> GenericSpec:
+        cls = type(self)
+        if cls._spec is None:
+            raw = self.conf.generic if self.conf else None
+            cls._spec = GenericSpec.parse(raw, self.uni_code)
+        return cls._spec
 
     # ---------------- 目录页 ----------------
     def program_catalog(self, page, res):
-        cat = self.g.get("catalog") or {}
-        link_re = cat.get("link_re")
-        if not link_re:
+        cat = self.spec.catalog
+        if not cat.link_re:
             res.note("generic.catalog.link_re 未配置，目录无法展开")
             return
-        for url, text in page.links(cat.get("scope_css"), link_re):
+        for url, text in page.links(cat.scope_css, cat.link_re):
             if url.rstrip("/") == page.url.rstrip("/"):
                 continue
             res.discovered.append(DiscoveredPage(
@@ -68,45 +124,37 @@ class GenericUK(BaseParser):
                 url=page.abs(nxt["href"]), category=Category.PROGRAM_CATALOG,
                 title="目录分页", crawl_freq="manual"))
         if not res.discovered:
-            res.note(f"目录页未匹配到 {link_re} 链接，页面结构需人工核对")
+            res.note(f"目录页未匹配到 {cat.link_re} 链接，页面结构需人工核对")
 
     # ---------------- 专业页 ----------------
     def program_detail(self, page, res):
-        d = self.g.get("detail") or {}
-        name = (page.title_tail() if d.get("name_source") == "title_tail"
+        d = self.spec.detail
+        name = (page.title_tail() if d.name_source == "title_tail"
                 else page.h1() or page.title_tail())
-        if not name or len(name) < 3:
+        if not name or len(name) < MIN_NAME_LEN:
             res.note("未解析出专业名（h1/title 均空），可能非专业页")
             return
-        is_pg = bool(re.search(d.get("pg_url_re", PG_URL_RE), page.url, re.I))
+        is_pg = bool(re.search(d.pg_url_re, page.url, re.I))
         p = ProgramData(name_en=name, level="PGT" if is_pg else "UG",
                         url=page.url, entry_year=self.entry_year)
 
-        p.tuition_intl = fee_near(page.txt, d.get("fee_intl_labels", FEE_INTL_LABELS))
-        p.tuition_home = fee_near(page.txt, d.get("fee_home_labels", FEE_HOME_LABELS))
+        p.tuition_intl = fee_near(page.txt, d.fee_intl_labels or FEE_INTL_LABELS)
+        p.tuition_home = fee_near(page.txt, d.fee_home_labels or FEE_HOME_LABELS)
         p.ielts_overall, p.ielts_min_each = ielts(page.txt)
         p.duration = first(page.txt,
                            r"Duration:?\s*\n\s*([^\n]{2,60})",
                            r"\b(\d+ (?:years?|months?)(?:,? full[- ]time| part[- ]time)?)\b")
         p.ucas_code = first(page.txt, r"UCAS(?: course)? code:?\s*\n?\s*([A-Z0-9]{4,5})\b")
-        # 标题措辞按 10 校观察列高频变体；yaml detail.entry_req_heading 可覆盖
-        p.entry_req_text = section_text(
-            page,
-            d.get("entry_req_heading",
-                  r"Entry requirements?|Academic requirements?|Qualifications|"
-                  r"Academic entry qualification overview|Typical (?:A-level )?offer"),
-            r"English language|Fees|How to apply|Application and selection|Programme structure",
-            400)
+        p.entry_req_text = section_text(page, d.entry_req_heading, ENTRY_REQ_STOP, 400)
         p.dept = self.canon_faculty(page.txt, FACULTY_RE)
 
-        label = d.get("deadline_label")
-        if label:
-            dl = parse_date(first(page.txt, re.escape(label) +
+        if d.deadline_label:
+            dl = parse_date(first(page.txt, re.escape(d.deadline_label) +
                                   r":?\s*\n?\s*(\d{1,2} \w+ \d{4})"))
             if dl:
                 p.deadlines.append(DeadlineData(
                     "all", "application", dl + " 23:59:00",
-                    p.entry_year, f"{label}（通用解析）"))
+                    p.entry_year, f"{d.deadline_label}（通用解析）"))
 
         if p.tuition_intl is None and is_pg:
             p.notes.append("通用解析器未取到国际学费，如批量缺失需写专属解析器")
@@ -114,12 +162,18 @@ class GenericUK(BaseParser):
 
 
 def register_for_configured():
-    """给「YAML 有 generic 段且无专属解析器」的学校动态派生并注册子类。"""
+    """「YAML 有 generic 段且无专属解析器」的学校 → 动态派生子类完成注册。
+
+    type(...) 建类等价于 `class GenericUK_<code>(GenericUK): uni_code = <code>`，
+    定义即触发 BaseParser.__init_subclass__ 的注册与校验；同时立即解析
+    GenericSpec，让 YAML 拼写错误在导入时暴露而不是首次抓取时。
+    """
     for code, u in config.all_unis().items():
         if not u.generic:
             continue
-        if get_parser(code, "program_detail"):
+        if get_parser(code, Category.PROGRAM_DETAIL):
             logger.debug("%s 已有专属解析器，generic 段忽略", code)
             continue
-        type(f"GenericUK_{code}", (GenericUK,), {"uni_code": code})
+        spec = GenericSpec.parse(u.generic, code)   # 导入时验证 YAML 键
+        type(f"GenericUK_{code}", (GenericUK,), {"uni_code": code, "_spec": spec})
         logger.info("通用解析器接管 %s（YAML 声明式）", code)
