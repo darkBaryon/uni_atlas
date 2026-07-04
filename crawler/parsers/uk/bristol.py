@@ -32,14 +32,21 @@ class Bristol(BaseParser):
         if not name:
             res.note("未解析出课程标题")
             return
+        if name.startswith("Changes to "):
+            res.note("变更说明页，非专业，跳过")
+            return
         f = facts(page)
         p = ProgramData(name_en=name, level=_level(page.url, name), url=page.url,
                         entry_year=_entry_year(page.url, page.txt, self.entry_year))
         p.ucas_code = pick(f, "ucas code", "ucas course code") or page.re(
             r"UCAS(?: course)? code\s*\n?\s*([A-Z0-9]{4,5})", flags=re.I)
         p.duration = pick(f, "duration", "course duration", "study mode")
-        p.faculty = known_name(self.conf.faculties, pick(f, "faculty") or page.txt)
-        p.dept = pick(f, "school", "department")
+        # 归属权威源是 <meta name="faculty/department">（实测 2026-07：新旧两代
+        # 措辞混用——旧六学部代码 SSL/SCI/LIFE 等与全名并存，经 faculty_alias 归一；
+        # 约半数页 meta 为空，回退正文识别官方名）
+        p.faculty = (_meta(page, "faculty")
+                     or known_name(self.conf.faculties, pick(f, "faculty") or page.txt))
+        p.dept = pick(f, "school", "department") or _meta(page, "department")
         p.tuition_home = fee_near(page.txt, ("Home: full-time", "Home:"))
         p.tuition_intl = fee_near(page.txt, ("Overseas: full-time", "Overseas:"))
         p.fee_year_label = page.re(r"(20\d{2}/\d{2})")
@@ -140,3 +147,8 @@ def _year(text):
     m = re.search(r"(20\d{2})/(\d{2})", text)
     return f"{m.group(1)}/{m.group(2)}" if m else None
 
+
+def _meta(page, name):
+    tag = page.soup.select_one(f'meta[name="{name}"]')
+    val = str(tag.get("content") or "").strip() if tag else ""
+    return val or None
