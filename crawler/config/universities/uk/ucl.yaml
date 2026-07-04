@@ -15,7 +15,8 @@ domains:
 # 抓取范围 = 数据层级而非院系：全部学院的专业页都抓（不设 focus_depts）；
 # 不抓底层细节——模块详情页（大纲/考核/负责人），专业页自带模块名单已够用
 scope:
-  crawl_module_details: false
+  crawl_module_details: false  # 课程详情不镜像：官方目录已完善，本地存链接跳官网；
+                               # 机构自有经验挂 module_contents 人工层（2026-07-04 定）
 
 # 入口页种子：python3 run.py --seed ucl 时登记进 source_pages（已存在的跳过）
 seed_pages:

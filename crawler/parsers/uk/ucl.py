@@ -141,7 +141,13 @@ class UCL(BaseParser):
     # ---------------- 课程（模块）页 ----------------
     def module_catalog(self, page, res):
         if "/module-catalogue/modules/" not in page.url:
-            res.note("module-catalogue 根页为搜索界面，课程任务由专业页链接自动登记")
+            # 目录索引页（Funnelback 服务端渲染，每页 20 条，start_rank 翻页；
+            # 实测 2026-07：num_ranks 参数无效，恒为 20）→ 展开课程任务
+            for href, text in page.links(href_re=r"/module-catalogue/modules/[a-z0-9-]+-[A-Z]{4}\d{4}/?$"):
+                res.discovered.append(DiscoveredPage(
+                    url=href, category=Category.MODULE_CATALOG, title=text or None))
+            if not res.discovered:
+                res.note("目录索引页未解析出课程链接（搜索界面变了？）")
             return
         name = page.h1()
         if not name:

@@ -42,6 +42,10 @@
     var chips = [ex.group, ex.ug_programs && "官网本科 " + ex.ug_programs + " 个",
       ex.pgt_programs && "官网授课硕士 " + ex.pgt_programs + " 个", uni.cn_student_note]
       .filter(Boolean).map(function (c) { return '<span class="chip">' + esc(c) + "</span>"; }).join("");
+    if (ex.module_catalogue_url) {
+      chips += '<a class="chip" href="' + esc(ex.module_catalogue_url) +
+        '" target="_blank" rel="noopener">官方课程总目录 ↗</a>';
+    }
     var h = '<header class="hero"><div class="eyebrow">' + esc(uni.country) + " · " + esc(uni.city || "") + "</div>" +
       "<h1>" + esc(uni.name_en) + (uni.name_zh ? ' <span class="zh">' + esc(uni.name_zh) + "</span>" : "") + "</h1>" +
       '<p class="sub">' + esc(uni.term_system || "") +
