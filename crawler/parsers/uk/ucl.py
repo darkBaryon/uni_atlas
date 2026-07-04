@@ -9,6 +9,7 @@
 import re
 
 from parsers.base import BaseParser
+from parsers.models import CalendarData
 from parsers.models import DeadlineData, DiscoveredPage, ModuleData, ModuleRef, ProgramData
 from parsers.page import parse_date
 from config.codes import Category, UniCode
@@ -137,6 +138,33 @@ class UCL(BaseParser):
                 title="目录分页", crawl_freq="manual"))
         if not res.discovered:
             res.note("目录页未解析出学位卡（result-item），页面结构可能已变")
+
+    # ---------------- 校历 ----------------
+    def term_dates(self, page, res):
+        """表格版式（实测 2026-07）：标题 'Term dates 2025-26' + Term/Dates 两列表；
+        IOE/药学院有独立轨道表。官网当前只挂当年，未来学年发布后月度复查自动接住。"""
+        from parsers.uk.common import date_range, event_type
+        for tb in page.soup.find_all("table"):
+            head = tb.find_previous(["h2", "h3"])
+            head_txt = head.get_text(" ", strip=True) if head else ""
+            m = re.search(r"(20\d{2})-(\d{2})", head_txt) or re.search(
+                r"(20\d{2})-(\d{2})", page.txt)
+            if not m:
+                continue
+            year = f"{m.group(1)}/{m.group(2)}"
+            track = ("ioe" if "Education" in head_txt
+                     else "pharmacy" if "Pharmacy" in head_txt else "standard")
+            for tr in tb.find_all("tr"):
+                cells = [c.get_text(" ", strip=True) for c in tr.find_all("td")]
+                if len(cells) < 2:
+                    continue
+                start, end = date_range(cells[1])
+                if start:
+                    res.calendar.append(CalendarData(
+                        year, event_type(cells[0], start), cells[0], start, end,
+                        calendar_track=track))
+        if not res.calendar:
+            res.note("UCL 校历页未解析出任何表格日期")
 
     # ---------------- 课程（模块）页 ----------------
     def module_catalog(self, page, res):

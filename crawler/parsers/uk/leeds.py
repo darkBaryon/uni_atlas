@@ -5,8 +5,9 @@ from urllib.parse import urlparse
 from parsers.base import BaseParser
 from parsers.models import CalendarData, DeadlineData, DiscoveredPage, ModuleRef, ProgramData
 from parsers.page import norm_ws, parse_date
-from parsers.uk.common import (dedupe_discovered, facts, fee_near, ielts,
-                               keyword_check, known_name, pick, scan_term_lines,
+from parsers.uk.common import (date_range,
+                               dedupe_discovered, facts, fee_near, ielts,
+                               event_type, keyword_check, known_name, pick,
                                section_text, title_from, unwrap_funnelback)
 from config.codes import Category, UniCode
 
@@ -71,8 +72,24 @@ class Leeds(BaseParser):
                 p.modules.append(ModuleRef(name=norm_ws(m.group(1)), module_type="core"))
 
     def term_dates(self, page, res):
-        # 学年从行内/上文捕获（原实现硬拼 f"{entry_year}/27"，2027 季会出错）
-        scan_term_lines(page, res, CalendarData, r"term|semester|induction|exam")
+        """版式（实测 2026-07）：'Autumn term:' 标签行，日期区间在下一行；
+        学年在页首 'Academic year 2026/27'。"""
+        ym = page.re(r"Academic year\s+(20\d{2}/\d{2})")
+        if not ym:
+            res.note("Leeds term dates 未见 'Academic year' 学年标识")
+            return
+        label = None
+        for line in page.txt.splitlines():
+            line = norm_ws(line)
+            start, end = date_range(line)
+            if start:
+                if label:
+                    res.calendar.append(CalendarData(
+                        ym, event_type(label, start), label, start, end))
+                    label = None
+                continue
+            if 3 <= len(line) <= 60 and not re.search(r"\d{4}", line):
+                label = line.rstrip(":")
         if not res.calendar:
             res.note("Leeds term dates 未解析出日期")
 

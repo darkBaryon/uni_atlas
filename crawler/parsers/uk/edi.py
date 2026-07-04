@@ -104,6 +104,10 @@ class Edinburgh(BaseParser):
                             f"第 {rnd} 轮申请截止", round_no=rnd))
 
     def term_dates(self, page, res):
+        # 未来学年子页（'/202627' 形）：登记为任务（实测 2026-07）
+        for href, text in page.links(href_re=r"/20\d{4}/?$"):
+            res.discovered.append(DiscoveredPage(
+                url=href, category=Category.TERM_DATES, title=text or None))
         ym = page.re(r"Academic year\s+(\d{4}/\d{2})")
         if not ym:
             m = re.search(r"/(\d{4})(\d{2})/?$", page.url)
