@@ -6,6 +6,8 @@
   "use strict";
 
   var UI = {};
+  // 申请域（学费/语言/截止/政策）显示开关——辅导业务默认收起，数据仍在库与校文件里
+  UI.SHOW_APP = false;
 
   UI.esc = function (s) {
     return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) {

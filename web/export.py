@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""把 study_abroad 数据库导出为 web/data.js，供静态页面 index.html 渲染。
+"""把 study_abroad 数据库导出为 web/data/（index.js 索引 + 每校一个 <code>.js）。
 
 用法:  python3 web/export.py
 依赖:  pip install pymysql   (凭据自动读取 ~/.my.cnf)
 
-导出结构（window.STUDY_ABROAD_DATA）:
+导出结构：window.UNI_INDEX（总览摘要）+ window.UNI_DATA[code]（每校全量）:
   generated_at
   universities[]                 # 每校一个对象
     ├─ faculties[] calendar[] language_bands[] china_policy deadlines[]
@@ -20,7 +20,6 @@ from decimal import Decimal
 import pymysql
 
 DB_NAME = "study_abroad"
-OUT_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data.js")
 
 # 库中以 JSON 字符串存储的列，导出时解析成对象
 JSON_COLUMNS = {
@@ -32,7 +31,7 @@ JSON_COLUMNS = {
 def clean(row: dict) -> dict:
     out = {}
     for k, v in row.items():
-        if isinstance(v, (datetime, date)):
+        if isinstance(v, datetime | date):
             v = v.isoformat()
         elif isinstance(v, Decimal):
             v = float(v)
@@ -125,20 +124,47 @@ def main():
 
     conn.close()
 
-    data = {
-        "generated_at": datetime.now().strftime("%Y-%m-%d %H:%M"),
-        "universities": universities,
-    }
-    payload = json.dumps(data, ensure_ascii=False, separators=(",", ":"))
-    with open(OUT_PATH, "w", encoding="utf-8") as f:
-        # 写成 JS 全局变量而非 .json：双击 index.html 用 file:// 打开时
-        # fetch 会被浏览器拦截，<script src> 不会
-        f.write("window.STUDY_ABROAD_DATA = " + payload + ";\n")
+    # ---- 按校拆分输出（与 config/parsers 同构）：data/index.js 总索引 +
+    #      data/<code>.js 每校全量，学校数据由前端按需懒加载 ----
+    # 写成 JS 全局变量而非 .json：file:// 下 fetch 被拦截，<script src> 不会
+    data_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
+    os.makedirs(data_dir, exist_ok=True)
+
+    def dump(obj):
+        return json.dumps(obj, ensure_ascii=False, separators=(",", ":"))
+
+    index = {"generated_at": datetime.now().strftime("%Y-%m-%d %H:%M"),
+             "universities": []}
+    total_kb = 0
+    for uni in universities:
+        code = uni["code"]
+        index["universities"].append({
+            "code": code, "name_en": uni["name_en"], "name_zh": uni["name_zh"],
+            "country": uni["country"], "city": uni["city"],
+            "term_system": uni["term_system"], "website": uni["website"],
+            "extra": uni["extra"], "cn_student_note": uni["cn_student_note"],
+            "n_programs": len(uni["programs"]),
+            "n_modules": len(uni["modules"]),
+            "has_calendar": bool(uni["calendar"]),
+            "dead_sources": sum(1 for s in uni["source_status"]
+                                if s["status"] == "dead"),
+        })
+        fpath = os.path.join(data_dir, f"{code}.js")
+        with open(fpath, "w", encoding="utf-8") as f:
+            f.write("window.UNI_DATA = window.UNI_DATA || {};\n"
+                    f"window.UNI_DATA[{dump(code)}] = {dump(uni)};\n")
+        total_kb += os.path.getsize(fpath) // 1024
+    with open(os.path.join(data_dir, "index.js"), "w", encoding="utf-8") as f:
+        f.write("window.UNI_INDEX = " + dump(index) + ";\n")
+
+    legacy = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data.js")
+    if os.path.exists(legacy):
+        os.remove(legacy)
 
     n_prog = sum(len(u["programs"]) for u in universities)
     n_mod = sum(len(u["modules"]) for u in universities)
-    kb = os.path.getsize(OUT_PATH) // 1024
-    print(f"OK: {len(universities)} 所大学, {n_prog} 个专业, {n_mod} 个模块 -> data.js ({kb} KB)")
+    print(f"OK: {len(universities)} 所大学, {n_prog} 个专业, {n_mod} 个模块"
+          f" -> data/index.js + {len(universities)} 个校文件（共 {total_kb} KB）")
 
 
 if __name__ == "__main__":

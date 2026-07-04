@@ -8,31 +8,43 @@
   var UI = window.UI, esc = UI.esc;
   var VIEWS = {};
 
-  /* ---------------- 概览页 ---------------- */
-  VIEWS.overview = function (data) {
-    var h = '<header class="hero"><div class="eyebrow">study_abroad · 留学申请信息库</div>' +
-      "<h1>院校数据总览</h1>" +
-      '<p class="sub">数据来自本地 MySQL，导出于 ' + esc(data.generated_at) +
-      "；点击学校进入详情</p></header>";
+  /* ---------------- 总览页（吃 index 摘要，按地区分组）---------------- */
+  var REGION = { UK: "英国", AU: "澳大利亚", HK: "香港" };
 
-    // 学校卡片
-    h += '<section><div class="uni-grid">' + data.universities.map(function (u) {
-      var nProg = u.programs.length;
-      var nMod = Object.keys(u.modules || {}).length;
-      var dead = (u.source_status || []).filter(function (s) { return s.status === "dead"; }).length;
-      return '<a class="uni-card" href="#/u/' + esc(u.code) + '">' +
-        '<span class="country">' + esc(u.country) + " · " + esc(u.city || "") + "</span>" +
-        "<h3>" + esc(u.name_en) + "</h3>" +
-        '<span class="zh">' + esc(u.name_zh || "") + " · " + esc(u.term_system || "") + "</span>" +
-        '<div class="nums"><div><b>' + nProg + "</b><span>专业</span></div>" +
-        "<div><b>" + nMod + "</b><span>模块</span></div>" +
-        "<div><b>" + (u.calendar.length ? "✓" : "—") + "</b><span>校历</span></div>" +
-        "<div><b>" + (dead ? dead + "⚠" : "0") + "</b><span>失效源</span></div></div></a>";
-    }).join("") + "</div></section>";
+  VIEWS.overview = function (index) {
+    var h = '<header class="hero"><div class="eyebrow">study_abroad · 留学辅导课程库</div>' +
+      "<h1>院校总览</h1>" +
+      '<p class="sub">数据导出于 ' + esc(index.generated_at) + "；点击学校进入</p></header>";
 
-    // 信息页占位：放跨校的重要信息（具体内容待定）
+    // 按地区分组（顺序：英国 → 澳大利亚 → 香港 → 其他）
+    var groups = {}, order = [];
+    index.universities.forEach(function (u) {
+      var key = u.country || "其他";
+      if (!groups[key]) { groups[key] = []; order.push(key); }
+      groups[key].push(u);
+    });
+    order.sort(function (a, b) {
+      var rank = ["UK", "AU", "HK"];
+      return (rank.indexOf(a) + 99 * (rank.indexOf(a) < 0)) -
+             (rank.indexOf(b) + 99 * (rank.indexOf(b) < 0));
+    });
+
+    order.forEach(function (key) {
+      h += "<section><h2>" + esc(REGION[key] || key) + "</h2>" +
+        '<div class="uni-grid">' + groups[key].map(function (u) {
+          return '<a class="uni-card" href="#/u/' + esc(u.code) + '">' +
+            '<span class="country">' + esc(u.city || "") + "</span>" +
+            "<h3>" + esc(u.name_en) + "</h3>" +
+            '<span class="zh">' + esc(u.name_zh || "") + " · " + esc(u.term_system || "") + "</span>" +
+            '<div class="nums"><div><b>' + u.n_programs + "</b><span>专业</span></div>" +
+            "<div><b>" + u.n_modules + "</b><span>课程</span></div>" +
+            "<div><b>" + (u.has_calendar ? "✓" : "—") + "</b><span>校历</span></div>" +
+            "<div><b>" + (u.dead_sources ? u.dead_sources + "⚠" : "0") + "</b><span>失效源</span></div></div></a>";
+        }).join("") + "</div></section>";
+    });
+
     h += "<section><h2>重要信息</h2>" +
-      '<p class="empty">这里预留给跨校的重要信息（申请季提醒、政策变动等），内容待定</p></section>';
+      '<p class="empty">这里预留给跨校的重要信息（考试季提醒、高需求课程等），内容待定</p></section>';
     return h;
   };
 
@@ -40,7 +52,8 @@
   VIEWS.university = function (uni, filters) {
     var ex = uni.extra || {};
     var chips = [ex.group, ex.ug_programs && "官网本科 " + ex.ug_programs + " 个",
-      ex.pgt_programs && "官网授课硕士 " + ex.pgt_programs + " 个", uni.cn_student_note]
+      ex.pgt_programs && "官网授课硕士 " + ex.pgt_programs + " 个",
+      UI.SHOW_APP && uni.cn_student_note]
       .filter(Boolean).map(function (c) { return '<span class="chip">' + esc(c) + "</span>"; }).join("");
     if (ex.module_catalogue_url) {
       chips += '<a class="chip" href="' + esc(ex.module_catalogue_url) +
@@ -55,9 +68,11 @@
 
     h += VIEWS._calendarSection(uni);
     h += VIEWS._facultyGrid(uni);
-    h += fold("未截止的关键日期", VIEWS._deadlineBody(uni));
-    h += fold("语言要求分档", VIEWS._bandBody(uni));
-    h += fold("中国学生政策要点", VIEWS._policyBody(uni));
+    if (UI.SHOW_APP) {   // 申请域整体收起（辅导业务）；数据在库，开 UI.SHOW_APP 即恢复
+      h += fold("未截止的关键日期", VIEWS._deadlineBody(uni));
+      h += fold("语言要求分档", VIEWS._bandBody(uni));
+      h += fold("中国学生政策要点", VIEWS._policyBody(uni));
+    }
     return h;
   };
 
@@ -175,10 +190,11 @@
       });
     });
     if (!mods.length) {
-      return "<section><h2>课程列表</h2>" +
-        '<p class="empty">课程（单门课）数据未采集' +
-        (Object.keys(uni.modules || {}).length ? "" : " — 该校官网专业页不公开课程清单") +
-        "</p></section>";
+      var cat = (uni.extra || {}).module_catalogue_url;
+      return "<section><h2>课程列表</h2><p class='empty'>" +
+        (cat ? '本库未收录该院系课程清单 — 见 <a href="' + esc(cat) +
+               '" target="_blank" rel="noopener">官方课程总目录 ↗</a>'
+             : "该校未公开课程目录（或尚未找到公开源）") + "</p></section>";
     }
     mods.sort(function (a, b) { return (a.code || "zz").localeCompare(b.code || "zz"); });
     var h = "<section><h2>课程列表</h2>" +
@@ -252,7 +268,8 @@
     var showFac = Object.keys(facs).length > 1;  // 院系只有一个时列是纯重复，不显示
     h += '<div class="scroll"><table><tr><th>专业</th><th>层次</th>' +
       (showFac ? "<th>院系</th>" : "") +
-      "<th>国际学费</th><th>语言</th><th>模块</th><th>最近截止</th></tr>";
+      (UI.SHOW_APP ? "<th>国际学费</th><th>语言</th>" : "") +
+      "<th>课程数</th>" + (UI.SHOW_APP ? "<th>最近截止</th>" : "") + "</tr>";
     rows.forEach(function (p) {
       var d = p.detail || {};
       var band = (uni.language_bands || []).filter(function (b) { return b.band_code === d.language_band; })[0];
@@ -262,10 +279,10 @@
         "<td>" + esc(p.name_en) + (p.name_zh ? '<span class="sub">' + esc(p.name_zh) + "</span>" : "") + "</td>" +
         "<td>" + (UI.LEVEL[p.level] || p.level) + "</td>" +
         (showFac ? "<td>" + esc(p.faculty_name || "—") + "</td>" : "") +
-        '<td class="num">' + (UI.money(d.tuition_intl, d.currency) || "—") + "</td>" +
-        '<td class="num">' + (ielts ? "IELTS " + ielts : "—") + "</td>" +
+        (UI.SHOW_APP ? '<td class="num">' + (UI.money(d.tuition_intl, d.currency) || "—") + "</td>" +
+                       '<td class="num">' + (ielts ? "IELTS " + ielts : "—") + "</td>" : "") +
         '<td class="num">' + (p.modules.length || "—") + "</td>" +
-        "<td>" + dl.html + "</td></tr>";
+        (UI.SHOW_APP ? "<td>" + dl.html + "</td>" : "") + "</tr>";
     });
     return h + "</table></div></section>";
   };
