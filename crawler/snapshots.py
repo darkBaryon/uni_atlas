@@ -11,12 +11,16 @@ import config
 
 
 def _slug(url):
-    tail = url.rstrip("/").split("/")[-1] or "index"
-    tail = tail.split("?")[0] or "index"
-    query = url.split("?", 1)[1] if "?" in url else ""
-    if query:  # 目录分页等带参页面，参数并入文件名避免互相覆盖
-        tail += "_" + re.sub(r"[^A-Za-z0-9]+", "-", query)[:60]
-    return re.sub(r"[^A-Za-z0-9._-]+", "-", tail)[:120]
+    """URL → 快照文件名：取路径全段而非仅尾段——不同页面共享尾段
+    （/schools/A/study/postgraduate 与 /schools/B/study/postgraduate）
+    曾互相覆盖（实测 2026-07）。"""
+    from urllib.parse import urlsplit
+    parts = urlsplit(url)
+    path = parts.path.strip("/") or "index"
+    slug = re.sub(r"[^A-Za-z0-9._-]+", "-", path.replace("/", "__"))
+    if parts.query:
+        slug += "_" + re.sub(r"[^A-Za-z0-9]+", "-", parts.query)[:60]
+    return slug[-160:]
 
 
 def path_for(uni_code, category, url):

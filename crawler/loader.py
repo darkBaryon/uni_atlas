@@ -24,6 +24,7 @@ class Loader:
         uconf = config.uni(uni_code) if uni_code else None
         self.faculty_zh = uconf.faculties if uconf else {}   # 英文名 -> 中文名
         self.faculty_alias = uconf.faculty_alias if uconf else {}  # 页面叫法 -> 官方名
+        self.faculty_overrides = uconf.faculty_overrides if uconf else {}  # slug -> 官方名（人工整理）
         self.stats = {"programs": 0, "modules": 0, "deadlines": 0,
                       "calendar": 0, "changes": 0}
         self.changes = []          # 报告用: (entity, name, field, old, new)
@@ -104,7 +105,10 @@ class Loader:
     # ---------------- program ----------------
     def load_program(self, p, source_page_id, snapshot_id, faculty_note=None):
         fac_id = None
-        if p.faculty or p.dept:
+        slug_key = p.url.rstrip("/").split("/")[-1]
+        if slug_key in self.faculty_overrides:   # 人工整理层优先（页面无信号的专业）
+            fac_id = self.faculty_id(self.faculty_overrides[slug_key])
+        elif p.faculty or p.dept:
             fac = self.faculty_id(p.faculty)
             fac_id = (self.faculty_id(p.dept, parent_id=fac, level="department")
                       if p.dept and p.dept != p.faculty else fac)

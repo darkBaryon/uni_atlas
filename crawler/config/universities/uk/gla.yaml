@@ -67,3 +67,27 @@ seed_pages:
   # 学院列表（4 College）
   - {category: faculty_list, crawl_freq: monthly,
      url: "https://www.gla.ac.uk/colleges/"}
+
+# 人工整理层：页面正文无归属信号的专业 → 学院（2026-07 按官方学科归属核对；
+# 海外合作办学项目故意留空）
+faculty_overrides:
+  americanmodernliterature: School of Critical Studies
+  creativewritingdistancelearning: School of Critical Studies
+  speech-language-sociolinguistics: School of Critical Studies
+  translation-intercultural-communication: School of Modern Languages & Cultures
+  ministrytheologypractice: School of Critical Studies
+  religion-global-challenges: School of Critical Studies
+  dress-textile-histories: School of Culture & Creative Arts
+  technical-art-history: School of Culture & Creative Arts
+  filmmaking: School of Culture & Creative Arts
+  playwritingdramaturgy: School of Culture & Creative Arts
+  theatrepractices: School of Culture & Creative Arts
+  theatrestudies: School of Culture & Creative Arts
+  dataanalyticsonline: School of Mathematics & Statistics
+  psychologicalscienceconversion: School of Psychology & Neuroscience
+  psychologyconversionmsconline: School of Psychology & Neuroscience
+  publichealth: School of Health & Wellbeing
+  sport-exercise-science-medicine-online: School of Cardiovascular & Metabolic Health
+  ecology-environmental-monitoring: School of Biodiversity, One Health & Veterinary Medicine
+  central-east-european-russian-eurasian-studies: School of Social & Political Sciences
+  # Gadjah Mada 联合办学 5 个与 UPES/SIT 合作项目故意留空（跨校归属不明）

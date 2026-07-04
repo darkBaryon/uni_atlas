@@ -12,7 +12,7 @@ from datetime import datetime
 
 from parsers.base import BaseParser
 from parsers.models import ModuleRef
-from parsers.uk.common import event_type, modules_from_credit_lis
+from parsers.uk.common import keyword_check, event_type, modules_from_credit_lis
 from parsers.models import CalendarData, DeadlineData, DiscoveredPage, ProgramData
 from parsers.page import parse_date
 from config.codes import Category, UniCode
@@ -117,6 +117,36 @@ class Glasgow(BaseParser):
                     "international", "application", d + " 23:59:00",
                     p.entry_year, "国际学生截止"))
         p.ucas_code = page.re(r"Apply to ([A-Z]{1,2}\d{2}[A-Z0-9]?)\b")
+
+    # ---------------- 学院归属反向索引 ----------------
+    def faculty_list(self, page, res):
+        """三层页面（实测 2026-07）：colleges 根页 → 4 个 College 页 →
+        /schools/<slug>/postgraduate/（权威反向归属索引——正文不自报家门的
+        专业在这里按学院列出，弥补 129 个 PGT 未归类）。"""
+        if "/schools/" in page.url:   # 各院 PGT 页路径五花八门，统一尝试归属
+            school = self.canon_faculty((page.h1() or "") + page.txt[:400], SCHOOL_RE)
+            if not school:
+                res.note(f"学院 PGT 索引页无法规范化学院名: {page.h1()}")
+                return
+            for href, text in page.links(href_re=r"/postgraduate/taught/[a-z0-9-]+/?$"):
+                name = re.sub(r"\[.*?\]$", "", text).strip() or href.rstrip("/").rsplit("/", 1)[-1]
+                res.programs.append(ProgramData(
+                    name_en=name, level="PGT", url=href,
+                    entry_year=self.entry_year, dept=school))
+            if not res.programs:
+                res.note(f"{school} PGT 归属索引页未解析出专业链接")
+            return
+        if re.search(r"/colleges/[a-z]+/?$", page.url):
+            for href, text in page.links(href_re=r"/schools/[a-z]+/?$"):
+                res.discovered.append(DiscoveredPage(
+                    url=href.rstrip("/") + "/postgraduate/",
+                    category=Category.FACULTY_LIST, title=f"{text} PGT 归属索引"))
+            return
+        # colleges 根页：发现 College 页 + 体检
+        for href, _text in page.links(href_re=r"/colleges/[a-z]+/?$"):
+            res.discovered.append(DiscoveredPage(
+                url=href, category=Category.FACULTY_LIST, title="College 页"))
+        keyword_check(res, page, r"College of", "Glasgow colleges 页")
 
     # ---------------- 校历 ----------------
     def term_dates(self, page, res):
