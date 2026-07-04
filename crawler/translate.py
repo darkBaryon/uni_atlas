@@ -62,6 +62,8 @@ def to_zh(name_en):
     m = _DEGREE_RE.search(name_en)
     body = name_en[: m.start()] if m else name_en
     suffix = m.group(1) if m else ""
+    if body.isupper():
+        body = body.title()   # 全大写（官方目录风格）会让模型复读失控，先归一化
     try:
         zh = fn(body.strip())
     except Exception as e:
@@ -69,6 +71,9 @@ def to_zh(name_en):
         return None
     if not zh or not re.search(r"[一-鿿]", zh):
         return None                      # 没译出中文就当没翻
+    if len(zh) > max(60, 3 * len(body)):
+        logger.warning("译文疑似复读失控，弃用 %r -> %d 字", name_en, len(zh))
+        return None                      # 离线模型的退化输出（无限重复）不入库
     for a, b in _FIXES:
         zh = zh.replace(a, b)
     # 'School of X' 结尾的“学校”应为“学院”；'Division of X' 的“司”应为“部”

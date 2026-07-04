@@ -12,6 +12,7 @@ domains:
   study.ed.ac.uk: 3.0
   semester-dates.ed.ac.uk: 3.0
   www.ed.ac.uk: 3.0
+  www.drps.ed.ac.uk: 3.0
 
 scope:
   crawl_module_details: false
@@ -20,8 +21,22 @@ faculties:
   "College of Arts, Humanities and Social Sciences": 艺术、人文与社会科学学院
   "College of Medicine and Veterinary Medicine": 医学与兽医学院
   "College of Science and Engineering": 科学与工程学院
+  # 医学院下属（DRPS 目录出现、专业页不出现，行由 loader 建）
+  "School of Genetics and Cancer": 遗传学与癌症学院
+  "School of Neurological and Cardiovascular Sciences": 神经与心血管科学学院
+  "School of Regeneration and Repair": 再生与修复学院
+  "School of Population Health Sciences": 人口健康科学学院
+  "Centre for Open Learning": 开放学习中心
+
+# DRPS 课程目录的叫法 → 库中官方名
+faculty_alias:
+  "School of Law": Edinburgh Law School
+  "School of Geosciences": School of GeoSciences
 
 seed_pages:
+  # 官方课程目录 DRPS：学院索引 → 科目 → 课程名单（只收名单+链接）
+  - {category: module_catalog, crawl_freq: monthly,
+     url: "https://www.drps.ed.ac.uk/26-27/dpt/cx_schindex.htm"}
   - {category: program_catalog, crawl_freq: monthly,
      url: "https://study.ed.ac.uk/programmes/undergraduate-a-z-2026"}
   - {category: program_catalog, crawl_freq: monthly,

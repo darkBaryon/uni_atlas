@@ -2,7 +2,8 @@
 import re
 
 from parsers.base import BaseParser
-from parsers.models import CalendarData, DeadlineData, DiscoveredPage, ProgramData
+from parsers.models import (CalendarData, DeadlineData, DiscoveredPage,
+                            ModuleData, ProgramData)
 from parsers.page import norm_ws, parse_date
 from parsers.uk.common import (date_range, event_type, ielts, keyword_check,
                                section_text)
@@ -102,6 +103,45 @@ class Edinburgh(BaseParser):
                         p.deadlines.append(DeadlineData(
                             "all", "round", d + " 23:59:00", p.entry_year,
                             f"第 {rnd} 轮申请截止", round_no=rnd))
+
+    # ---------------- 官方课程目录（名单+链接，不镜像详情）----------------
+    def module_catalog(self, page, res):
+        """DRPS drps.ed.ac.uk（实测 2026-07）：cx_schindex 学院索引 →
+        cx_s_su<id> 学院页（列科目）→ cx_sb_<subj> 科目页（课程名单）。
+        课程链接文件名即课程代码（cxinfr08031.htm → INFR08031）；
+        class=not_delivered 表示本学年不开课，跳过。策略同格拉：只收名单。"""
+        if "cx_schindex" in page.url:
+            for href, text in page.links(href_re=r"/cx_s_su\d+\.htm$"):
+                name = norm_ws(re.sub(r"\(Schedule\s*[A-Z]?\s*\)\s*$", "", text))
+                res.discovered.append(DiscoveredPage(
+                    url=href, category=Category.MODULE_CATALOG,
+                    title=f"{name} 科目索引"))
+            if not res.discovered:
+                res.note("DRPS 学院索引未解析出学院链接")
+            return
+        if re.search(r"/cx_s_su\d+\.htm$", page.url):
+            for href, text in page.links(href_re=r"/cx_sb_\w+\.htm$"):
+                res.discovered.append(DiscoveredPage(
+                    url=href, category=Category.MODULE_CATALOG,
+                    title=f"{text} 课程名单"))
+            if not res.discovered:
+                res.note("DRPS 学院页未解析出科目链接")
+            return
+        if "/cx_sb_" in page.url:
+            school_links = page.links(href_re=r"/cx_s_su\d+\.htm$")
+            dept = school_links[0][1] if school_links else None
+            for a in page.soup.find_all("a", href=True):
+                url = page.abs(a["href"])
+                m = re.search(r"/cx([a-z]{2,6}\d{5})\.htm$", url)
+                if not m or "not_delivered" in (a.get("class") or []):
+                    continue
+                name = norm_ws(a.get_text(" ", strip=True))
+                if name:
+                    res.modules.append(ModuleData(
+                        name_en=name, url=url, entry_year=self.entry_year,
+                        code=m.group(1).upper(), dept=dept))
+            if not res.modules:
+                res.note("DRPS 科目页无本学年开课的课程链接")
 
     def term_dates(self, page, res):
         # 未来学年子页（'/202627' 形）：登记为任务（实测 2026-07）
