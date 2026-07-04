@@ -33,27 +33,30 @@ mysql study_abroad --table -e "
    WHERE u.is_active=1
    ORDER BY u.country, u.code;"
 echo
-echo "▸ 已抓页面构成（格式 已抓/登记）。「冻结」= crawl_freq=manual 故意不抓："
-echo "  未来学年名单、课程详情页（存链接不镜像）、限流挂起等；「失效」= 404/搬家"
+echo "▸ 已抓页面构成（格式 已抓/应抓，只含活跃非冻结任务）。「冻结」= manual 故意"
+echo "  不抓：未来学年、课程详情链接留痕、限流挂起；「失效」= 404/搬家/垃圾清理"
 mysql study_abroad --table -e "
   SELECT u.code 学校,
-    CONCAT(SUM(sp.category='program_detail' AND sp.last_fetched_at IS NOT NULL),
-           '/', SUM(sp.category='program_detail')) 专业页,
-    CONCAT(SUM(sp.category='module_catalog' AND sp.last_fetched_at IS NOT NULL),
-           '/', SUM(sp.category='module_catalog')) 课程名单页,
-    CONCAT(SUM(sp.category='program_catalog' AND sp.last_fetched_at IS NOT NULL),
-           '/', SUM(sp.category='program_catalog')) 目录页,
-    CONCAT(SUM(sp.category IN ('term_dates','faculty_list')
+    CONCAT(SUM(sp.category='program_detail' AND sp.ok AND sp.last_fetched_at IS NOT NULL),
+           '/', SUM(sp.category='program_detail' AND sp.ok)) 专业页,
+    CONCAT(SUM(sp.category='module_catalog' AND sp.ok AND sp.last_fetched_at IS NOT NULL),
+           '/', SUM(sp.category='module_catalog' AND sp.ok)) 课程名单页,
+    CONCAT(SUM(sp.category='program_catalog' AND sp.ok AND sp.last_fetched_at IS NOT NULL),
+           '/', SUM(sp.category='program_catalog' AND sp.ok)) 目录页,
+    CONCAT(SUM(sp.category IN ('term_dates','faculty_list') AND sp.ok
                AND sp.last_fetched_at IS NOT NULL),
-           '/', SUM(sp.category IN ('term_dates','faculty_list'))) 校历院系,
+           '/', SUM(sp.category IN ('term_dates','faculty_list') AND sp.ok)) 校历院系,
     CONCAT(SUM(sp.category NOT IN ('program_detail','module_catalog',
                                    'program_catalog','term_dates','faculty_list')
-               AND sp.last_fetched_at IS NOT NULL),
+               AND sp.ok AND sp.last_fetched_at IS NOT NULL),
            '/', SUM(sp.category NOT IN ('program_detail','module_catalog',
-                                        'program_catalog','term_dates','faculty_list'))) 其他,
-    SUM(sp.crawl_freq='manual') 冻结,
+                                        'program_catalog','term_dates','faculty_list')
+                    AND sp.ok)) 其他,
+    SUM(sp.crawl_freq='manual' AND sp.status='active') 冻结,
     SUM(sp.status!='active') 失效
-  FROM source_pages sp JOIN universities u ON u.id=sp.university_id
+  FROM (SELECT s.*, (s.status='active' AND s.crawl_freq!='manual') ok
+          FROM source_pages s) sp
+  JOIN universities u ON u.id=sp.university_id
   GROUP BY u.code ORDER BY u.code;"
 echo
 echo "▸ 最近变更（同一对象反复出现同样的对调 = 解析器不稳，要查）"
