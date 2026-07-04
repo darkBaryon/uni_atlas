@@ -1,0 +1,40 @@
+# 莫纳什大学 —— 澳洲第二所（2026-07 调研）。
+# 死胡同清单与校历人工来源见 docs/澳洲院校数据源备忘.md。
+# 数据拓扑：
+# - 官方目录 = handbook.monash.edu（CourseLoop 平台，Next.js）：列表/搜索页是纯 SPA
+#   零内嵌（KCL 同款陷阱），ES 搜索 API 有网关令牌——**枚举走 sitemap**
+#   （sitemap.xml 索引 → 28 个子图 ≈27 万 URL 含历年，按 /{entry_year}/ 过滤后
+#   2026 = 1,114 courses + 5,719 units）。
+# - 详情页 SSR，__NEXT_DATA__ 内嵌完整 JSON：title/code/credit_points/
+#   school(=院系归属!)/aqf_level/unit_offering(校区+学期)/时长——一层采齐。
+# - 反爬：handbook 域 ~40 个带间隔请求无挑战（对比墨尔本 Imperva），中速即可；
+#   主站 www.monash.edu 403 挑战页，校历人工录入，不 seed。
+code: monash
+name: Monash University
+name_zh: 莫纳什大学
+website: https://www.monash.edu
+city: Melbourne
+
+domains:
+  handbook.monash.edu: {interval: 2.0, concurrency: 2}
+
+faculties:
+  "Faculty of Art, Design and Architecture": 艺术、设计与建筑学院
+  "Faculty of Arts": 文学院
+  "Faculty of Business and Economics": 商业与经济学院
+  "Faculty of Education": 教育学院
+  "Faculty of Engineering": 工程学院
+  "Faculty of Information Technology": 信息技术学院
+  "Faculty of Law": 法学院
+  "Faculty of Medicine, Nursing and Health Sciences": 医学、护理与健康科学学院
+  "Faculty of Pharmacy and Pharmaceutical Sciences": 药学与药物科学学院
+  "Faculty of Science": 理学院
+
+seed_pages:
+  # 唯一种子：sitemap 索引 → 解析器展开 28 个子图 → courses/units 详情任务
+  - {category: program_catalog, crawl_freq: monthly,
+     url: "https://handbook.monash.edu/sitemap.xml"}
+  # 校历：主站 403，仅登记留痕；2026 principal dates 已人工录入（来源见备忘）
+  - {category: term_dates, crawl_freq: manual,
+     url: "https://www.monash.edu/students/admin/dates/summary-dates",
+     note: "主站 WAF 403，脚本不可达；校历人工维护"}
