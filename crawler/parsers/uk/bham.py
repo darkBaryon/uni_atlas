@@ -22,6 +22,17 @@ class Birmingham(BaseParser):
     uni_code = UniCode.BHAM
 
     def program_catalog(self, page, res):
+        # 课程搜索页是 JS 渲染抓不全（历史仅 14 个）；权威全量源是
+        # /study/sitemap.xml 的 <loc>（702 个，实测 2026-07-05）
+        if "sitemap" in page.url:
+            for loc in page.soup.select("loc"):
+                url = norm_ws(loc.get_text(strip=True))
+                if re.search(COURSE_RE, url) and "/dubai/" not in url:
+                    res.discovered.append(DiscoveredPage(
+                        url=url, category=Category.PROGRAM_DETAIL))
+            if not res.discovered:
+                res.note("study/sitemap.xml 未解析出专业 URL（结构变了？）")
+            return
         for url, title, _ in find_links(page, COURSE_RE):
             if "/dubai/" not in url:
                 res.discovered.append(DiscoveredPage(

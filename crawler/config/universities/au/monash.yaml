@@ -16,7 +16,9 @@ website: https://www.monash.edu
 city: Melbourne
 
 domains:
-  handbook.monash.edu: {interval: 2.0, concurrency: 2}
+  # 2026-07 并发实测：30 并发两轮全 200、零挑战、最慢 1s、无长尾（Next.js SSR，
+  # 不像墨尔本挂 Imperva）——放到高档。interval 保留 0.5s 作兜底。
+  handbook.monash.edu: {interval: 0.5, concurrency: 8}
 
 faculties:
   "Faculty of Art, Design and Architecture": 艺术、设计与建筑学院

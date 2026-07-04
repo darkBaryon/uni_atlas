@@ -34,6 +34,9 @@ faculties:
   College of Social Sciences: 社会科学学院
 
 seed_pages:
+  # 专业全量清单：课程搜索是 JS 渲染，权威源是 study 分区 sitemap（702 个）
+  - {category: program_catalog, crawl_freq: monthly,
+     url: "https://www.birmingham.ac.uk/study/sitemap.xml"}
   # 官方 Programmes & Modules Handbook：模块名单权威源（52 院系）
   - {category: module_catalog, crawl_freq: monthly,
      url: "https://program-and-modules-handbook.bham.ac.uk/webhandbooks/WebHandbooks-control-servlet?Action=getSchoolList"}
