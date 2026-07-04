@@ -16,6 +16,10 @@ domains:
   # 学生支持站，仅取 term dates 单页，保持保守。
   self-service.kcl.ac.uk: {interval: 3.0, concurrency: 1}
 
+expect:
+  modules_min: 200          # 交换生子集（KCL 唯一公开模块源，非全量）
+  module_faculty_pct: 50
+
 scope:
   crawl_module_details: false
 

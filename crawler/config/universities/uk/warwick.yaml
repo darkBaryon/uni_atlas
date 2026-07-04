@@ -12,7 +12,8 @@ entry_year: "2026"
 domains:
   # 2026-07 复核：此前“429 限流”系误判——20 路并发实测全 200/404、零 429、无 challenge。
   # 唯一特征是响应慢（首访 ~8s，之后 2-3s/页），故靠并发提吞吐、间隔收紧。
-  warwick.ac.uk: {interval: 1.0, concurrency: 3}
+  # 主站实测会 429（2026-07-05 termdates 中招）——高并发只适用 courses 子域
+  warwick.ac.uk: {interval: 3.0, concurrency: 1}
   # 官方模块目录（courses.warwick.ac.uk/modules）：并发容忍度实测最高（20 路并发全 200）；
   # 单页慢（2-3s），多开并发收益最大，推到高档。interval 保留 0.5s 作兜底。
   courses.warwick.ac.uk: {interval: 0.5, concurrency: 8}
@@ -35,6 +36,9 @@ seed_pages:
      url: "https://warwick.ac.uk/study/postgraduate/courses/"}
   - {category: term_dates, crawl_freq: monthly,
      url: "https://warwick.ac.uk/study/termdates"}
+  # 考试期（辅导旺季排班核心）：教务处考试日期页
+  - {category: term_dates, crawl_freq: monthly,
+     url: "https://warwick.ac.uk/services/academicoffice/modules_marks_assessments/students/examination_dates/"}
   - {category: ug_admissions, crawl_freq: weekly,
      url: "https://warwick.ac.uk/study/undergraduate"}
   - {category: pg_admissions, crawl_freq: weekly,

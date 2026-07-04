@@ -11,6 +11,9 @@ domains:
   www.sheffield.ac.uk: {interval: 1.0, concurrency: 3}
   sheffield.ac.uk: {interval: 1.0, concurrency: 3}
 
+expect:
+  modules_skip: "无中央目录（模块散在专业规格 PDF/院系页，待决策）"
+
 scope:
   crawl_module_details: false
 

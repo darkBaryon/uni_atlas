@@ -184,6 +184,8 @@ def date_range(text):
     clean = re.sub(r"\([^)]*\)", "", clean)
     # 星期前缀（'Monday 30 November - Friday 11 ...'）会挡住区间正则，先剥掉
     clean = re.sub(r"\b(?:Mon|Tues|Wednes|Thurs|Fri|Satur|Sun)day,?\s+", "", clean, flags=re.I)
+    # 序数词后缀（'15th December'，华威考试期页措辞）同样挡正则
+    clean = re.sub(r"\b(\d{1,2})(?:st|nd|rd|th)\b", r"\1", clean, flags=re.I)
     m = re.search(r"(\d{1,2})(?:\s+([A-Za-z]+))?(?:\s+(20\d{2}))?\s*(?:-|to)\s*"
                   r"(\d{1,2})\s+([A-Za-z]+)\s+(20\d{2})", clean, re.I)
     if m:

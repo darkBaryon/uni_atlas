@@ -9,10 +9,9 @@ from parsers.base import BaseParser
 from parsers.page import norm_ws
 from parsers.models import (CalendarData, DeadlineData, DiscoveredPage,
                             ModuleData, ProgramData)
-from parsers.uk.common import (band, fee_near, find_links, first, ielts,
-                               keyword_check, known_name, scan_term_lines,
-                               section_text, standard_deadlines, title_from)
-from config.codes import Category, UniCode
+from parsers.uk.common import (date_range, event_type, band, fee_near, find_links, first, ielts,
+                               keyword_check, known_name, section_text, standard_deadlines, title_from)
+from config.codes import Category, EventType, UniCode
 
 COURSE_RE = (r"/study/undergraduate/courses-20\d{2}/[a-z0-9-]+/?$|"
              r"/study/postgraduate/courses(?:-20\d{2})?/(?!course-list/?$)[a-z0-9-]+/?$")
@@ -114,8 +113,55 @@ class Warwick(BaseParser):
             res.info("该系本学年无课程行（小单位常见）")
 
     def term_dates(self, page, res):
-        scan_term_lines(page, res, CalendarData,
-                        r"welcome|autumn|spring|summer|term|exam")
+        if "examination_dates" in page.url:
+            return self._exam_dates(page, res)
+        return self._term_dates(page, res)
+
+    def _exam_dates(self, page, res):
+        """考试期页（实测 2026-07-05）：'2025/26 Exam Dates' 标题后跟表格，
+        行 = 考试窗口名（December 2025 / Summer 2026 / Resits...）+ 日期区间
+        （带星期前缀和序数词后缀，date_range 已兼容）。表格语义即考试期。"""
+        for table in page.soup.find_all("table"):
+            cap = table.find("caption")
+            m = re.search(r"(20\d{2})/(\d{2}) Exam Dates",
+                          cap.get_text(" ", strip=True) if cap else "")
+            if not m:
+                continue
+            ym = f"{m.group(1)}/{m.group(2)}"
+            for tr in table.find_all("tr"):
+                cells = [norm_ws(td.get_text(" ", strip=True)) for td in tr.find_all("td")]
+                if len(cells) < 2 or not cells[0]:
+                    continue
+                start, end = date_range(cells[-1])
+                if not start:
+                    continue
+                etype = (EventType.RESIT_PERIOD if "resit" in cells[0].lower()
+                         else EventType.EXAM_PERIOD)
+                label = norm_ws(re.sub(r"\s*\[\d\]", "", cells[0]))   # 剥脚注符
+                res.calendar.append(CalendarData(ym, etype, f"{label} 考试期", start, end))
+        if not res.calendar:
+            res.note("华威考试期页未解析出日期区间")
+
+    def _term_dates(self, page, res):
+        """版式（实测 2026-07-05）：学年标题行（2025/2026）后跟
+        「标签行 + 日期区间行」成对（Campus Arrivals/Welcome Week/
+        Autumn|Spring|Summer Term），三个学年连排。"""
+        ym = label = None
+        for raw in page.txt.split("\n"):
+            line = raw.strip()
+            if not line:
+                continue
+            m = re.fullmatch(r"(20\d{2})/(20\d{2})", line)
+            if m:
+                ym, label = f"{m.group(1)}/{m.group(2)[2:]}", None
+                continue
+            start, end = date_range(line)
+            if ym and label and start:
+                res.calendar.append(CalendarData(
+                    ym, event_type(label, start), label, start, end))
+                label = None
+            elif len(line) < 40 and not re.search(r"\d", line):
+                label = line
         if not res.calendar:
             res.note("Warwick term dates 未解析出日期区间")
 

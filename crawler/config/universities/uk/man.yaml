@@ -14,6 +14,9 @@ domains:
   # 保持单并发串行。
   portal.manchester.ac.uk: {interval: 2.0, concurrency: 1}
 
+expect:
+  module_faculty_pct: 0     # 曼大归属经专业引用（portlet 无院系字段）
+
 scope:
   crawl_module_details: false
 

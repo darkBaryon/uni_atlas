@@ -4,6 +4,7 @@
 #
 # 其他子命令（按需）：
 #   ./run.sh web          # 不抓取，只刷新数据并打开页面（--serve 起本地服务器）
+#   ./run.sh audit        # 数据体检：逐校断言矩阵（人工验收规则的固化）
 #   ./run.sh status       # 看现状：待抓任务 / 每校数据量 / 最近变更
 #   ./run.sh seed <校>    # 按 crawler/config/universities/<校>.yaml 登记新学校
 #   ./run.sh discover <校># 展开该校目录页 → 生成专业页任务
@@ -23,8 +24,14 @@ case "$cmd" in
     echo "▸ 翻译新增名称 ..."
     ( cd crawler && python3 translate_backfill.py )
     export_web
+    echo "▸ 数据体检 ..."
+    python3 crawler/audit.py --quiet || echo "⚠ 体检有红灯，详见上方（./run.sh audit 看全量矩阵）"
     echo "▸ 打开页面 ..."
     open web/index.html
+    ;;
+  audit)
+    # 数据体检：逐校断言矩阵（课程量/覆盖率/垃圾名/校历时效/漏抓），红灯退出码 1
+    python3 crawler/audit.py "$@"
     ;;
   web)
     exec ./web/start.sh "$@"

@@ -15,6 +15,10 @@ domains:
   # packer 挑战 + 样式化 403 硬封），脚本抓不了，故不 seed；此处仅低速兜底防误触。
   www.bris.ac.uk: {interval: 5.0, concurrency: 1}
 
+expect:
+  modules_skip: "目录被 FortiWeb 硬挡（真实浏览器方案另议）"
+  exam_skip: true
+
 scope:
   crawl_module_details: false
 
