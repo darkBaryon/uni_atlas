@@ -8,11 +8,13 @@ city: Edinburgh
 
 entry_year: "2026"
 
+# 2026-07 并发实测：均无 429/challenge。drps（课程目录）持续加压干净；
+# study（专业页）持续加压下响应长尾涨到 ~11s（服务器变慢，非拦截），故 study 取保守档。
 domains:
-  study.ed.ac.uk: {interval: 3.0, concurrency: 1}
-  semester-dates.ed.ac.uk: {interval: 3.0, concurrency: 1}
-  www.ed.ac.uk: {interval: 3.0, concurrency: 1}
-  www.drps.ed.ac.uk: {interval: 3.0, concurrency: 1}
+  study.ed.ac.uk: {interval: 1.0, concurrency: 2}
+  semester-dates.ed.ac.uk: {interval: 3.0, concurrency: 1}   # 仅少量校历页，无需并发
+  www.ed.ac.uk: {interval: 1.0, concurrency: 2}
+  www.drps.ed.ac.uk: {interval: 1.0, concurrency: 3}
 
 scope:
   crawl_module_details: false

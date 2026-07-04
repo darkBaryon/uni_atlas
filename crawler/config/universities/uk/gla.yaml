@@ -10,9 +10,10 @@ city: Glasgow
 
 entry_year: "2026"
 
-# 未实测反爬阈值，先沿用 3s 保守节奏（调研时页面结构统一、抓取难度低）
+# 2026-07 并发实测：20 路并发两轮全 200、零 429、最慢 ~3s、无长尾——容忍度高，推到高档。
+# interval 保留 0.5s 作兜底，防未测到的窗口限流一上来就撞。
 domains:
-  www.gla.ac.uk: {interval: 3.0, concurrency: 1}
+  www.gla.ac.uk: {interval: 0.5, concurrency: 8}
 
 scope:
   # 范围 = 数据层级而非院系：全部学院的专业页都抓（不设 focus_depts），

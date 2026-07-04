@@ -87,15 +87,21 @@ class Leeds(BaseParser):
             for h2 in page.soup.select("h2"):
                 t = norm_ws(h2.get_text(" ", strip=True))
                 if t and not t.startswith("Taught by") and "navigation" not in t.lower():
-                    dept = t
+                    # 区块标题多为正规院系名（loader 按名复用已有行）；
+                    # 教学单元名（如 Health Economics）走 faculty_alias 映射，
+                    # 别名表外且无结构词的不作归属
+                    if (t in (self.conf.faculty_alias or {})
+                            or re.search(r"\b(School|Faculty|Institute|Centre|Department)\b", t)):
+                        dept = t
                     break
             lvl = page.url.split("/ModuleSearch/results/")[1].split("/")[0]
             for a in page.soup.select('a[href^="/Module/"]'):
                 code = norm_ws(a.get_text(" ", strip=True))
-                tr = a.find_parent("tr")
-                cells = [norm_ws(td.get_text(" ", strip=True)) for td in tr.select("td")] if tr else []
-                name = cells[1] if len(cells) > 1 else ""
-                if not re.fullmatch(r"[A-Z]{2,6}\d{4}", code) or not name:
+                # 课名 = 代码链接所在单元格的下一格（列数随页面变化，别按下标取）
+                cell = a.find_parent("td")
+                nxt = cell.find_next_sibling("td") if cell else None
+                name = norm_ws(nxt.get_text(" ", strip=True)) if nxt else ""
+                if not re.fullmatch(r"[A-Z]{2,6}\d{4}[A-Z]?", code) or not name:
                     continue
                 res.modules.append(ModuleData(
                     name_en=name, url=page.abs(a["href"]), entry_year=self.entry_year,
