@@ -290,3 +290,25 @@ def dedupe_discovered(items):
             seen.add(d.url)
             out.append(d)
     items[:] = out
+
+
+def modules_from_credit_lis(page, p, ModuleRef, scope_css="li"):
+    """通用课程名单提取：'<li>课程名 (15 credits)</li>' 版式（格拉/谢菲实测 2026-07）。
+
+    仅匹配整行恰为「名称 (N credits)」的元素，入学要求里的学分句子不会误中。
+    """
+    seen = {m.name.lower() for m in p.modules}
+    for li in page.soup.select(scope_css):
+        t = norm_ws(li.get_text(" ", strip=True))
+        m = re.match(r"^(.{3,120}?)\s*\((\d{1,3})\s*[Cc]redits?\)$", t)
+        if not m:
+            continue
+        name = m.group(1).strip()
+        if name.lower() in seen:
+            continue
+        seen.add(name.lower())
+        head = li.find_previous(["h3", "h4", "h5", "strong"])
+        mtype = ("optional" if head is not None
+                 and re.search(r"optional", head.get_text(" ", strip=True), re.I)
+                 else "core")
+        p.modules.append(ModuleRef(name=name, module_type=mtype))

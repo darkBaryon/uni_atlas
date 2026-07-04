@@ -11,6 +11,8 @@ import re
 from datetime import datetime
 
 from parsers.base import BaseParser
+from parsers.models import ModuleRef
+from parsers.uk.common import modules_from_credit_lis
 from parsers.models import CalendarData, DeadlineData, DiscoveredPage, ProgramData
 from parsers.page import parse_date
 from config.codes import Category, UniCode
@@ -77,9 +79,14 @@ class Glasgow(BaseParser):
         p.dept = self.canon_faculty(page.txt, SCHOOL_RE)
 
         self._deadlines(page, p, is_pg)
+        self._modules(page, p)
         if p.tuition_intl is None and is_pg:
             p.notes.append("未解析出国际学费，页面结构可能已变，需人工核对")
         res.programs.append(p)
+
+    @staticmethod
+    def _modules(page, p):
+        modules_from_credit_lis(page, p, ModuleRef, scope_css="div.tab-content li")
 
     def _deadlines(self, page, p, is_pg):
         if is_pg:

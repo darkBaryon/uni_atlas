@@ -4,7 +4,8 @@ import re
 from parsers.base import BaseParser
 from parsers.models import CalendarData, DeadlineData, DiscoveredPage, ModuleRef, ProgramData
 from parsers.page import norm_ws
-from parsers.uk.common import (date_loose, date_range, event_type, find_links,
+from parsers.uk.common import (modules_from_credit_lis,
+                               date_loose, date_range, event_type, find_links,
                                ielts, keyword_check, section_text, title_from)
 from config.codes import Category, UniCode
 
@@ -47,12 +48,17 @@ class Sheffield(BaseParser):
         res.programs.append(p)
 
     def _modules(self, page, p):
-        area = section_text(page, r"Modules", limit=7000)
-        if not area:
-            return
-        for line in [norm_ws(x) for x in area.splitlines() if norm_ws(x)]:
-            if 6 <= len(line) <= 140 and not re.search(r"module|optional|core|fees|apply|year ", line, re.I):
-                p.modules.append(ModuleRef(name=line))
+        """结构块 [class*=course-structure-module]，块内 '- 课程名 (15 credits)' 连写（实测 2026-07）。"""
+        seen = set()
+        for block in page.soup.select("[class*='course-structure-module']"):
+            btxt = norm_ws(block.get_text(" ", strip=True))
+            mtype = "optional" if re.search(r"optional", btxt[:120], re.I) else "core"
+            for name, _cr in re.findall(r"([A-Z][^()\u2013-]{2,80}?)\s*\((\d{1,3})\s*credits?\)", btxt):
+                n = norm_ws(name).strip("-\u2013 ")
+                if n and n.lower() not in seen:
+                    seen.add(n.lower())
+                    p.modules.append(ModuleRef(name=n, module_type=mtype))
+        modules_from_credit_lis(page, p, ModuleRef)   # PGT 页是 li 直列版式
 
     def term_dates(self, page, res):
         if re.search(r"/about/dates/?$", page.url):
