@@ -137,7 +137,10 @@ class _Throttle:
         async with self._lock:
             loop = asyncio.get_running_loop()
             start = max(loop.time(), self._next_at)
-            self._next_at = start + self.interval + random.random() * config.JITTER
+            # 抖动上限跟随 interval：固定 0~1s 的抖动对高速档（0.5s）是双倍减速
+            # （悉尼实测 60 页/分钟 = interval 0.5 + 平均抖动 0.5，2026-07-05）
+            self._next_at = (start + self.interval
+                             + random.random() * min(config.JITTER, self.interval))
             delay = start - loop.time()
         if delay > 0:
             await asyncio.sleep(delay)
