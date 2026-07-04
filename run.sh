@@ -54,7 +54,7 @@ case "$cmd" in
        WHERE u.code='$1' GROUP BY u.id;"
     ;;
   status)
-    exec ./crawler/status.sh "$@"
+    exec ./status.sh "$@"
     ;;
   seed)
     [ $# -ge 1 ] || { echo "用法: ./run.sh seed <校代码>" >&2; exit 2; }

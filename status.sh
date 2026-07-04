@@ -2,7 +2,7 @@
 # 数据现状报表（./run.sh status 的实现）。四段：
 # ① 待抓任务数 ② 每校核心数据 ③ 已抓页面构成 ④ 最近变更
 set -euo pipefail
-cd "$(dirname "$0")/.."
+cd "$(dirname "$0")"
 
 # 三段：① 待抓任务数 ② 每校核心数据体检（按数据策略四件套） ③ 最近变更
 python3 crawler/run.py --due --dry-run 2>/dev/null | head -1 || true
