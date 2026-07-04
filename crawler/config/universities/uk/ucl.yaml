@@ -8,9 +8,9 @@ city: London
 
 entry_year: "2026"
 
-# 域名限速（秒/页）。实测连续 ~40 请求触发 Cloudflare，3s 稳定通过
+# 域名限速。实测连续 ~40 请求触发 Cloudflare，3s 间隔稳定通过，勿开并发
 domains:
-  www.ucl.ac.uk: 3.0
+  www.ucl.ac.uk: {interval: 3.0, concurrency: 1}
 
 # 抓取范围 = 数据层级而非院系：全部学院的专业页都抓（不设 focus_depts）；
 # 不抓底层细节——模块详情页（大纲/考核/负责人），专业页自带模块名单已够用

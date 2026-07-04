@@ -1,11 +1,15 @@
-"""抓取器：域名级并行 + 域内串行限速 + Cloudflare 退避。
+"""抓取器：域名级并行 + 域内限速并发 + Cloudflare 退避。
 
 对外只有一个入口 fetch_tasks(tasks, handle)：
-tasks 按域名分队列，每域一个 worker 串行抓取（interval + 抖动），
-域间并发（上限 MAX_DOMAINS）。每个结果同步回调 handle(result)。
+tasks 按域名分队列，每域按 YAML 配置起 concurrency 个 worker 共享队列，
+共享一个域级节流器（两次请求发起间隔 >= interval + 抖动，退避时全域暂停），
+域间并发（上限 MAX_DOMAINS）。handle(result) 在独立消费线程里被逐个
+串行调用，解析/入库不阻塞事件循环里的抓取。
 """
 import asyncio
+import queue
 import random
+import threading
 from collections import deque
 from enum import Enum
 from http import HTTPStatus
@@ -113,40 +117,76 @@ async def _fetch_one(session, task):
         return FetchResult(task, FetchKind.ERROR, note=f"{type(e).__name__}: {e}")
 
 
-async def _domain_worker(domain, queue, session, handle, sem, log):
-    interval = config.domain_interval(domain)
+class _Throttle:
+    """域级节流：同域任意两次请求"发起"之间至少隔 interval + 抖动。
+
+    并发 worker 共享一个实例排队领发车时刻；反爬退避时 pause() 把发车
+    时刻整体后移，让同域所有 worker 一起停手，而不是继续往限流上撞。
+    """
+
+    def __init__(self, interval):
+        self.interval = interval
+        self._lock = asyncio.Lock()
+        self._next_at = 0.0
+
+    async def wait(self):
+        async with self._lock:
+            loop = asyncio.get_running_loop()
+            start = max(loop.time(), self._next_at)
+            self._next_at = start + self.interval + random.random() * config.JITTER
+            delay = start - loop.time()
+        if delay > 0:
+            await asyncio.sleep(delay)
+
+    def pause(self, seconds):
+        self._next_at = max(self._next_at,
+                            asyncio.get_running_loop().time() + seconds)
+
+
+async def _fetch_with_retry(domain, task, session, throttle, log):
+    await throttle.wait()
+    result = await _fetch_one(session, task)
+    # 5xx 瞬时错误：短暂等待重试一次
+    if result.kind is FetchKind.TRANSIENT:
+        await asyncio.sleep(20)
+        await throttle.wait()
+        retry = await _fetch_one(session, task)
+        result = retry if retry.kind is FetchKind.OK else FetchResult(
+            task, FetchKind.ERROR, retry.http_status,
+            note=f"{result.note}（重试 1 次仍失败）")
+    # Cloudflare / 429 限流：全域暂停指数退避，用尽则失败留痕（只影响本域）
+    for backoff in config.CF_BACKOFFS:
+        if result.kind is not FetchKind.CLOUDFLARE:
+            break
+        log(f"  [{domain}] 反爬/限流({result.note or 'CF 挑战'})，"
+            f"退避 {backoff}s: {task.url[:80]}")
+        throttle.pause(backoff)
+        await asyncio.sleep(backoff)
+        await throttle.wait()
+        result = await _fetch_one(session, task)
+    if result.kind is FetchKind.CLOUDFLARE:
+        result.note = (f"{result.note or 'Cloudflare 挑战'}"
+                       f" {len(config.CF_BACKOFFS)+1} 次未过，待下轮")
+    return result
+
+
+async def _domain_worker(domain, pending, session, emit, throttle, log):
+    while pending:
+        task = pending.popleft()
+        result = await _fetch_with_retry(domain, task, session, throttle, log)
+        emit(result)
+
+
+async def _domain_group(domain, pending, session, emit, sem, log):
+    policy = config.domain_policy(domain)
     async with sem:
-        first = True
-        while queue:
-            task = queue.popleft()
-            if not first:
-                await asyncio.sleep(interval + random.random() * config.JITTER)
-            first = False
-
-            result = await _fetch_one(session, task)
-            # 5xx 瞬时错误：短暂等待重试一次
-            if result.kind is FetchKind.TRANSIENT:
-                await asyncio.sleep(20)
-                retry = await _fetch_one(session, task)
-                result = retry if retry.kind is FetchKind.OK else FetchResult(
-                    task, FetchKind.ERROR, retry.http_status,
-                    note=f"{result.note}（重试 1 次仍失败）")
-            # Cloudflare / 429 限流：指数退避重试，用尽则失败留痕（只影响本域）
-            for backoff in config.CF_BACKOFFS:
-                if result.kind is not FetchKind.CLOUDFLARE:
-                    break
-                log(f"  [{domain}] 反爬/限流({result.note or 'CF 挑战'})，"
-                    f"退避 {backoff}s: {task.url[:80]}")
-                await asyncio.sleep(backoff)
-                result = await _fetch_one(session, task)
-            if result.kind is FetchKind.CLOUDFLARE:
-                result.note = (f"{result.note or 'Cloudflare 挑战'}"
-                               f" {len(config.CF_BACKOFFS)+1} 次未过，待下轮")
-
-            handle(result)
+        throttle = _Throttle(policy.interval)
+        await asyncio.gather(*[
+            _domain_worker(domain, pending, session, emit, throttle, log)
+            for _ in range(max(1, min(policy.concurrency, len(pending))))])
 
 
-async def _run(tasks, handle, log):
+async def _run(tasks, emit, log):
     queues: dict[str, deque] = {}
     for t in tasks:
         queues.setdefault(_domain(t.url), deque()).append(t)
@@ -156,11 +196,33 @@ async def _run(tasks, handle, log):
     async with aiohttp.ClientSession(
             timeout=timeout, headers={"User-Agent": config.USER_AGENT}) as session:
         await asyncio.gather(*[
-            _domain_worker(d, q, session, handle, sem, log)
+            _domain_group(d, q, session, emit, sem, log)
             for d, q in queues.items()])
 
 
+def _consume(results, handle, log):
+    while True:
+        res = results.get()
+        if res is None:
+            return
+        try:
+            handle(res)
+        except Exception as e:   # 消费线程不能死：单条结果异常记录后继续
+            log(f"handle 异常（已跳过该页）: {res.task.url[:80]}  "
+                f"{type(e).__name__}: {e}")
+
+
 def fetch_tasks(tasks, handle, log=print):
-    """同步入口。handle(FetchResult) 在事件循环线程内被逐个调用。"""
-    if tasks:
-        asyncio.run(_run(tasks, handle, log))
+    """同步入口。抓取协程只投递结果；handle(FetchResult) 在独立消费线程
+    里被逐个串行调用（顺序语义与旧版一致，数据库连接只在该线程使用）。"""
+    if not tasks:
+        return
+    results: queue.Queue = queue.Queue()
+    consumer = threading.Thread(target=_consume, args=(results, handle, log),
+                                name="fetch-handle")
+    consumer.start()
+    try:
+        asyncio.run(_run(tasks, results.put, log))
+    finally:
+        results.put(None)
+        consumer.join()
