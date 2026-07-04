@@ -40,7 +40,14 @@ class Warwick(BaseParser):
                            r"(\d+(?:\.\d+)?\s+years?\s+(?:full|part)-time)",
                            r"(\d+\s+months?\s+(?:full|part)-time)")
         p.campus = first(page.txt, r"(?:Location|Campus)\s*\n([^\n]{2,120})")
-        p.tuition_home = fee_near(page.txt, ("Home fee", "UK fee", "Home:"))
+        # 2026-07 新模板：归属是 info-block 标签字段（旧模板确实没有归属信号）
+        for ib in page.soup.select(".info-block"):
+            lines = [norm_ws(x) for x in ib.get_text("\n", strip=True).split("\n") if x.strip()]
+            if len(lines) >= 2 and lines[0] == "Department":
+                p.dept = lines[1]
+                break
+        p.tuition_home = fee_near(page.txt, ("Home fee", "UK fee", "Home:",
+                                             "Home\nTuition fee"))
         p.tuition_intl = fee_near(page.txt, ("Overseas fee", "International fee", "Overseas:"))
         p.entry_req_text = section_text(
             page, r"Entry requirements|General entry requirements|Requirements",
@@ -181,7 +188,45 @@ class Warwick(BaseParser):
         if not res.discovered:
             keyword_check(res, page, r"China", "Warwick 国别页")
 
+    # ---------------- 系反向索引（专业归属的行政层来源）----------------
+    # 专业页（营销层）不报归属；权威索引 = /departments/academic/ 系名录
+    # （29 系，官方名+学部）→ 各系招生页（路径各系不一：admissions/、
+    # prospective/ug 等）→ 页内列到中央 study/.../courses/ 链接。
+    # 系名经 uaDept 附加参数沿链传递（Sitebuilder 容忍未知参数，实测）。
+    DEPT_HOME_RE = r"/fac/(?:sci|arts|soc|med)/[a-z0-9]+/?$"
+    PROSPECT_RE = (r"/fac/(?:sci|arts|soc|med)/[a-z0-9]+/"
+                   r"(?:admissions|prospective|study|ugstudy|pgstudy)[a-z/]*$")
+    COURSE_LINK_RE = r"/study/(?:undergraduate|postgraduate)/courses[^/]*/[a-z0-9-]+/?$"
+
     def faculty_list(self, page, res):
+        from urllib.parse import parse_qs, quote, urlsplit
+        dept = (parse_qs(urlsplit(page.url).query).get("uaDept") or [None])[0]
+        if "/departments/academic" in page.url:      # 系名录 → 系主页任务
+            for href, text in page.links(href_re=self.DEPT_HOME_RE):
+                if len(text) < 4 or "Link opens" in text:
+                    continue
+                name = norm_ws(text.replace("Link opens in a new window", ""))
+                res.discovered.append(DiscoveredPage(
+                    url=f"{href.rstrip('/')}/?uaDept={quote(name)}",
+                    category=Category.FACULTY_LIST, title=f"{name} 系主页"))
+            if not res.discovered:
+                res.note("系名录未解析出院系链接")
+            return
+        if dept:
+            # 系主页：发现招生/预备页；招生页：收中央专业链接 → 归属回填
+            for href, _t in page.links(href_re=self.PROSPECT_RE):
+                res.discovered.append(DiscoveredPage(
+                    url=f"{href.rstrip('/')}/?uaDept={quote(dept)}",
+                    category=Category.FACULTY_LIST, title=f"{dept} 招生索引"))
+            for href, text in page.links(href_re=self.COURSE_LINK_RE):
+                res.programs.append(ProgramData(
+                    name_en=norm_ws(text) or dept, url=href.split("?")[0],
+                    entry_year=self.entry_year,
+                    level="PGT" if "/postgraduate/" in href else "UG",
+                    dept=dept, backfill_only=True))
+            if not res.discovered and not res.programs:
+                res.info(f"{dept} 页面无招生索引或专业链接")
+            return
         if not known_name(self.conf.faculties, page.txt):
             res.note("未匹配到 Warwick Faculty 名称")
 

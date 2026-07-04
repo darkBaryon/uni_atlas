@@ -1,0 +1,62 @@
+# 悉尼大学 —— 澳洲第三所（2026-07 调研）。
+# 死胡同清单与校历人工来源见 docs/澳洲院校数据源备忘.md。
+# 数据拓扑：
+# - 主站 www.sydney.edu.au **无 WAF**（不像墨尔本/莫纳什主站），全可抓；
+#   30 并发实测零挑战，域配 0.5s/10。
+# - 官方目录都由 **Coveo 搜索**驱动（handbook/units 页均 JS 壳）；从 clientlib
+#   提出 org+apiKey（公开客户端令牌），Coveo REST **支持 GET**（access_token 入 query）
+#   → 把 Coveo 查询当种子页，GET+解析 JSON（同莫纳什 sitemap 模式）。
+# - 专业(Courses 源)：Coveo 结果**字段够全**（名称/studylevel→级别/fieldofstudy→学院/
+#   学制），直接建库，不抓页面。2026 共 541 个。
+# - 课程(units)：Coveo(Units of Study [Sitemap] 源)只给代码+学期+链接、**无课名**；
+#   课名/学分在 /units/{code}/{session} 的 **SSR 详情页**（h1=代码:全名, Credit points）；
+#   学院未进索引，页面仅"School of X Student Portal"链接可 best-effort 取。
+#   2026 共 3,579 个开课（按代码去重后入库）。
+code: sydney
+name: University of Sydney
+name_zh: 悉尼大学
+website: https://www.sydney.edu.au
+city: Sydney
+
+domains:
+  # 2026-07 实测：主站无 WAF，30 并发两轮全 200 零挑战 → 高档。
+  www.sydney.edu.au: {interval: 0.5, concurrency: 10}
+  # Coveo 枚举端点（GET，公开令牌），轻量少量请求。
+  universityofsydneyproduction10somjans.org.coveo.com: {interval: 0.5, concurrency: 4}
+
+# fieldofstudy slug（=学院） → 官方学院名
+faculty_alias:
+  "architecture-design-and-planning": Sydney School of Architecture, Design and Planning
+  "arts-and-social-sciences": Faculty of Arts and Social Sciences
+  "business": University of Sydney Business School
+  "economics": School of Economics
+  "education-and-social-work": Sydney School of Education and Social Work
+  "engineering-and-information-technology": Faculty of Engineering
+  "law": Sydney Law School
+  "medicine-and-health": Faculty of Medicine and Health
+  "music": Sydney Conservatorium of Music
+  "science": Faculty of Science
+
+faculties:
+  "Faculty of Arts and Social Sciences": 文学与社会科学学院
+  "University of Sydney Business School": 悉尼大学商学院
+  "School of Economics": 经济学院
+  "Sydney School of Architecture, Design and Planning": 建筑、设计与规划学院
+  "Sydney School of Education and Social Work": 教育与社会工作学院
+  "Faculty of Engineering": 工程学院
+  "Sydney Law School": 法学院
+  "Faculty of Medicine and Health": 医学与健康学院
+  "Sydney Conservatorium of Music": 音乐学院
+  "Faculty of Science": 理学院
+
+seed_pages:
+  # 专业枚举：Coveo Courses 源（结果直接建库 + 分页）
+  - {category: program_catalog, crawl_freq: monthly,
+     url: "https://universityofsydneyproduction10somjans.org.coveo.com/rest/search/v2?access_token=xxf8204f8d-c2dc-4c5e-befb-83168d339bfd&organizationId=universityofsydneyproduction10somjans&aq=%40source%3D%3D%22Courses%22+%40usyd_courses_startyear%3D%3D2026&numberOfResults=200&firstResult=0&fieldsToInclude=%5B%22usyd_courses_studylevel%22%2C+%22usyd_courses_fieldofstudy%22%2C+%22usyd_courses_courseduration%22%5D"}
+  # 课程枚举：Coveo Units 源（发现 SSR 详情页任务 + 分页）
+  - {category: module_catalog, crawl_freq: monthly,
+     url: "https://universityofsydneyproduction10somjans.org.coveo.com/rest/search/v2?access_token=xxf8204f8d-c2dc-4c5e-befb-83168d339bfd&organizationId=universityofsydneyproduction10somjans&aq=%40source%3D%3D%22Units+of+Study+%5BSitemap%5D%22+%40usyd_uos_year%3D%3D2026&numberOfResults=200&firstResult=0&fieldsToInclude=%5B%5D"}
+  # 校历：主站可抓，但 key-dates 是筛选式 JS 页；2026 principal dates 已人工录入（来源见备忘）
+  - {category: term_dates, crawl_freq: manual,
+     url: "https://www.sydney.edu.au/students/key-dates.html",
+     note: "校历人工维护（UA PDF 交叉验证）"}

@@ -28,6 +28,7 @@ class UniCode(str, Enum):
     # 澳洲（Go8，逐校接入）
     MELB = "melb"          # 墨尔本大学
     MONASH = "monash"      # 莫纳什大学
+    SYDNEY = "sydney"      # 悉尼大学
 
     __str__ = str.__str__      # 日志/格式化输出 'bristol' 而非 'UniCode.BRISTOL'
 

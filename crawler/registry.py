@@ -96,7 +96,7 @@ def get_tasks(conn, uni_code=None, category=None, due_only=False,
         sql.append("AND sp.crawl_freq != 'manual' AND (sp.last_fetched_at IS NULL"
                    " OR sp.last_fetched_at < NOW() - INTERVAL"
                    " (CASE sp.crawl_freq WHEN 'daily' THEN 1 WHEN 'weekly' THEN 7"
-                   " ELSE 30 END) DAY)")
+                   " WHEN 'quarterly' THEN 90 ELSE 30 END) DAY)")
     prio = ", ".join(f"'{c}'" for c in config.CATEGORY_PRIORITY)
     sql.append(f"ORDER BY FIELD(sp.category, {prio}),"
                " sp.last_fetched_at IS NOT NULL, sp.last_fetched_at, sp.id")

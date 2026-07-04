@@ -125,6 +125,8 @@ class Loader:
                 cur.execute("SELECT id FROM programs WHERE university_id=%s AND url=%s",
                             (self.uid, p.url))
                 row = cur.fetchone()
+            if not row and getattr(p, "backfill_only", False):
+                return   # 反向索引条目：目录里没有的（停办/外链）不建新行
             if row:
                 prog_id = row["id"]
                 self._diff_update(

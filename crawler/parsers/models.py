@@ -47,6 +47,7 @@ class ProgramData:
     deadlines: list = field(default_factory=list)     # [DeadlineData]
     modules: list = field(default_factory=list)       # [ModuleRef]
     notes: list = field(default_factory=list)
+    backfill_only: bool = False   # 只回填已有行（归属反向索引），无匹配不建新专业
 
 
 @dataclass

@@ -49,3 +49,6 @@ seed_pages:
      url: "https://warwick.ac.uk/study/international/countryinformation/"}
   - {category: faculty_list, crawl_freq: monthly,
      url: "https://warwick.ac.uk/fac"}
+  # 系反向索引（专业归属行政层）：系名录 → 系招生页 → 中央专业链接
+  - {category: faculty_list, crawl_freq: monthly,
+     url: "https://warwick.ac.uk/departments/academic/"}
