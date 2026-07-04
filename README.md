@@ -8,7 +8,6 @@
 uni_atlas/
 ├── db/            数据库层
 │   ├── schema.sql        建库建表（含视图）
-│   ├── seed_ucl.sql      UCL 种子数据（首个样例校）
 │   └── 数据库设计.md      表结构设计说明
 ├── crawler/       爬虫（架构见 crawler/ARCHITECTURE.md）
 │   ├── run.py            CLI 入口
@@ -51,8 +50,7 @@ python3 run.py --dry-run                 # 只列任务不执行
 
 ```bash
 # 1. 建库（本地 MySQL，凭据放 ~/.my.cnf）
-mysql < db/schema.sql
-mysql study_abroad < db/seed_ucl.sql
+mysql < db/schema.sql   # 建表；数据用 ./run.sh 爬取
 
 # 2. 导出数据（依赖: pip install pymysql）
 python3 web/export.py
