@@ -337,11 +337,18 @@
       return "<section><h2>学期日历</h2>" +
         '<p class="empty">暂无今天之后的校历事项（数据可能待更新）</p></section>';
     }
-    // 只显示当前学年和下一学年（更远的先留在库里）
-    var now = new Date(), sy = now.getMonth() + 1 >= 9 ? now.getFullYear() : now.getFullYear() - 1;
-    var wanted = [sy, sy + 1].map(function (y) {
-      return y + "/" + String((y + 1) % 100).padStart(2, "0");
-    });
+    // 只显示当前学年和下一学年（更远的先留在库里）。
+    // 学年制按地区分支：英港 = 9 月起算、标签 "2026/27"；
+    // 澳洲 = 自然年制（2 月开学）、标签就是年份 "2026"
+    var now = new Date(), wanted;
+    if ((uni.country || "UK") === "AU") {
+      wanted = [String(now.getFullYear()), String(now.getFullYear() + 1)];
+    } else {
+      var sy = now.getMonth() + 1 >= 9 ? now.getFullYear() : now.getFullYear() - 1;
+      wanted = [sy, sy + 1].map(function (y) {
+        return y + "/" + String((y + 1) % 100).padStart(2, "0");
+      });
+    }
     var years = Object.keys(byYear).filter(function (y) { return wanted.indexOf(y) >= 0; });
     if (!years.length) years = Object.keys(byYear);   // 全不匹配时兜底全显示
     var h = "<section><h2>学期日历</h2>";
