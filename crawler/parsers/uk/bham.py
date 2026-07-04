@@ -69,7 +69,12 @@ class Birmingham(BaseParser):
         for node in root.find_all(["a", "h3", "h4"]):
             title = norm_ws(node.get_text(" ", strip=True))
             if 6 <= len(title) <= 140 and not re.search(r"module information|optional|compulsory|fees|apply", title, re.I):
-                p.modules.append(ModuleRef(name=title, url=page.abs(node["href"]) if node.name == "a" and node.get("href") else None))
+                href = page.abs(node["href"]) if node.name == "a" and node.get("href") else None
+                # 只认手册域的课程链接；营销页课表区块里的杂链（博客/hub 在线
+                # 学位站）曾被当课程链接登记出 5,078 个垃圾任务（2026-07-05）
+                if href and "program-and-modules-handbook" not in href:
+                    href = None
+                p.modules.append(ModuleRef(name=title, url=href))
 
     # ---------------- 官方课程目录（Programmes & Modules Handbook）----------------
     # WebHandbooks servlet（探明 2026-07-05）：getSchoolList（52 院系）→
