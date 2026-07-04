@@ -2,7 +2,7 @@
    app.js — hash 路由、状态与数据懒加载
    数据架构（与 config/parsers 同构，按校拆分）:
      data/index.js           window.UNI_INDEX   总览摘要（启动即载）
-     data/<code>.js          window.UNI_DATA    每校全量（进校页时按需注入）
+     data/<地区>/<code>.js   window.UNI_DATA    每校全量（进校页时按需注入）
    路由:  #/                     总览（按地区分组）
           #/u/{code}             学校页
           #/u/{code}/f/{id}      学院页
@@ -33,7 +33,7 @@
     if (pending[code]) { pending[code].push(cb); return; }
     pending[code] = [cb];
     var s = document.createElement("script");
-    s.src = "data/" + code + ".js";
+    s.src = "data/" + ((idxByCode[code].country || "other").toLowerCase()) + "/" + code + ".js";
     s.onload = function () {
       var cbs = pending[code]; delete pending[code];
       cbs.forEach(function (fn) { fn(window.UNI_DATA[code]); });

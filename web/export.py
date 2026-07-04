@@ -149,7 +149,9 @@ def main():
             "dead_sources": sum(1 for s in uni["source_status"]
                                 if s["status"] == "dead"),
         })
-        fpath = os.path.join(data_dir, f"{code}.js")
+        region_dir = os.path.join(data_dir, (uni["country"] or "other").lower())
+        os.makedirs(region_dir, exist_ok=True)
+        fpath = os.path.join(region_dir, f"{code}.js")
         with open(fpath, "w", encoding="utf-8") as f:
             f.write("window.UNI_DATA = window.UNI_DATA || {};\n"
                     f"window.UNI_DATA[{dump(code)}] = {dump(uni)};\n")
