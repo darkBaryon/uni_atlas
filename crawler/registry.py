@@ -73,13 +73,6 @@ def ensure_university(conn, uconf):
         return cur.lastrowid
 
 
-def universities(conn):
-    """code -> {id, code, name_en, website}"""
-    with conn.cursor() as cur:
-        cur.execute("SELECT id, code, name_en, website FROM universities WHERE is_active=1")
-        return {r["code"]: r for r in cur.fetchall()}
-
-
 def get_tasks(conn, uni_code=None, category=None, due_only=False,
               discover_only=False, limit=None):
     """取待抓任务。due_only: 仅 crawl_freq 周期已到期的; discover_only: 仅目录类。"""
