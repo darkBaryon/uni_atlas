@@ -28,6 +28,17 @@ class UniCode(str, Enum):
     __str__ = str.__str__      # 日志/格式化输出 'bristol' 而非 'UniCode.BRISTOL'
 
 
+class FetchMethod(str, Enum):
+    """source_pages.fetch_method——页面的抓取方式（镜像数据库 ENUM 定义）。"""
+    HTML = "html"                  # 普通 GET
+    PORTLET_POST = "portlet_post"  # uPortal 门户：先 GET render.uP 预热会话再 POST 任务 URL
+    JS_RENDER = "js_render"        # 需浏览器渲染（v1 不抓，报告统计）
+    PDF = "pdf"                    # PDF 文档（v1 不抓，报告统计）
+    API = "api"                    # JSON 接口（预留）
+
+    __str__ = str.__str__
+
+
 class Category(str, Enum):
     """页面类别——镜像数据库 source_pages.category 的 ENUM 定义。
 

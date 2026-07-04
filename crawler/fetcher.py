@@ -14,6 +14,7 @@ from urllib.parse import urlsplit
 import aiohttp
 
 import config
+from config.codes import FetchMethod
 
 
 class FetchKind(str, Enum):
@@ -62,10 +63,28 @@ def _is_cloudflare(status, text_head):
     return any(m in text_head for m in config.CF_MARKERS)
 
 
+_PRIMED: set[str] = set()   # portlet_post 已预热的域（GET render.uP 建会话 cookie）
+
+
+async def _request(session, task):
+    """按 fetch_method 发请求。portlet_post: uPortal 的 cookiecheck 302 会把
+    POST 变 GET 丢参数，须先 GET 同 portlet 的 render.uP 预热（每域一次），
+    之后参数全在任务 URL query 里 POST 即可（实测 2026-07）。"""
+    if task.fetch_method == FetchMethod.PORTLET_POST:
+        domain = _domain(task.url)
+        if domain not in _PRIMED:
+            prime = task.url.split("/action.uP")[0] + "/render.uP"
+            async with session.get(prime, allow_redirects=True):
+                pass
+            _PRIMED.add(domain)
+        return session.post(task.url, allow_redirects=True)
+    return session.get(task.url, allow_redirects=True)
+
+
 async def _fetch_one(session, task):
     url = task.url
     try:
-        async with session.get(url, allow_redirects=True) as resp:
+        async with await _request(session, task) as resp:
             body = await resp.read()
             head = body[:4096].decode("utf-8", "ignore")
             if _is_cloudflare(resp.status, head):
@@ -76,7 +95,10 @@ async def _fetch_one(session, task):
             if resp.status == HTTPStatus.NOT_FOUND:
                 return FetchResult(task, FetchKind.DEAD, resp.status)
             final = str(resp.url)
-            if resp.history and not _same_page(url, final):
+            # portlet_post 的 POST→302→render.uP 是 uPortal 固有应答模式，
+            # 结果在重定向后的正文里，不是页面搬家
+            if (task.fetch_method != FetchMethod.PORTLET_POST
+                    and resp.history and not _same_page(url, final)):
                 return FetchResult(task, FetchKind.MOVED, resp.status, body, final_url=final)
             if resp.status >= HTTPStatus.INTERNAL_SERVER_ERROR:   # 5xx 多为瞬时（如 CF 520）
                 return FetchResult(task, FetchKind.TRANSIENT, resp.status,

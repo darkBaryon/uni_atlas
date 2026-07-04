@@ -2,10 +2,11 @@
 import re
 
 from parsers.base import BaseParser
-from parsers.models import CalendarData, DeadlineData, DiscoveredPage, ModuleRef, ProgramData
+from parsers.models import (CalendarData, DeadlineData, DiscoveredPage,
+                            ModuleData, ModuleRef, ProgramData)
 from parsers.page import norm_ws, parse_date
 from parsers.uk.common import date_loose, event_type, fee_near, find_links, first, ielts, section_text
-from config.codes import Category, UniCode
+from config.codes import Category, FetchMethod, UniCode
 
 COURSE_RE = r"/study/(?:undergraduate/courses/2026|masters/courses/list)/\d{4,6}/[^/?#]+/?$"
 MODULE_CODE_RE = re.compile(r"\b[A-Z]{4}\d{4,5}\b")
@@ -83,6 +84,66 @@ class Manchester(BaseParser):
                         code=m.group(0) if m else None,
                         module_type="core" if "mandatory" in norm_ws(cells[-1].get_text(" ", strip=True)).lower()
                         else "optional"))
+
+    # ---------------- 官方课程目录（名单+链接，不镜像详情）----------------
+    # MyManchester uPortal course-unit-info portlet，免登录（探明 2026-07-04）。
+    # 表单页(render.uP)枚举 ~75 学科 → 每学科×career 一个 POST 检索任务
+    # (portlet_post，参数全在 URL query) → 结果表: 代码/名称/level/学期/学分/
+    # Valid From（同代码多行取最新）。坑: app.manchester.ac.uk 直访 .xml
+    # 返回 200 的伪 404，必须经门户 portlet 代理。
+    PORTLET = "https://portal.manchester.ac.uk/uPortal/p/course-unit-info.ctf1/max"
+    CAREERS = ("UGRD", "PGDT")     # 辅导相关：本科 + 授课硕士
+    SUBJECT_OPT_RE = r"/CourseUnitbyCareerSubjectArea/([A-Z0-9]+)\.xml"
+    UNIT_CODE_RE = r"[A-Z]{2,6}\d{5}"
+
+    def module_catalog(self, page, res):
+        from urllib.parse import quote
+        if "/render.uP" in page.url:          # 表单页：学科下拉 → 检索任务
+            for opt in page.soup.select("option"):
+                val = str(opt.get("value") or "")
+                if not re.search(self.SUBJECT_OPT_RE, val):
+                    continue
+                label = norm_ws(opt.get_text(" ", strip=True))
+                for career in self.CAREERS:
+                    res.discovered.append(DiscoveredPage(
+                        url=(f"{self.PORTLET}/action.uP?pP_action=searchCUCatalog"
+                             f"&career={career}&searchCriteria=subject"
+                             f"&subjectArea={quote(val, safe='')}"),
+                        category=Category.MODULE_CATALOG,
+                        fetch_method=FetchMethod.PORTLET_POST,
+                        title=f"{label} 课程名单（{career}）"))
+            if not res.discovered:
+                res.note("portlet 表单页未枚举到学科（门户结构变了？）")
+            return
+        best: dict[str, tuple[str, ModuleData]] = {}   # 结果页：code -> (生效日, ModuleData)
+        for table in page.soup.select("table"):
+            head = [th.get_text(" ", strip=True).lower() for th in table.select("th")]
+            if not head or "unit code" not in head[0]:
+                continue
+            for tr in table.select("tr"):
+                tds = tr.select("td")
+                if len(tds) < 7:
+                    continue
+                cells = [norm_ws(td.get_text(" ", strip=True)) for td in tds]
+                code, name, level, sem, credits, _free, valid = cells[:7]
+                if not re.fullmatch(self.UNIT_CODE_RE, code) or not name:
+                    continue
+                a = tds[1].select_one("a[href]")
+                href = str(a["href"]) if a else ""
+                if not href.startswith("/"):
+                    continue
+                m = ModuleData(
+                    name_en=name, url="https://portal.manchester.ac.uk" + href,
+                    entry_year=self.entry_year, code=code,
+                    credits=int(credits) if credits.isdigit() else None,
+                    level=f"Level {level}" if level else None,
+                    semester=sem or None)
+                valid_key = parse_date(valid) or ""    # '01 Aug 2025' 字符串不可比，转 ISO
+                if code not in best or valid_key > best[code][0]:
+                    best[code] = (valid_key, m)
+        res.modules.extend(m for _v, m in best.values())
+        if not res.modules:
+            res.note("portlet 检索页无课程行（该学科×career 可能确实无课）")
 
     def term_dates(self, page, res):
         for h2 in page.soup.find_all("h2"):

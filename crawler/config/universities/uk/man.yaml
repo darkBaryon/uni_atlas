@@ -10,6 +10,7 @@ entry_year: "2026"
 
 domains:
   www.manchester.ac.uk: 3.0
+  portal.manchester.ac.uk: 3.0
 
 scope:
   crawl_module_details: false
@@ -20,6 +21,9 @@ faculties:
   "Faculty of Humanities": 人文学院
 
 seed_pages:
+  # 官方课程目录：uPortal portlet 表单页（学科下拉→portlet_post 检索任务）
+  - {category: module_catalog, crawl_freq: monthly,
+     url: "https://portal.manchester.ac.uk/uPortal/p/course-unit-info.ctf1/max/render.uP"}
   # Docs mention the crawler-friendly A-Z lists; current official simple lists return 200.
   - {category: program_catalog, crawl_freq: monthly,
      url: "https://www.manchester.ac.uk/study/undergraduate/courses/2026/basic/"}
