@@ -314,10 +314,18 @@
       return "<section><h2>学期日历</h2>" +
         '<p class="empty">校历未采集（官网未公布或来源页尚未解析）</p></section>';
     }
+    // 只看今天之后的事项（辅导排班不需要历史）；区间事件以结束日为准，
+    // 进行中的（已开始未结束）保留
+    var today = new Date().toISOString().slice(0, 10);
     var byYear = {};
     uni.calendar.forEach(function (e) {
+      if ((e.end_date || e.start_date) < today) return;
       (byYear[e.academic_year] = byYear[e.academic_year] || []).push(e);
     });
+    if (!Object.keys(byYear).length) {
+      return "<section><h2>学期日历</h2>" +
+        '<p class="empty">暂无今天之后的校历事项（数据可能待更新）</p></section>';
+    }
     // 只显示当前学年和下一学年（更远的先留在库里）
     var now = new Date(), sy = now.getMonth() + 1 >= 9 ? now.getFullYear() : now.getFullYear() - 1;
     var wanted = [sy, sy + 1].map(function (y) {
