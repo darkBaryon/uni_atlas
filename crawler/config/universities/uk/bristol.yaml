@@ -9,7 +9,11 @@ city: Bristol
 entry_year: "2026"
 
 domains:
-  www.bristol.ac.uk: {interval: 3.0, concurrency: 1}
+  # 专业/学院页正常站点，实测抓取无阻，适度并发。
+  www.bristol.ac.uk: {interval: 1.0, concurrency: 3}
+  # 官方课程目录 www.bris.ac.uk/unit-programme-catalogue 挂 FortiWeb（Dean-Edwards
+  # packer 挑战 + 样式化 403 硬封），脚本抓不了，故不 seed；此处仅低速兜底防误触。
+  www.bris.ac.uk: {interval: 5.0, concurrency: 1}
 
 scope:
   crawl_module_details: false

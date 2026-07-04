@@ -9,8 +9,10 @@ city: Manchester
 entry_year: "2026"
 
 domains:
-  www.manchester.ac.uk: {interval: 3.0, concurrency: 1}
-  portal.manchester.ac.uk: {interval: 3.0, concurrency: 1}
+  www.manchester.ac.uk: {interval: 1.0, concurrency: 3}
+  # uPortal portlet 是会话态（每域一次 cookie 预热 + POST 检索），并发会打乱握手，
+  # 保持单并发串行。
+  portal.manchester.ac.uk: {interval: 2.0, concurrency: 1}
 
 scope:
   crawl_module_details: false

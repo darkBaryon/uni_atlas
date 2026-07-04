@@ -10,7 +10,9 @@ city: London
 entry_year: "2026"
 
 domains:
-  www.kcl.ac.uk: {interval: 3.0, concurrency: 1}
+  # 大站（Akamai 前置），实测无 429；sitemap 为静态 XML 很轻，课程页/模块目录常规。
+  www.kcl.ac.uk: {interval: 1.0, concurrency: 3}
+  # 学生支持站，仅取 term dates 单页，保持保守。
   self-service.kcl.ac.uk: {interval: 3.0, concurrency: 1}
 
 scope:

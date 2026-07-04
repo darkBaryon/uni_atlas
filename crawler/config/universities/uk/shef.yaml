@@ -7,8 +7,9 @@ website: https://www.sheffield.ac.uk
 entry_year: "2026"
 
 domains:
-  www.sheffield.ac.uk: {interval: 3.0, concurrency: 1}
-  sheffield.ac.uk: {interval: 3.0, concurrency: 1}
+  # 常规站点，适度并发；模块无中央 HTML 目录（专业规格是 ~200 个 PDF），本轮仅名单/专业。
+  www.sheffield.ac.uk: {interval: 1.0, concurrency: 3}
+  sheffield.ac.uk: {interval: 1.0, concurrency: 3}
 
 scope:
   crawl_module_details: false
