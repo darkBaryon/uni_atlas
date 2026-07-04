@@ -37,7 +37,9 @@ DEFAULTS = {
     "exam_periods": 1,           # 考试期/补考期事件（辅导排班核心）
     "dead_src_pct": 25,          # 失效源占比上限
 }
-JUNK_NAME_RE = r"^[^A-Za-z0-9]|^(Modules?|Year [0-9]|Semester [0-9]|Optional|Core)$"
+# 引号/括号开头的多为真实课名（首跑假阳性），只抓明确异常：
+# 方括号/花括号/尖括号/双引号开头 + 通用占位词
+JUNK_NAME_RE = r'^\[|^["{<]|^(Modules?|Year [0-9]|Semester [0-9]|Optional|Core)$'
 
 GREEN, YELLOW, RED = "✓", "△", "✗"
 

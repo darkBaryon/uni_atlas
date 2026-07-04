@@ -14,6 +14,9 @@ domains:
 
 # 抓取范围 = 数据层级而非院系：全部学院的专业页都抓（不设 focus_depts）；
 # 不抓底层细节——模块详情页（大纲/考核/负责人），专业页自带模块名单已够用
+expect:
+  module_faculty_pct: 0     # UCL 课程归属经专业引用（专业页内联无院系字段）
+
 scope:
   crawl_module_details: false  # 详情不镜像（策略见 _defaults.yaml 注释）
 
