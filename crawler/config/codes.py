@@ -1,4 +1,4 @@
-"""标识符常量层：学校代码 UniCode、页面类别 Category。代码里引用枚举，不写裸字符串。
+"""标识符常量层：学校代码 UniCode、页面类别 Category、校历事件 EventType。代码里引用枚举，不写裸字符串。
 
 映射链：枚举值 = config/universities/**/<code>.yaml 的 code 字段
             = 数据库 universities.code 列。
@@ -47,6 +47,21 @@ class Category(str, Enum):
     STAFF_LIST = "staff_list"
     RESEARCH = "research"
     NEWS = "news"
+    OTHER = "other"
+
+    __str__ = str.__str__
+
+
+class EventType(str, Enum):
+    """校历事件类型——镜像数据库 calendar_events.event_type 的 ENUM 定义。"""
+    WELCOME_WEEK = "welcome_week"
+    TEACHING_PERIOD = "teaching_period"
+    READING_WEEK = "reading_week"
+    EXAM_PERIOD = "exam_period"
+    RESIT_PERIOD = "resit_period"
+    HOLIDAY = "holiday"
+    CLOSURE = "closure"
+    GRADUATION = "graduation"
     OTHER = "other"
 
     __str__ = str.__str__

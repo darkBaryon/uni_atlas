@@ -12,7 +12,7 @@ from datetime import datetime
 
 from parsers.base import BaseParser
 from parsers.models import ModuleRef
-from parsers.uk.common import modules_from_credit_lis
+from parsers.uk.common import event_type, modules_from_credit_lis
 from parsers.models import CalendarData, DeadlineData, DiscoveredPage, ProgramData
 from parsers.page import parse_date
 from config.codes import Category, UniCode
@@ -140,7 +140,7 @@ class Glasgow(BaseParser):
         events = self._disambiguate(events)
         for name, start, end in events:
             res.calendar.append(CalendarData(
-                academic_year=year_label, event_type=self._etype(name, start),
+                academic_year=year_label, event_type=event_type(name, start),
                 name=name, start_date=start, end_date=end))
         if not res.calendar:
             res.note("学年页表格未解析出任何事件")
@@ -218,23 +218,3 @@ class Glasgow(BaseParser):
             out.append((name, start, end))
         return out
 
-    @staticmethod
-    def _etype(name, start):
-        n = name.lower()
-        if "teaching" in n:
-            return "teaching_period"
-        if "examination" in n or "revision" in n:
-            return "resit_period" if start[5:7] in ("07", "08") else "exam_period"
-        if "vacation" in n:
-            return "closure"
-        if "holiday" in n:
-            return "holiday"
-        if "graduation" in n:
-            return "graduation"
-        if "welcome" in n:
-            return "welcome_week"
-        if "academic year" in n:      # 学年整体区间
-            return "other"
-        if "orientation" in n:
-            return "welcome_week"
-        return "other"
