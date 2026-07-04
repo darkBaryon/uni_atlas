@@ -18,6 +18,6 @@ if [[ "$1" == "--serve" ]]; then
   ( sleep 1 && open "http://localhost:${PORT}" ) &
   exec python3 -m http.server "$PORT"
 else
-  echo "▸ 打开页面 ..."
+  echo "▸ 打开页面: file://$(pwd)/index.html"
   open index.html
 fi
