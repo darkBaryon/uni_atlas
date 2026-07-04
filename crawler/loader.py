@@ -209,10 +209,14 @@ class Loader:
         if code:
             cur.execute("SELECT id FROM modules WHERE university_id=%s AND code=%s"
                         " AND entry_year=%s", (self.uid, code, entry_year))
-        else:
-            cur.execute("SELECT id FROM modules WHERE university_id=%s AND name_en=%s"
-                        " AND entry_year=%s AND code IS NULL",
-                        (self.uid, name, entry_year))
+            row = cur.fetchone()
+            if row:
+                return row["id"]
+        # 无码引用（专业页课表）兜底按名匹配**带码行**——目录名单先入库时，
+        # 专业页引用应挂到已有行而不是另建无码骨架（跨源重复，实测 2026-07-05）
+        cur.execute("SELECT id FROM modules WHERE university_id=%s AND name_en=%s"
+                    " AND entry_year=%s ORDER BY code IS NULL, id",
+                    (self.uid, name, entry_year))
         row = cur.fetchone()
         return row["id"] if row else None
 
