@@ -75,7 +75,7 @@ case "$cmd" in
                WHERE ce.university_id=u.id AND ce.event_type='exam_period') 其中考试期,
              (SELECT COUNT(*) FROM source_pages sp
                WHERE sp.university_id=u.id AND sp.status='active'
-                 AND sp.crawl_freq!='manual') 在抓页面,
+                 AND sp.crawl_freq!='manual') 已抓页面,
              (SELECT COUNT(*) FROM source_pages sp
                WHERE sp.university_id=u.id AND sp.status='active'
                  AND sp.crawl_freq!='manual' AND sp.last_fetched_at IS NULL) 未抓过

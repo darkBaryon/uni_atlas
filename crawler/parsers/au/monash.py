@@ -64,12 +64,13 @@ class Monash(BaseParser):
 
     # ---------------- sitemap 枚举 ----------------
     def program_catalog(self, page, res):
-        locs = re.findall(r"<loc>([^<]+)</loc>", page.html)
+        html = _text(page)
+        locs = re.findall(r"<loc>([^<]+)</loc>", html)
         if not locs:
             res.note("sitemap 未解析出 <loc> 条目")
             return
         y = self.entry_year
-        if "<sitemapindex" in page.html:
+        if "<sitemapindex" in html:
             for u in locs:
                 res.discovered.append(DiscoveredPage(
                     url=u, category=Category.PROGRAM_CATALOG, title="子 sitemap"))
@@ -90,11 +91,16 @@ class Monash(BaseParser):
         pc = self._page_content(page, res)
         if not pc:
             return
-        name = pc.get("title")
+        name, code = pc.get("title"), pc.get("code")
         level = _aqf_to_level((pc.get("aqf_level") or {}).get("label"))
         if not name or not level:
-            res.note(f"course 页缺 title/aqf_level: {pc.get('code')}")
+            res.note(f"course 页缺 title/aqf_level: {code}")
             return
+        # loader 的 upsert 键是 (校, level, name_en)，而 Monash 各学院有同名课程
+        # （如每院一个 Master of Philosophy，代码不同）——名称并入官方代码保唯一，
+        # 也与 handbook 自身展示（"B2000 - Bachelor of Business"）一致。
+        if code:
+            name = f"{name} ({code})"
         p = ProgramData(name_en=name, level=level, url=page.url,
                         entry_year=self.entry_year, currency="AUD")
         p.faculty = self._ref_value(pc.get("school"))
@@ -102,8 +108,6 @@ class Monash(BaseParser):
         ft = pc.get("full_time_duration") or []
         if ft and ft[0].get("duration_number"):
             p.duration = f"{ft[0]['duration_number']} years full-time"
-        if pc.get("code"):
-            p.notes.append(f"handbook code: {pc['code']}")
         res.programs.append(p)
 
     # ---------------- 课程页（unit）----------------
