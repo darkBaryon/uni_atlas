@@ -130,14 +130,24 @@ class Leeds(BaseParser):
         if not ym:
             res.note("Leeds term dates 未见 'Academic year' 学年标识")
             return
-        label = None
+        label, section = None, ""
         for line in page.txt.splitlines():
             line = norm_ws(line)
+            # 分节头（Semesters/Examinations/Resits...）：其下的
+            # 'Autumn semester:' 只是子标签，事件名须带上节名，
+            # 否则考试区间会顶着学期名错标成 teaching_period（实测 2026-07）
+            if re.fullmatch(r"(Terms?|Semesters?|Examinations?|Resits?)", line, re.I):
+                section, label = line, None
+                continue
             start, end = date_range(line)
             if start:
                 if label:
+                    name = (f"{label} {section}"
+                            if re.search(r"exam|resit", section, re.I)
+                            and re.match(r"(Autumn|Spring|Summer|Winter)", label, re.I)
+                            else label)
                     res.calendar.append(CalendarData(
-                        ym, event_type(label, start), label, start, end))
+                        ym, event_type(name, start), name, start, end))
                     label = None
                 continue
             if 3 <= len(line) <= 60 and not re.search(r"\d{4}", line):

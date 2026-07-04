@@ -13,6 +13,7 @@ domains:
 
 expect:
   modules_skip: "无中央目录（模块散在专业规格 PDF/院系页，待决策）"
+  exam_skip: true   # 公开半年历无考试窗口，考试时间表在 MUSE 登录墙内
 
 scope:
   crawl_module_details: false

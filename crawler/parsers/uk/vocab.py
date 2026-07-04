@@ -19,7 +19,7 @@ EVENT_RULES: tuple = (
     (("resit",),                              EventType.RESIT_PERIOD),
     (("exam", "assessment", "revision"),      EventType.EXAM_PERIOD),
     (("holiday",),                            EventType.HOLIDAY),
-    (("vacation", "closure", "break"),        EventType.CLOSURE),
+    (("vacation", "closure", "closed", "break"), EventType.CLOSURE),
     (("graduation",),                         EventType.GRADUATION),
     (("term", "semester", "teaching"),        EventType.TEACHING_PERIOD),
 )

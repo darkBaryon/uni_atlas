@@ -16,6 +16,9 @@ domains:
   www.ed.ac.uk: {interval: 1.0, concurrency: 2}
   www.drps.ed.ac.uk: {interval: 1.0, concurrency: 3}
 
+expect:
+  exam_skip: true   # 26/27 考试期官网标 To be confirmed（月度任务候发布；25/26 已考完）
+
 scope:
   crawl_module_details: false
 

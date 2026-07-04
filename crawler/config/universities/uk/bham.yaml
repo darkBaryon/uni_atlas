@@ -20,6 +20,9 @@ domains:
       - "https://program-and-modules-handbook.bham.ac.uk/webhandbooks/WebHandbooks-control-servlet?Action=getProgramList&pgDeptId=027&pgDdesc=Law"
 
 
+expect:
+  exam_skip: true   # 公开学年页无考试窗口（仅提及夏季 Supplementary Assessment）
+
 scope:
   crawl_module_details: false
 
