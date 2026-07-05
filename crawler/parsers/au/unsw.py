@@ -89,7 +89,8 @@ class UNSW(BaseParser):
         res.modules.append(ModuleData(
             name_en=name, url=page.url, entry_year=self.entry_year,
             code=code.upper(), dept=_ref(pc.get("academic_org")),
-            credits=credits, level=f"L{lvl.group(1)}" if lvl else None))
+            credits=credits, level=f"L{lvl.group(1)}" if lvl else None,
+            assessment=_assessments(pc)))
 
     # ---------------- 校历 ----------------
     def term_dates(self, page, res):
@@ -138,6 +139,27 @@ class UNSW(BaseParser):
         if not pc:
             res.note("pageContent 为空（该条目本年可能未开设）")
         return pc
+
+
+def _assessments(pc):
+    """CourseLoop hb_assessments → [{name, weight, type}]（辅导核心：考核构成
+    定义旺季排班与备考重点）。分组内每项含 assessment_name/weighting/type。"""
+    out = []
+    for grp in pc.get("hb_assessments") or []:
+        for a in grp.get("assessments") or []:
+            name = norm_ws(a.get("assessment_name") or "")
+            wt = (a.get("weighting") or "").strip()
+            if not name:
+                continue
+            item = {"name": name}
+            if wt.isdigit():
+                item["weight"] = int(wt)
+            atype = (a.get("assessment_type") or {}).get("label")
+            if atype:
+                item["type"] = atype
+            if item not in out:
+                out.append(item)
+    return out or None
 
 
 def _ref(v):
