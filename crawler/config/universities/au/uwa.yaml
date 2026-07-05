@@ -1,0 +1,51 @@
+# 西澳大学 —— 澳洲第六所（2026-07-05 调研，实测记录见 parsers/au/uwa.py 头注）。
+# 数据拓扑：自建 handbook 老式聚合页（格拉待遇）——units 索引一页列全 3,311 门；
+# 学位/主修详情页有归属（Administered by）；课程详情页无归属按克制原则不抓。
+# 校历 important-dates 可抓（日期行+标签行成对，年份在标签括号内）。
+code: uwa
+name: University of Western Australia
+name_zh: 西澳大学
+website: https://www.uwa.edu.au
+city: Perth
+
+domains:
+  www.handbooks.uwa.edu.au: {interval: 1.0, concurrency: 4}
+  www.uwa.edu.au: {interval: 3.0, concurrency: 1}
+
+expect:
+  module_faculty_pct: 0     # units 全站无归属字段（索引与详情页均无），结构性缺
+  modules_min: 3000
+
+faculties:
+  "UWA Business School": 商学院
+  "School of Agriculture and Environment": 农业与环境学院
+  "School of Allied Health": 联合健康学院
+  "School of Biological Sciences": 生物科学学院
+  "School of Design": 设计学院
+  "School of Engineering": 工程学院
+  "School of Humanities": 人文学院
+  "School of Indigenous Studies": 原住民研究学院
+  "School of Law": 法学院
+  "School of Medicine": 医学院
+  "School of Molecular Sciences": 分子科学学院
+  "School of Physics, Mathematics and Computing": 物理、数学与计算学院
+  "School of Population and Global Health": 人口与全球健康学院
+  "School of Psychological Science": 心理科学学院
+  "School of Social Sciences": 社会科学学院
+  "Conservatorium of Music": 音乐学院
+  "Graduate School of Education": 教育研究生院
+
+seed_pages:
+  # 课程名单：一张索引页收全（3,311 门，锚文本=课名+[代码]）
+  - {category: program_catalog, crawl_freq: monthly,
+     url: "https://www.handbooks.uwa.edu.au/units"}
+  # 学位/主修索引 → 详情任务（详情页带 Administered by 归属）
+  - {category: program_catalog, crawl_freq: monthly,
+     url: "https://www.handbooks.uwa.edu.au/undergraduate"}
+  - {category: program_catalog, crawl_freq: monthly,
+     url: "https://www.handbooks.uwa.edu.au/postgraduate"}
+  - {category: program_catalog, crawl_freq: monthly,
+     url: "https://www.handbooks.uwa.edu.au/majors"}
+  # 校历（含考试与 study break）
+  - {category: term_dates, crawl_freq: monthly,
+     url: "https://www.uwa.edu.au/students/my-course/important-dates"}
