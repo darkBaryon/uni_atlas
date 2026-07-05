@@ -140,10 +140,11 @@ def enrich_zh(conn, program_id, plan):
     for y in plan.get("years", []):
         for it in y.get("items", []):
             it.pop("label_zh", None)     # 幂等：先清旧值
-            # 带码课程不在计划里翻（复用 modules.name_zh，但那是机翻、
-            # 技术课名常错——前端显英文码名+可点，翻译交课程详情页）；
-            # 只译占位活动/类别（词典可靠）
-            if not it.get("code"):
+            # 带码课程复用 modules.name_zh（与课程详情页一致，英主中辅显示）；
+            # 占位活动/类别走词典。机翻个别技术课名不准是全库既有问题，用到再修。
+            if it.get("code") and mz.get(it["code"]):
+                it["label_zh"] = mz[it["code"]]
+            elif not it.get("code"):
                 z = label_zh(it.get("label", ""), mz)
                 if z:
                     it["label_zh"] = z
