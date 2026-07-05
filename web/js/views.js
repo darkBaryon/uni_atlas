@@ -87,7 +87,9 @@
 
   /* 带数量徽章的折叠段（专业/课程用）：summary 里标题 + 计数 pill */
   function foldSec(title, count, body, open) {
-    return '<details class="fold foldsec"' + (open ? " open" : "") + ">" +
+    // data-fold = 开合状态的保存键：SPA 重渲染（筛选/搜索）后由 app.js 回放
+    return '<details class="fold foldsec" data-fold="' + esc(title) + '"' +
+      (open ? " open" : "") + ">" +
       "<summary><h2>" + esc(title) + '</h2><span class="fold-count">' +
       esc(count) + "</span></summary>" +
       '<div class="fold-body">' + body + "</div></details>";
@@ -364,7 +366,7 @@
     var h = "<section><h2>学期日历</h2>";
     years.sort().forEach(function (y, yi) {
       // 每学年一个折叠栏：当前学年默认展开，下一学年收起（校历越攒越长）
-      h += "<details" + (yi === 0 ? " open" : "") + "><summary>" + esc(y) +
+      h += '<details data-fold="cal-' + esc(y) + '"' + (yi === 0 ? " open" : "") + "><summary>" + esc(y) +
         " 学年 <span class='sub'>（" + byYear[y].length + " 项）</span></summary>" +
         '<div class="scroll"><table><tr><th>起</th><th>止</th><th>事项</th><th>类型</th></tr>';
       var TRACK = { ioe: "教育学院轨", pharmacy: "药学院轨", medicine: "医学院轨" };

@@ -149,7 +149,20 @@
     });
   }
 
+  function bindFolds(route) {
+    // 折叠栏开合状态跨重渲染保存（筛选会整页重建 DOM，实测 2026-07-05）
+    var key = route.code + "/" + route.view + (route.id != null ? route.id : "");
+    var saved = (filterState._folds = filterState._folds || {})[key] ||
+      (filterState._folds[key] = {});
+    app.querySelectorAll("details[data-fold]").forEach(function (d) {
+      var k = d.dataset.fold;
+      if (k in saved) d.open = saved[k];           // 回放用户上次的开合
+      d.addEventListener("toggle", function () { saved[k] = d.open; });
+    });
+  }
+
   function bindEvents(route, uni) {
+    bindFolds(route);
     app.querySelectorAll("tr.click[data-href]").forEach(function (tr) {
       tr.addEventListener("click", function () { location.hash = tr.dataset.href; });
       tr.tabIndex = 0;
