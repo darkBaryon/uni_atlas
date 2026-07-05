@@ -1,0 +1,41 @@
+# 昆士兰大学 UQ —— 澳洲第 N 所（2026-07 调研）。
+# 死胡同/来源见 docs/澳洲院校数据源备忘.md。
+# 数据拓扑（重要）：
+# - 官方目录 programs-courses.uq.edu.au 挂 **AWS WAF（人工 CAPTCHA）**，脚本/无头浏览器
+#   都过不去，只能人工过一次验证 → 走 fetch_method=cdp（fetcher/browser.py 持久会话，
+#   过一次管几小时、跨运行复用）。课程码枚举、课程详情、专业院系都在这后面。
+# - 营销站 study.uq.edu.au **无 WAF**：专业名（json-ld）+ 链接，337 个 ID 从 sitemap 拿。
+# - 分工：专业名/链接走 study.uq（html，便宜）；专业院系 + 课程走 programs-courses（cdp）。
+code: uq
+name: University of Queensland
+name_zh: 昆士兰大学
+website: https://www.uq.edu.au
+city: Brisbane
+
+domains:
+  study.uq.edu.au: {interval: 1.0, concurrency: 3}
+  # AWS WAF：只能单并发经浏览器会话；一次验证撑 80+ 页（实测）。
+  programs-courses.uq.edu.au: {interval: 0.5, concurrency: 1}
+
+faculties:
+  "Faculty of Business, Economics and Law": 商业、经济与法律学院
+  "Faculty of Engineering, Architecture and Information Technology": 工程、建筑与信息技术学院
+  "Faculty of Health and Behavioural Sciences": 健康与行为科学学院
+  "Faculty of Humanities, Arts and Social Sciences": 人文、艺术与社会科学学院
+  "Faculty of Medicine": 医学院
+  "Faculty of Science": 理学院
+
+seed_pages:
+  # 专业枚举：study.uq sitemap（4 页），解析器抠 /programs/{slug}-{id} → 专业页任务
+  - {category: program_catalog, crawl_freq: monthly,
+     url: "https://study.uq.edu.au/sitemap.xml?page=1"}
+  - {category: program_catalog, crawl_freq: monthly,
+     url: "https://study.uq.edu.au/sitemap.xml?page=2"}
+  - {category: program_catalog, crawl_freq: monthly,
+     url: "https://study.uq.edu.au/sitemap.xml?page=3"}
+  - {category: program_catalog, crawl_freq: monthly,
+     url: "https://study.uq.edu.au/sitemap.xml?page=4"}
+  # 校历：主站可抓，2026 principal dates 已人工录入（来源见备忘）
+  - {category: term_dates, crawl_freq: manual,
+     url: "https://about.uq.edu.au/academic-calendar",
+     note: "校历人工维护（UA PDF + 官网交叉验证）"}

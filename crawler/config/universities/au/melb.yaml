@@ -5,8 +5,14 @@
 #   courses（专业，539 个）+ subjects（课程，~6,200 门），列表行自带
 #   名称/代码/级别/校区/时长/学分/开课期——名单+链接一层就采齐，无需进详情页。
 # - 分页走 /search?page=N&types[]=course|subject&year=2026（/2026/courses?page=N 无效）。
-# - 反爬：handbook 挂 Imperva/Distil（"Pardon Our Interruption"），实测连发 ~6 请求
-#   即触发，冷却后恢复——interval 必须 ≥5s、单并发，靠 CF_MARKERS 退避兜底。
+# - 反爬：handbook 挂 Imperva/**Incapsula**（拦截页是 HTTP 200 的 888 字节空壳
+#   "Request unsuccessful. Incapsula incident ID"，已列入 config.CF_MARKERS）。
+#   行为型 WAF：ctx.request 带 cookie 也过不去，只有 cdp 的 page.goto 真导航才行
+#   （browser.py navmode/_get_via_page 已支持）。IP 干净时能过，但连续访问会
+#   **升级成 IP 硬封**，cookie/stealth/重试全解不开、只能冷却恢复。
+# - 【2026-07 现状】课程（subjects ~6200 门）**暂停**：Incapsula IP 硬封，需极慢
+#   滴灌 + 遇封长冷却分批抓，非一次跑完。已有 158 专业（真实无污染）+ 校历。
+#   复跑前先晾 IP，且把 interval 调更大（≥10s）逐页试，遇 888/403 即停冷却。
 # - 主站（www/students/study.unimelb.edu.au）Akamai 403 硬挡，校历页抓不到：
 #   term_dates 走人工录入（官方 principal dates 公开可查），不 seed 主站页面。
 code: melb
@@ -16,8 +22,9 @@ website: https://www.unimelb.edu.au
 city: Melbourne
 
 domains:
-  # Imperva 反爬实测（2026-07）：突发 6 请求触发挑战页，冷却 >60s。保守节奏 + 单并发。
-  handbook.unimelb.edu.au: {interval: 5.0, concurrency: 1}
+  # Imperva 反爬实测（2026-07）：突发 6 请求触发挑战页，冷却 >60s。经 CDP 有头
+  # Chrome 可零人工自动过，但仍偶发 403（限速），故保守 7s/单并发 + 下轮重试兜底。
+  handbook.unimelb.edu.au: {interval: 7.0, concurrency: 1}
 
 faculties:
   "Faculty of Architecture, Building and Planning": 建筑、建造与规划学院
@@ -32,11 +39,12 @@ faculties:
   "Faculty of Veterinary and Agricultural Sciences": 兽医与农业科学学院
 
 seed_pages:
-  # 专业目录：解析器从首页读分页导航，直接构造 /search?page=N 任务展开
-  - {category: program_catalog, crawl_freq: monthly,
+  # handbook 挂 Imperva，全程走 cdp（有头 Chrome + 守护页）；解析器从首页读
+  # 分页导航构造 /search?page=N 展开，展开的分页页也标 cdp。
+  - {category: program_catalog, crawl_freq: monthly, fetch_method: cdp,
      url: "https://handbook.unimelb.edu.au/2026/courses"}
   # 课程目录（subjects ≈6,200 门，~311 页）：同上
-  - {category: module_catalog, crawl_freq: monthly,
+  - {category: module_catalog, crawl_freq: monthly, fetch_method: cdp,
      url: "https://handbook.unimelb.edu.au/2026/subjects"}
   # 校历：主站 Akamai 403，此页仅登记留痕（manual 不入抓取队列）；
   # 2026 principal dates 已人工录入 calendar_events（来源即此页）

@@ -17,7 +17,7 @@ import re
 from parsers.base import BaseParser
 from parsers.models import DiscoveredPage, ModuleData, ProgramData
 from parsers.page import norm_ws
-from config.codes import Category, UniCode
+from config.codes import Category, FetchMethod, UniCode
 
 # 列表行级别旗标 → programs.level
 LEVEL_MAP = {
@@ -67,7 +67,8 @@ class Melbourne(BaseParser):
         for n in range(2, last + 1):
             url = page.abs(re.sub(r"([?&]page=)\d+", rf"\g<1>{n}", template))
             res.discovered.append(DiscoveredPage(
-                url=url, category=category, title=f"{type_} 目录第 {n} 页"))
+                url=url, category=category, title=f"{type_} 目录第 {n} 页",
+                fetch_method=FetchMethod.CDP))   # handbook 挂 Imperva，分页页也走 CDP
 
     # ---------------- 专业目录（courses，539 个）----------------
     def program_catalog(self, page, res):

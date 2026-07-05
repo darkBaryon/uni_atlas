@@ -15,6 +15,8 @@ import yaml
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 SNAP_ROOT = os.path.join(ROOT, "snapshots")   # snapshots/{uni_code}/{category}/
 _UNI_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "universities")
+# CDP 浏览器持久化 profile：过一次 CAPTCHA 后 token cookie 存这里，跨运行复用
+BROWSER_PROFILE = os.path.join(ROOT, ".browser-profile")
 
 USER_AGENT = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
               "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36")
@@ -37,12 +39,15 @@ class DomainPolicy(NamedTuple):
 MAX_DOMAINS = 10              # 同时并发的域名数上限
 TIMEOUT = 30                  # 单请求超时（秒）
 WAF_SOLVE_TIMEOUT = 40        # 浏览器打开 WAF 页的导航超时（秒）
-WAF_SOLVE_WAIT = 180          # 等用户手动过 CAPTCHA 的最长时间（秒）
+WAF_SOLVE_WAIT = 600          # 等用户手动过 CAPTCHA 的最长时间（秒）
 CF_BACKOFFS = [30, 60, 120]   # 反爬挑战退避序列；用尽后放弃本轮
 # 各家 WAF 挑战页标记：Cloudflare 三种 + Imperva/Distil + AWS WAF（UQ）
-# （墨尔本 handbook 实测 2026-07：连发 ~6 请求触发，冷却后自动恢复）
+# （墨尔本 handbook 实测 2026-07：Incapsula/Imperva 拦截页是 HTTP 200 但只有
+#  888 字节 "Request unsuccessful. Incapsula incident ID"，务必列为标记，
+#  否则空壳会被当有效页入库；连发触发后升级为 IP 硬封，需冷却才恢复）
 CF_MARKERS = ("Just a moment", "cf-challenge", "Checking your browser",
-              "Pardon Our Interruption", "Human Verification")
+              "Pardon Our Interruption", "Human Verification",
+              "Incapsula", "_Incapsula_Resource", "Request unsuccessful")
 
 DEFAULT_ENTRY_YEAR = "2026"   # 学校 YAML 未指定申请季时的默认值
 

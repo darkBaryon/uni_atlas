@@ -79,7 +79,8 @@ def get_tasks(conn, uni_code=None, category=None, due_only=False,
     sql = ["SELECT sp.*, u.code AS uni_code, u.name_zh AS uni_name_zh"
            " FROM source_pages sp"
            " JOIN universities u ON u.id = sp.university_id"
-           " WHERE sp.status = 'active' AND sp.fetch_method IN ('html', 'portlet_post')"]
+           " WHERE sp.status = 'active'"
+           " AND sp.fetch_method IN ('html', 'portlet_post', 'cdp')"]
     args = []
     if uni_code:
         sql.append("AND u.code = %s")
