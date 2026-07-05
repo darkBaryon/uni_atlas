@@ -36,11 +36,13 @@ class DomainPolicy(NamedTuple):
 
 MAX_DOMAINS = 10              # 同时并发的域名数上限
 TIMEOUT = 30                  # 单请求超时（秒）
+WAF_SOLVE_TIMEOUT = 40        # 浏览器打开 WAF 页的导航超时（秒）
+WAF_SOLVE_WAIT = 180          # 等用户手动过 CAPTCHA 的最长时间（秒）
 CF_BACKOFFS = [30, 60, 120]   # 反爬挑战退避序列；用尽后放弃本轮
-# 各家 WAF 挑战页标记：Cloudflare 三种 + Imperva/Distil 式
+# 各家 WAF 挑战页标记：Cloudflare 三种 + Imperva/Distil + AWS WAF（UQ）
 # （墨尔本 handbook 实测 2026-07：连发 ~6 请求触发，冷却后自动恢复）
 CF_MARKERS = ("Just a moment", "cf-challenge", "Checking your browser",
-              "Pardon Our Interruption")
+              "Pardon Our Interruption", "Human Verification")
 
 DEFAULT_ENTRY_YEAR = "2026"   # 学校 YAML 未指定申请季时的默认值
 

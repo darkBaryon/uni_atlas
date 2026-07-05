@@ -42,6 +42,7 @@ class FetchMethod(str, Enum):
     JS_RENDER = "js_render"        # 需浏览器渲染（v1 不抓，报告统计）
     PDF = "pdf"                    # PDF 文档（v1 不抓，报告统计）
     API = "api"                    # JSON 接口（预留）
+    CDP = "cdp"                    # 交互式浏览器会话：人工过 CAPTCHA 后经浏览器抓（fetcher/browser.py）
 
     __str__ = str.__str__
 

@@ -12,7 +12,7 @@ import sys
 
 import registry
 import logging_setup
-from translate import to_zh
+from translate import calendar_zh, to_zh
 
 logger = logging.getLogger(__name__)
 
@@ -22,6 +22,7 @@ TARGETS = [
     ("faculties",    "id", "name_en", "name_zh", ""),
     ("programs",     "id", "name_en", "name_zh", "AND is_active=1"),
     ("modules",      "id", "name_en", "name_zh", "AND is_active=1"),
+    ("calendar_events", "id", "name", "name_zh", ""),
 ]
 
 
@@ -44,7 +45,9 @@ def backfill(conn, limit=None):
 
         n = 0
         for i, r in enumerate(rows, 1):
-            zh_val = known.get(r["en"]) or to_zh(r["en"])
+            # 校历事件名是封闭词汇表：走词典（机翻短语易出鬼译）
+            fn = calendar_zh if table == "calendar_events" else to_zh
+            zh_val = known.get(r["en"]) or fn(r["en"])
             if not zh_val:
                 continue
             with conn.cursor() as cur:
