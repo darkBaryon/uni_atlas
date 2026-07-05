@@ -201,7 +201,9 @@ async def _run(tasks, emit, log):
     timeout = aiohttp.ClientTimeout(total=config.TIMEOUT)
     # trust_env 默认 False：绕开本机代理环境变量（anaconda requests 曾因此出错）
     async with aiohttp.ClientSession(
-            timeout=timeout, headers={"User-Agent": config.USER_AGENT}) as session:
+            timeout=timeout, headers={"User-Agent": config.USER_AGENT},
+            # UNSW 学生站响应头超 aiohttp 默认 8KB 上限（巨型 CSP/cookie 头）
+            max_line_size=16384, max_field_size=16384) as session:
         await asyncio.gather(*[
             _domain_group(d, q, session, emit, sem, log)
             for d, q in queues.items()])

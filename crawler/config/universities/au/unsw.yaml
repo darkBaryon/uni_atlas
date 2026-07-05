@@ -1,0 +1,32 @@
+# 新南威尔士大学 —— 澳洲第四所（2026-07-05 调研，实测记录见 parsers/au/unsw.py 头注）。
+# 数据拓扑：CourseLoop handbook（同莫纳什）——sitemap 枚举（26 子图，按 2026 过滤
+# = 5,762 courses + 962 programs），详情页 __NEXT_DATA__ 一层采齐（含两级归属：
+# academic_org 学院 / parent_academic_org 学部）。校历 student.unsw.edu.au/calendar
+# 可抓，三学期制（T1 二月起），自带 Exams T1/T2/T3。
+code: unsw
+name: University of New South Wales
+name_zh: 新南威尔士大学
+website: https://www.unsw.edu.au
+city: Sydney
+
+domains:
+  # 2026-07-05 并发实测：8 并发全 200、零挑战（无 Imperva/WAF），中高档。
+  www.handbook.unsw.edu.au: {interval: 0.5, concurrency: 8}
+  student.unsw.edu.au: {interval: 3.0, concurrency: 1}
+
+faculties:
+  "UNSW Business School": 商学院
+  "Faculty of Arts, Design & Architecture": 艺术、设计与建筑学院
+  "Faculty of Engineering": 工程学院
+  "Faculty of Law & Justice": 法律与司法学院
+  "Faculty of Medicine & Health": 医学与健康学院
+  "Faculty of Science": 理学院
+  "UNSW Canberra": 堪培拉校区（国防军学院）
+
+seed_pages:
+  # 唯一目录种子：sitemap 索引 → 26 子图 → 2026 年 programs/courses 详情任务
+  - {category: program_catalog, crawl_freq: monthly,
+     url: "https://www.handbook.unsw.edu.au/sitemap.xml"}
+  # 校历（含考试期）：三学期制 T1/T2/T3，2026+2027 双年在同一页
+  - {category: term_dates, crawl_freq: monthly,
+     url: "https://student.unsw.edu.au/calendar"}

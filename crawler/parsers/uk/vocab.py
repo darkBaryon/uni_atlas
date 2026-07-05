@@ -10,7 +10,8 @@ from config.codes import EventType
 
 # ---- 校历事件分类（按序首中即停）----
 EVENT_RULES: tuple = (
-    (("welcome", "induction"),                EventType.WELCOME_WEEK),
+    (("welcome", "induction", "o-week", "orientation"),   # 后两者=澳洲迎新周措辞
+     EventType.WELCOME_WEEK),
     # 学年整体区间（"academic year 9月至次年9月"）必须先于 orientation：
     # "academic year / Orientation" 是全年区间，不是迎新周
     (("academic year",),                      EventType.OTHER),

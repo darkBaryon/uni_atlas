@@ -127,9 +127,9 @@ class Sydney(BaseParser):
         # /units/{code}/{2026-S1C-…} → 学期段
         seg = page.url.rstrip("/").split("/")[-1]
         sess = seg if re.match(r"20\d\d-", seg) else None
-        # 只认标注的 "Credit points" 字段；松散的 "N credit point" 会抓到学位总学分
-        # （如 144），不用。
-        credits = page.re(r"Credit points\s*</[^>]+>\s*<[^>]+>\s*(\d+)")
+        # page.re 搜去标签后的纯文本，故用 "Credit points 6"（标注式，取那门课自己
+        # 的学分）；不用松散的 "N credit point"——它会抓到学位总学分（如 144）。
+        credits = page.re(r"Credit points\s+(\d+)\b")
         dept = page.re(r"(School of [A-Z][A-Za-z ,&]{3,45})\s+Student Portal")
         res.modules.append(ModuleData(
             name_en=name, url=page.url, entry_year=self.entry_year,
