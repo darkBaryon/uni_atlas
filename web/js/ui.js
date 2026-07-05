@@ -70,19 +70,43 @@
   };
 
   /** 考核占比条 */
+  UI.assClass = function (t) {
+    if (/exam/i.test(t)) return "a-exam";
+    if (/course|assignment|essay|report|project|lab/i.test(t)) return "a-coursework";
+    if (/group|class|present|participation|quiz|test/i.test(t)) return "a-group";
+    return "a-other";
+  };
+
+  /* 紧凑条：表格单元格用（权重叠成一条 + 简短标签） */
   UI.assBar = function (ass) {
     if (!ass || !ass.length) return '<span class="asslabel">考核未公布</span>';
-    var cls = function (t) {
-      if (/exam/i.test(t)) return "a-exam";
-      if (/course/i.test(t)) return "a-coursework";
-      if (/group|class/i.test(t)) return "a-group";
-      return "a-other";
-    };
     var bar = ass.map(function (a) {
-      return '<i class="' + cls(a.type) + '" style="width:' + a.weight + '%"></i>';
+      return '<i class="' + UI.assClass(a.type) + '" style="width:' + (a.weight || 0) + '%"></i>';
     }).join("");
-    var lab = ass.map(function (a) { return a.weight + "% " + a.type; }).join(" + ");
+    var lab = ass.map(function (a) { return (a.weight != null ? a.weight + "% " : "") + a.type; }).join(" + ");
     return '<span class="assbar">' + bar + '</span><span class="asslabel">' + UI.esc(lab) + '</span>';
+  };
+
+  /* 完整考核构成：权重条 + 逐项明细（课程详情页独立模块用） */
+  UI.assDetail = function (ass) {
+    if (!ass || !ass.length) return '<p class="empty">该课程考核构成未公布</p>';
+    var exam = ass.filter(function (a) { return /exam/i.test(a.type); })
+      .reduce(function (s, a) { return s + (a.weight || 0); }, 0);
+    var cw = ass.reduce(function (s, a) { return s + (a.weight || 0); }, 0) - exam;
+    var bar = ass.map(function (a) {
+      return '<i class="' + UI.assClass(a.type) + '" style="width:' + (a.weight || 0) +
+        '%" title="' + UI.esc(a.name + " " + (a.weight || "?") + "%") + '"></i>';
+    }).join("");
+    var rows = ass.map(function (a) {
+      return "<tr><td>" + UI.esc(a.name) + "</td><td class='num'>" +
+        (a.weight != null ? a.weight + "%" : "—") + "</td><td>" +
+        '<span class="atag ' + UI.assClass(a.type) + '">' + UI.esc(a.type || "") + "</span></td></tr>";
+    }).join("");
+    return '<div class="assbar big">' + bar + "</div>" +
+      '<p class="h2note">考试占 <b>' + exam + "%</b> · 平时/作业占 <b>" + cw + "%</b>" +
+      "（考试比重高→旺季备考，作业比重高→学期内持续辅导）</p>" +
+      '<div class="scroll"><table class="asstable"><tr><th>评估项</th><th>权重</th><th>类型</th></tr>' +
+      rows + "</table></div>";
   };
 
   UI.assLegend = '<div class="legend"><span><i class="a-exam"></i>考试</span>' +

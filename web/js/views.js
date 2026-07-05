@@ -500,7 +500,6 @@
         mod.leader && "负责人 " + mod.leader].filter(Boolean).join(" · ")) +
       (mod.url ? ' · <a href="' + esc(mod.url) + '" target="_blank" rel="noopener">Module Catalogue ↗</a>' : "") +
       "</p>";
-    if (mod.assessment) h += "<div>" + UI.assBar(mod.assessment) + "</div>";
     h += "</header>";
 
     /* 所属专业 */
@@ -518,6 +517,11 @@
 
     if (mod.prerequisites) {
       h += "<section><h2>先修要求</h2><div class='policy'>" + esc(mod.prerequisites) + "</div></section>";
+    }
+
+    /* 考核构成（辅导核心：定备考重点与旺季排班）——独立模块 */
+    if (mod.assessment && mod.assessment.length) {
+      h += "<section><h2>考核构成</h2>" + UI.assDetail(mod.assessment) + "</section>";
     }
 
     h += "<section><h2>课程大纲</h2>";
