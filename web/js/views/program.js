@@ -57,9 +57,15 @@
           '" target="_blank" rel="noopener">官方 PDF ↗</a>' : "") +
         '</summary><div class="planroad">' + body + "</div></details>";
     }
+    // 多变体（柔性学位含多个主修方向，各一份计划）时给出说明
+    var note = plans.length > 1
+      ? "本学位含 " + plans.length + " 个主修方向 · 展开你的方向看修课路线 · 课程码可点开 · ↳ 先修"
+      : "逐年逐学期修课路线 · 课程码可点开看详情 · ↳ 标注先修";
+    // 默认全部收起（多变体时展开首个会误导，让用户自己选方向）
+    var openFirst = plans.length === 1;
     return '<section><h2>培养计划</h2>' +
-      '<p class="h2note">逐年逐学期修课路线 · 课程码可点开看详情 · ↳ 标注先修</p>' +
-      plans.map(function (p, i) { return one(p, i === 0); }).join("") + "</section>";
+      '<p class="h2note">' + note + "</p>" +
+      plans.map(function (p, i) { return one(p, openFirst && i === 0); }).join("") + "</section>";
   };
 
   VIEWS.program = function (uni, prog) {

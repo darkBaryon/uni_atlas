@@ -152,12 +152,32 @@ def enrich_zh(conn, program_id, plan):
 
 
 def variant_label(url):
-    """从 PDF 文件名提取变体标签（去代码/年级前缀，保主修+起始学期）。"""
+    """PDF 文件名 → 干净的「主修方向 · 起始学期」标签（两种源格式都清）。
+    如 '3707 - Bachelor Engineering (Honours) - Aerospace Engineering -
+    AEROAH - T1 2026 Start' → 'Aerospace Engineering · T1 2026 入学'。"""
     from urllib.parse import unquote
-    name = unquote(url.split("/")[-1]).rsplit(".pdf", 1)[0]
-    name = re.sub(r"^\d{4}\s*-\s*", "", name)
-    name = re.sub(r"\b1st Yr\b\s*-?\s*", "", name)
-    return re.sub(r"\s+", " ", name).strip()
+    raw = unquote(url.split("/")[-1]).rsplit(".pdf", 1)[0]
+    # 按分隔符切段（' - ' 或 连续破折号/下划线），每段内部空格保留
+    segs = [re.sub(r"[-_\s]+", " ", s).strip()
+            for s in re.split(r"\s*-\s*-\s*|\s+-\s+|_{2,}|-{2,}", raw)]
+    segs = [s for s in segs if s]
+    # 起始学期段
+    term = ""
+    for i, s in enumerate(segs):
+        m = re.search(r"\bT([123])\b.*?(20\d{2})", s, re.I)
+        if m:
+            term = f"T{m.group(1)} {m.group(2)} 入学"
+            segs = segs[:i]          # 学期段及其后（Start）截掉
+            break
+    # 丢：4 位代码段、学位名段（Bachelor/Master…）、纯主修代码段（短且无空格）
+    def junk(s):
+        return (re.fullmatch(r"\d{4}", s) or re.match(r"(bachelor|master)\b", s, re.I)
+                or re.match(r"1st yr", s, re.I)
+                or (len(s) <= 8 and " " not in s and re.fullmatch(r"[A-Za-z]+\d*", s)))
+    majors = [s for s in segs if not junk(s)]
+    major = majors[-1].title() if majors else (segs[-1].title() if segs else "")
+    label = (major + (" · " + term if term else "")).strip(" ·")
+    return label or "培养计划"
 
 
 def load_plan(conn, program_id, entry_year, plan, url):
