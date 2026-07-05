@@ -52,7 +52,9 @@
       }).join("");
       return '<details class="fold planfold"' + (open ? " open" : "") +
         ' data-fold="plan-' + esc(p.variant_label) + '"><summary>' +
-        '<span class="pvar">' + esc(p.variant_label) + "</span>" +
+        '<span class="pvar">' + esc(p.variant_label_zh || p.variant_label) +
+        (p.variant_label_zh ? ' <span class="pvar-en">' + esc(p.variant_label) + "</span>" : "") +
+        "</span>" +
         (p.source_url ? '<a class="pdf" href="' + esc(p.source_url) +
           '" target="_blank" rel="noopener">官方 PDF ↗</a>' : "") +
         '</summary><div class="planroad">' + body + "</div></details>";

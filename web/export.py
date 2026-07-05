@@ -114,7 +114,7 @@ def main():
                 cur, "SELECT pm.module_id, pm.module_type, pm.year_of_study, pm.note "
                      "FROM program_modules pm WHERE pm.program_id=%s", (pid,))
             prog["plans"] = fetch_all(
-                cur, "SELECT variant_label, plan, source_url FROM program_plans "
+                cur, "SELECT variant_label, variant_label_zh, plan, source_url FROM program_plans "
                      "WHERE program_id=%s ORDER BY variant_label", (pid,))
             faculty = next((f for f in uni["faculties"] if f["id"] == prog["faculty_id"]), None)
             prog["faculty_name"] = (faculty or {}).get("name_zh") or (faculty or {}).get("name_en")

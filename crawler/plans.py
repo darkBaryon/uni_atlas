@@ -180,8 +180,65 @@ def variant_label(url):
     return label or "培养计划"
 
 
+# 主修方向（工程学科）中文词典：先长后短，"X Engineering"→"X工程"由后缀规则兜底
+_MAJOR_TERMS = [
+    ("mine geotechnical", "矿山岩土"), ("geotechnical", "岩土"),
+    ("geoenergy and geostorage", "地热能与地质封存"), ("geoenergy", "地热能"),
+    ("geostorage", "地质封存"), ("geo eng and eng geology", "地质工程与工程地质"),
+    ("aerospace", "航空航天"), ("bioinformatics", "生物信息"),
+    ("biomedical", "生物医学"), ("chemical product", "化工产品"),
+    ("chemical", "化学"), ("civil", "土木"), ("computer networks", "计算机网络"),
+    ("computer science", "计算机科学"), ("computer engineering", "计算机工程"),
+    ("computer", "计算机"), ("electrical", "电气"), ("environmental", "环境"),
+    ("mechanical", "机械"), ("mechatronic", "机电"), ("mechatronics", "机电"),
+    ("mining", "采矿"), ("nuclear", "核"), ("petroleum", "石油"),
+    ("photovoltaics and solar energy", "光伏与太阳能"), ("photovoltaics", "光伏"),
+    ("renewable energy", "可再生能源"), ("renewable", "可再生能源"),
+    ("robotics and mechatronics", "机器人与机电"), ("robotics", "机器人"),
+    ("software", "软件"), ("structural", "结构"), ("surveying", "测绘"),
+    ("telecommunications", "电信"), ("transport", "交通运输"),
+    ("water wastewater and waste", "水与污废水"), ("water", "水"),
+    ("quantum", "量子"), ("space systems", "空间系统"),
+    ("adv manufacturing", "先进制造"), ("advanced manufacturing", "先进制造"),
+    ("manufacturing", "制造"), ("food process", "食品加工"),
+    ("food science and technology", "食品科学与技术"),
+    ("food science and nutrition", "食品科学与营养"), ("food science", "食品科学"),
+    ("energy systems", "能源系统"), ("embedded systems", "嵌入式系统"),
+    ("systems and control", "系统与控制"), ("sustainable systems", "可持续系统"),
+    ("security engineering", "安全工程"), ("cyber security", "网络安全"),
+    ("engineering science", "工程科学"), ("space", "空间"),
+    ("artificial intelligence", "人工智能"), ("database systems", "数据库系统"),
+    ("information technology", "信息技术"), ("internetworking", "网络互联"),
+    ("programming languages", "编程语言"), ("computational biology", "计算生物学"),
+    ("project management", "项目管理"), ("photovoltaic", "光伏"),
+    ("commerce specialisation", "商科方向"), ("commerce specialisations", "商科方向"),
+]
+def major_zh(label):
+    """主修方向英文名 → 中文（词典子串匹配学科词根，工程类补'工程'后缀）。
+    子串匹配天然容忍尾部残留 spec 码；词典未覆盖返回 None（前端回退英文）。"""
+    low = re.sub(r"\s*·.*$", "", label).strip().lower()   # 去 ' · T1 …' 尾
+    is_eng = "engineering" in low or re.search(r"\beng\b", low)
+    for en, zh in _MAJOR_TERMS:                       # 长词根在前
+        if en in low:
+            done = zh.endswith(("工程", "技术", "科学", "系统", "方向",
+                                "能源", "安全", "制造", "智能", "语言",
+                                "网络", "生物学", "管理", "互联"))
+            return zh + "工程" if is_eng and not done else zh
+    return None
+
+
+def variant_zh(label):
+    """完整中文变体标签：'电气工程 · T1 2026 入学'（学期段照抄）。"""
+    mz = major_zh(label)
+    if not mz:
+        return None
+    tm = re.search(r"·\s*(.+)$", label)
+    return f"{mz} · {tm.group(1).strip()}" if tm else mz
+
+
 def load_plan(conn, program_id, entry_year, plan, url):
     label = variant_label(url)
+    zh = variant_zh(label)
     with conn.cursor() as cur:
         cur.execute("SELECT id FROM program_plans WHERE program_id=%s"
                     " AND variant_label=%s AND entry_year=%s",
@@ -189,12 +246,14 @@ def load_plan(conn, program_id, entry_year, plan, url):
         row = cur.fetchone()
         payload = json.dumps(plan, ensure_ascii=False)
         if row:
-            cur.execute("UPDATE program_plans SET plan=%s, source_url=%s WHERE id=%s",
-                        (payload, url, row["id"]))
+            cur.execute("UPDATE program_plans SET plan=%s, source_url=%s,"
+                        " variant_label_zh=%s WHERE id=%s",
+                        (payload, url, zh, row["id"]))
         else:
             cur.execute("INSERT INTO program_plans (program_id, variant_label,"
-                        " entry_year, plan, source_url) VALUES (%s,%s,%s,%s,%s)",
-                        (program_id, label, entry_year, payload, url))
+                        " variant_label_zh, entry_year, plan, source_url)"
+                        " VALUES (%s,%s,%s,%s,%s,%s)",
+                        (program_id, label, zh, entry_year, payload, url))
     conn.commit()
 
 
