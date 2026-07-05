@@ -175,8 +175,11 @@ def variant_label(url):
                 or re.match(r"1st yr", s, re.I)
                 or (len(s) <= 8 and " " not in s and re.fullmatch(r"[A-Za-z]+\d*", s)))
     majors = [s for s in segs if not junk(s)]
-    major = majors[-1].title() if majors else (segs[-1].title() if segs else "")
-    label = (major + (" · " + term if term else "")).strip(" ·")
+    major = majors[-1] if majors else (segs[-1] if segs else "")
+    # 理学院格式主修段前置 spec 码（'ANATA1 Anatomy'）——剥掉
+    major = re.sub(r"^[A-Za-z]{4,7}\d\s+", "", major).strip()
+    major = re.sub(r"\s+(full|part)\s+time.*$", "", major, flags=re.I).strip()  # 去 'Full Time…'
+    label = (major.title() + (" · " + term if term else "")).strip(" ·")
     return label or "培养计划"
 
 
@@ -212,6 +215,41 @@ _MAJOR_TERMS = [
     ("programming languages", "编程语言"), ("computational biology", "计算生物学"),
     ("project management", "项目管理"), ("photovoltaic", "光伏"),
     ("commerce specialisation", "商科方向"), ("commerce specialisations", "商科方向"),
+    # 理学院学科
+    ("anatomy", "解剖学"), ("bioinformatics", "生物信息学"), ("genetics", "遗传学"),
+    ("molecular and cell biology", "分子与细胞生物学"), ("biophysics", "生物物理学"),
+    ("ecology and conservation", "生态与保育"), ("biology and biodiversity", "生物与生物多样性"),
+    ("biotechnology", "生物技术"), ("chemistry", "化学"),
+    ("climate systems science", "气候系统科学"), ("food science", "食品科学"),
+    ("geography", "地理学"), ("earth science", "地球科学"),
+    ("physical oceanography", "物理海洋学"), ("statistics", "统计学"),
+    ("materials science", "材料科学"), ("microbiology", "微生物学"),
+    ("immunology", "免疫学"), ("marine and coastal science", "海洋与海岸科学"),
+    ("neuroscience", "神经科学"), ("pathology", "病理学"), ("pharmacology", "药理学"),
+    ("physiology", "生理学"), ("physics", "物理学"), ("psychology", "心理学"),
+    ("vision science", "视觉科学"), ("applied mathematics", "应用数学"),
+    ("pure mathematics", "纯数学"), ("advanced statistics", "高级统计"),
+    ("mathematics", "数学"), ("data science", "数据科学"),
+    # 商学院/经济
+    ("actuarial studies", "精算"), ("actuarial", "精算"), ("commerce", "商学"),
+    ("economics", "经济学"), ("information systems", "信息系统"),
+    ("accounting", "会计"), ("finance", "金融"), ("marketing", "市场营销"),
+    ("international business", "国际商务"), ("business analytics", "商业分析"),
+    ("taxation", "税务"), ("financial analysis", "金融分析"),
+    ("applied economics", "应用经济学"), ("business", "商学"),
+    # 医学与健康
+    ("medical studies doctor of medicine", "医学（本博连读）"),
+    ("doctor of medicine", "医学博士"), ("public health", "公共卫生"),
+    ("global health", "全球健康"), ("infectious diseases intelligence", "传染病情报"),
+    ("reproductive medicine", "生殖医学"), ("optometry", "视光学"),
+    ("clinical optometry", "临床视光学"), ("health data science", "健康数据科学"),
+    ("womens health medicine", "女性健康医学"), ("mental health", "心理健康"),
+    ("health leadership", "健康领导力"), ("exercise physiology", "运动生理学"),
+    ("orientation and mobility", "定向与行动"), ("vision impairment", "视力障碍"),
+    ("medicine", "医学"), ("health", "健康"),
+    # 法学
+    ("juris doctor", "法学博士（JD）"), ("master of laws", "法学硕士"),
+    ("laws", "法学"), ("law", "法学"),
 ]
 def major_zh(label):
     """主修方向英文名 → 中文（词典子串匹配学科词根，工程类补'工程'后缀）。

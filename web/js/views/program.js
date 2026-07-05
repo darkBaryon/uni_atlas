@@ -34,6 +34,7 @@
         (it.credits ? '<span class="pcr">' + it.credits + "</span>" : "") +
         "</div>" + pre + "</div>";
     }
+    var multi = plans.length > 1;
     function one(p, open) {
       var years = (p.plan && p.plan.years) || [];
       // 按学年分组，同一年的各 term 并排
@@ -50,11 +51,15 @@
         return '<div class="pyear"><div class="pyear-tag">Year ' + esc(yr) + "</div>" +
           '<div class="pterms">' + cols + "</div></div>";
       }).join("");
+      // 单份计划：折叠栏只显学期（学位名标题里已有，别重复）；
+      // 多份（柔性学位多主修）：显主修方向（中文优先）
+      var term = (/·\s*(.+)$/.exec(p.variant_label) || [])[1] || "";
+      var head = multi
+        ? '<span class="pvar">' + esc(p.variant_label_zh || p.variant_label) +
+            (p.variant_label_zh ? ' <span class="pvar-en">' + esc(p.variant_label) + "</span>" : "") + "</span>"
+        : '<span class="pvar">修课计划' + (term ? ' <span class="pvar-en">' + esc(term) + "</span>" : "") + "</span>";
       return '<details class="fold planfold"' + (open ? " open" : "") +
-        ' data-fold="plan-' + esc(p.variant_label) + '"><summary>' +
-        '<span class="pvar">' + esc(p.variant_label_zh || p.variant_label) +
-        (p.variant_label_zh ? ' <span class="pvar-en">' + esc(p.variant_label) + "</span>" : "") +
-        "</span>" +
+        ' data-fold="plan-' + esc(p.variant_label) + '"><summary>' + head +
         (p.source_url ? '<a class="pdf" href="' + esc(p.source_url) +
           '" target="_blank" rel="noopener">官方 PDF ↗</a>' : "") +
         '</summary><div class="planroad">' + body + "</div></details>";
