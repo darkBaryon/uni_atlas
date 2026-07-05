@@ -14,6 +14,9 @@ domains:
   programsandcourses.anu.edu.au: {interval: 0.5, concurrency: 6}
   www.anu.edu.au: {interval: 3.0, concurrency: 1}
 
+expect:
+  program_faculty_pct: 85   # Flexible Double Degree 系列为跨学院学位，官方即无单一归属
+
 faculties:
   "ANU College of Arts and Social Sciences": 艺术与社会科学学部
   "ANU College of Asia and the Pacific": 亚洲与太平洋学部

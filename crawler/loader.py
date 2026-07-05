@@ -209,11 +209,12 @@ class Loader:
     # ---------------- module ----------------
     def _find_module(self, cur, code, name, entry_year):
         if code:
+            # 带码条目只按码匹配：同名不同码是真实存在的（ANU 各学院同名
+            # Exchange/Thesis 课 751 门曾被按名误并，2026-07-05）
             cur.execute("SELECT id FROM modules WHERE university_id=%s AND code=%s"
                         " AND entry_year=%s", (self.uid, code, entry_year))
             row = cur.fetchone()
-            if row:
-                return row["id"]
+            return row["id"] if row else None
         # 无码引用（专业页课表）兜底按名匹配**带码行**——目录名单先入库时，
         # 专业页引用应挂到已有行而不是另建无码骨架（跨源重复，实测 2026-07-05）
         cur.execute("SELECT id FROM modules WHERE university_id=%s AND name_en=%s"
