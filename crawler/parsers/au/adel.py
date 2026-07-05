@@ -19,7 +19,8 @@ Course Planner 已死（TLS 拒连），只认新站**。
 import re
 
 from parsers.base import BaseParser
-from parsers.models import CalendarData, DiscoveredPage, ModuleData, ProgramData
+from parsers.models import (CalendarData, DiscoveredPage, ModuleData,
+                            ModuleRef, ProgramData)
 from parsers.page import norm_ws
 from parsers.uk.common import date_loose, event_type
 from config.codes import Category, UniCode
@@ -80,6 +81,18 @@ class Adelaide(BaseParser):
             level=level, url=page.url, entry_year=self.entry_year)
         m = re.search(r"(\d+(?:\.\d+)? year\(s\)[^\n]{0,30})", _text_of(page))
         p.duration = norm_ws(m.group(1)) if m else None
+        # 课表引用（学位页列的课程链接）：①前端课表 ②归属反推的选票
+        # （学位页自身无归属字段，用课表课程的 Course owner 多数票补）
+        seen = set()
+        for a in page.soup.find_all("a", href=True):
+            m2 = re.search(r"/study/courses/([a-z]{2,6}-\d{4}[a-z]*)/", a["href"])
+            if not m2 or m2.group(1) in seen:
+                continue
+            seen.add(m2.group(1))
+            p.modules.append(ModuleRef(
+                name=norm_ws(a.get_text(" ", strip=True)) or m2.group(1),
+                code=m2.group(1).replace("-", "").upper(),
+                url=page.abs(a["href"])))
         res.programs.append(p)
 
     # ---------------- 校历 ----------------

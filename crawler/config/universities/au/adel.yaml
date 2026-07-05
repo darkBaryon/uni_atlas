@@ -10,7 +10,7 @@ website: https://adelaide.edu.au
 city: Adelaide
 
 domains:
-  adelaide.edu.au: {interval: 0.5, concurrency: 4}   # 试抓无压力，CDN 大站
+  adelaide.edu.au: {interval: 0.2, concurrency: 6}   # 20 连发实测零限流（2026-07-05），CDN 大站
 
 expect:
   program_faculty_pct: 0    # 学位页无归属字段（合并后学部结构未在页面透出）
