@@ -493,3 +493,17 @@ SET character_set_client = @saved_cs_client;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
+
+-- 培养计划（逐年逐学期修课序列，PDF 解析，见 crawler/plans.py）
+CREATE TABLE `program_plans` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `program_id` int unsigned NOT NULL,
+  `variant_label` varchar(200) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '主修+起始学期变体',
+  `entry_year` varchar(9) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `plan` json NOT NULL COMMENT '结构化修课序列 years[].items[]',
+  `source_url` varchar(768) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `fetched_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_plan` (`program_id`,`variant_label`,`entry_year`),
+  KEY `program_id` (`program_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='培养计划（逐年逐学期修课序列，PDF 解析）';

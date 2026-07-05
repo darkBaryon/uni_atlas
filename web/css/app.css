@@ -208,3 +208,14 @@ footer{margin-top:56px;padding-top:16px;border-top:1px solid var(--line);
   main{animation:fadein .12s ease-out}
   @keyframes fadein{from{opacity:.4}to{opacity:1}}
 }
+
+/* 培养计划路线图 */
+.planroad{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;margin-top:8px}
+.planroad .term{border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--past-soft)}
+.planroad .term h4{margin:0 0 6px;font-size:12px;color:var(--accent);font-weight:700}
+.planroad ul{list-style:none;margin:0;padding:0}
+.planroad li{font-size:12.5px;padding:3px 0;border-bottom:1px dashed var(--line);display:flex;flex-wrap:wrap;align-items:baseline;gap:4px}
+.planroad li:last-child{border-bottom:0}
+.planroad li .cr{margin-left:auto;font-size:11px;color:var(--ink-soft);font-variant-numeric:tabular-nums}
+.planroad li .pre{flex-basis:100%;font-size:11px;color:var(--ink-soft)}
+summary .pdf,summary a.pdf{font-size:11px;margin-left:8px;color:var(--accent)}
