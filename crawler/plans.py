@@ -63,6 +63,10 @@ def parse_plan(pdf_bytes):
                 credit = " ".join(w["text"] for w in ws if w["x0"] >= x_cr).strip()
                 if not name or not credit.isdigit():
                     continue
+                # 滤 PDF 内的学位交叉引用行（"BE (Hons) ME Elec Eng [3736]"）——
+                # 指向其他学位结构，非本计划课程/活动
+                if re.search(r"\[\d{4}\]\s*$", name):
+                    continue
                 lead = CODE.match(name)
                 item: dict = {"credits": int(credit)}
                 if lead and "or" not in name.split(lead.group(0), 1)[1][:4].lower():
