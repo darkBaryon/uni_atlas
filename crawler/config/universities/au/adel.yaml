@@ -1,0 +1,25 @@
+# 阿德莱德大学（2026 合并新校 Adelaide University = 原阿德莱德大学 + 南澳大学）
+# —— 澳洲第七所（2026-07-05 调研，实测记录见 parsers/au/adel.py 头注）。
+# 数据拓扑：单站 sitemap 枚举（学位 524 + 课程 5,521，slug 即代码）；课程页
+# 标签/值行对含 Course owner 归属；学位页无归属（合并后结构未透出）。
+# 旧 access.adelaide.edu.au Course Planner 已死（TLS 拒连），勿用。
+code: adel
+name: Adelaide University
+name_zh: 阿德莱德大学
+website: https://adelaide.edu.au
+city: Adelaide
+
+domains:
+  adelaide.edu.au: {interval: 0.5, concurrency: 4}   # 试抓无压力，CDN 大站
+
+expect:
+  program_faculty_pct: 0    # 学位页无归属字段（合并后学部结构未在页面透出）
+  modules_min: 4000
+
+seed_pages:
+  # 唯一目录种子：单张 sitemap → 学位/课程详情任务
+  - {category: program_catalog, crawl_freq: monthly,
+     url: "https://adelaide.edu.au/sitemap.xml"}
+  # 校历（Semester 1/2 分节，含 Exam period/SWOT week）
+  - {category: term_dates, crawl_freq: monthly,
+     url: "https://adelaide.edu.au/students/manage-study/academic-calendar/"}

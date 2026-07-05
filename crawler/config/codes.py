@@ -32,6 +32,7 @@ class UniCode(str, Enum):
     UNSW = "unsw"          # 新南威尔士大学
     UQ = "uq"              # 昆士兰大学
     UWA = "uwa"            # 西澳大学
+    ADEL = "adel"          # 阿德莱德大学（2026 合并新校）
     ANU = "anu"            # 澳大利亚国立大学
 
     __str__ = str.__str__      # 日志/格式化输出 'bristol' 而非 'UniCode.BRISTOL'
