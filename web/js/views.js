@@ -436,30 +436,47 @@
       var m = uni.modules[id];
       if (m.code) modByCode[m.code] = m.id;
     });
+    // 单门课/活动卡片：真课程（有码可点）与占位活动（通识/选修）视觉分级
     function item(it) {
       var mid = it.code && modByCode[it.code];
-      var head = it.code
-        ? (mid ? '<a href="#/u/' + esc(uni.code) + "/m/" + mid + '">' + esc(it.code) + "</a>"
-               : '<b>' + esc(it.code) + "</b>") + " " + esc(it.label || "")
-        : esc(it.label || "");
-      var pre = it.prereq ? ' <span class="pre">先修 ' + esc(it.prereq) + "</span>" : "";
-      return '<li>' + head + '<span class="cr">' + (it.credits || "") + "</span>" + pre + "</li>";
+      var isCourse = !!it.code;
+      var codeHtml = it.code
+        ? (mid ? '<a class="pcode" href="#/u/' + esc(uni.code) + "/m/" + mid + '">' + esc(it.code) + "</a>"
+               : '<span class="pcode dead">' + esc(it.code) + "</span>")
+        : "";
+      var pre = it.prereq
+        ? '<span class="ppre" title="先修">↳ ' + esc(it.prereq) + "</span>" : "";
+      return '<div class="pitem' + (isCourse ? "" : " activity") + '">' +
+        '<div class="pitem-main">' + codeHtml +
+        '<span class="pname">' + esc(it.label || "") + "</span>" +
+        (it.credits ? '<span class="pcr">' + it.credits + "</span>" : "") +
+        "</div>" + pre + "</div>";
     }
     function one(p, open) {
       var years = (p.plan && p.plan.years) || [];
-      var body = years.map(function (y) {
-        return '<div class="term"><h4>Year ' + y.year + " · Term " + y.term + "</h4><ul>" +
-          y.items.map(item).join("") + "</ul></div>";
+      // 按学年分组，同一年的各 term 并排
+      var byYear = {};
+      years.forEach(function (t) { (byYear[t.year] = byYear[t.year] || []).push(t); });
+      var body = Object.keys(byYear).sort(function (a, b) { return a - b; }).map(function (yr) {
+        var terms = byYear[yr].sort(function (a, b) { return a.term - b.term; });
+        var cols = terms.map(function (t) {
+          var cr = t.items.reduce(function (s, it) { return s + (it.credits || 0); }, 0);
+          return '<div class="pterm"><div class="pterm-hd">Term ' + t.term +
+            '<span class="pterm-cr">' + cr + " UOC</span></div>" +
+            t.items.map(item).join("") + "</div>";
+        }).join("");
+        return '<div class="pyear"><div class="pyear-tag">Year ' + esc(yr) + "</div>" +
+          '<div class="pterms">' + cols + "</div></div>";
       }).join("");
-      return '<details class="fold"' + (open ? " open" : "") +
+      return '<details class="fold planfold"' + (open ? " open" : "") +
         ' data-fold="plan-' + esc(p.variant_label) + '"><summary>' +
-        esc(p.variant_label) +
-        (p.source_url ? ' <a class="pdf" href="' + esc(p.source_url) +
-          '" target="_blank" rel="noopener">PDF ↗</a>' : "") +
+        '<span class="pvar">' + esc(p.variant_label) + "</span>" +
+        (p.source_url ? '<a class="pdf" href="' + esc(p.source_url) +
+          '" target="_blank" rel="noopener">官方 PDF ↗</a>' : "") +
         '</summary><div class="planroad">' + body + "</div></details>";
     }
     return '<section><h2>培养计划</h2>' +
-      '<p class="h2note">逐年逐学期修课序列 · 课程码可点开 · 先修关系标注（辅导选课规划）</p>' +
+      '<p class="h2note">逐年逐学期修课路线 · 课程码可点开看详情 · ↳ 标注先修</p>' +
       plans.map(function (p, i) { return one(p, i === 0); }).join("") + "</section>";
   };
 
