@@ -92,6 +92,10 @@ _PLAN_TERMS = [
     ("thesis", "毕业论文"), ("capstone", "毕业设计"),
     ("industrial training", "实习"), ("work integrated learning", "带薪实习"),
     ("research project", "研究项目"), ("minor", "辅修"), ("major", "主修"),
+    ("core courses", "核心课程"), ("core course", "核心课程"),
+    ("specialisations", "专业方向"), ("specialisation", "专业方向"),
+    ("masters project", "硕士项目"), ("coursework", "授课课程"),
+    ("project", "项目"), ("courses", "课程"), ("course", "课程"),
     ("or", "或"), ("and", "和"),
 ]
 
