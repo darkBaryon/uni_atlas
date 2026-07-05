@@ -13,7 +13,7 @@ domains:
   adelaide.edu.au: {interval: 0.2, concurrency: 6}   # 20 连发实测零限流（2026-07-05），CDN 大站
 
 expect:
-  program_faculty_pct: 0    # 学位页无归属字段（合并后学部结构未在页面透出）
+  program_faculty_pct: 80   # 学位页无归属字段，经课表多数票反推达 83%（跨学院学位除外）
   modules_min: 4000
 
 seed_pages:
