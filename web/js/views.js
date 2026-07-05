@@ -110,30 +110,42 @@
   /* 学院卡片（学校页）：顶层学院 + 本硕专业数 */
   VIEWS._facultyGrid = function (uni) {
     var ft = VIEWS.facTop(uni);
-    var agg = {};   // topId -> {fac, n, ug, pgt}
-    uni.programs.forEach(function (p) {
-      var top = p.faculty_id != null ? ft.topOf(p.faculty_id) : null;
+    var agg = {};   // topId -> {fac, n, ug, pgt, mods}
+    function bucket(facId) {
+      var top = facId != null ? ft.topOf(facId) : null;
       var key = top ? top.id : 0;
-      var a = agg[key] || (agg[key] = { fac: top, n: 0, ug: 0, pgt: 0 });
+      return agg[key] || (agg[key] = { fac: top, n: 0, ug: 0, pgt: 0, mods: 0 });
+    }
+    uni.programs.forEach(function (p) {
+      var a = bucket(p.faculty_id);
       a.n += 1;
       if (p.level === "UG") a.ug += 1; else a.pgt += 1;
     });
-    var keys = Object.keys(agg).sort(function (a, b) {
-      return agg[b].n - agg[a].n;
+    // 课程也计入学院卡片——有的学校归属只在课程侧（阿德莱德：学位页无归属）
+    Object.keys(uni.modules || {}).forEach(function (id) {
+      var m = uni.modules[id];
+      if (m.faculty_id != null) bucket(m.faculty_id).mods += 1;
     });
+    var keys = Object.keys(agg).filter(function (k) {
+      return agg[k].n + agg[k].mods > 0;
+    }).sort(function (a, b) { return (agg[b].n - agg[a].n) || (agg[b].mods - agg[a].mods); });
     if (!keys.length) return "<section><h2>学院</h2><p class='empty'>暂无专业数据</p></section>";
     return "<section><h2>学院</h2>" +
-      '<p class="h2note">共 ' + uni.programs.length + " 个专业已入库 · 点击学院查看</p>" +
+      '<p class="h2note">共 ' + uni.programs.length + " 个专业、" +
+      Object.keys(uni.modules || {}).length + " 门课程已入库 · 点击学院查看</p>" +
       '<div class="uni-grid">' + keys.map(function (k) {
         var a = agg[k];
         var nameEn = a.fac ? a.fac.name_en : "未归类";
         var nameZh = a.fac ? (a.fac.name_zh || "") : "院系信息待补";
+        var nums = a.n > 0
+          ? '<div><b>' + a.n + "</b><span>专业</span></div>" +
+            "<div><b>" + a.ug + "</b><span>本科</span></div>" +
+            "<div><b>" + a.pgt + "</b><span>硕士</span></div>"
+          : '<div><b>' + a.mods + "</b><span>课程</span></div>";
         return '<a class="uni-card" href="#/u/' + esc(uni.code) + "/f/" + k + '">' +
           "<h3>" + esc(nameEn) + "</h3>" +
           '<span class="zh">' + esc(nameZh) + "</span>" +
-          '<div class="nums"><div><b>' + a.n + "</b><span>专业</span></div>" +
-          "<div><b>" + a.ug + "</b><span>本科</span></div>" +
-          "<div><b>" + a.pgt + "</b><span>硕士</span></div></div></a>";
+          '<div class="nums">' + nums + "</div></a>";
       }).join("") + "</div></section>";
   };
 
