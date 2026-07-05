@@ -85,6 +85,14 @@
       '<div class="fold-body">' + body + "</div></details>";
   }
 
+  /* 带数量徽章的折叠段（专业/课程用）：summary 里标题 + 计数 pill */
+  function foldSec(title, count, body, open) {
+    return '<details class="fold foldsec"' + (open ? " open" : "") + ">" +
+      "<summary><h2>" + esc(title) + '</h2><span class="fold-count">' +
+      esc(count) + "</span></summary>" +
+      '<div class="fold-body">' + body + "</div></details>";
+  }
+
   /* ---- 学院聚合：专业挂在系上时向上归并到顶层学院 ---- */
   VIEWS.facTop = function (uni) {
     var byId = {};
@@ -179,7 +187,8 @@
     }
     var facIds = {}; facIds[facId] = 1;
     (uni.faculties || []).forEach(function (f) { if (f.parent_id === facId) facIds[f.id] = 1; });
-    h += VIEWS._moduleSection(uni, direct, facIds);   // 无系的学院：课程列表在上
+    // 无系的学院：课程列表在上、专业列表在下
+    h += VIEWS._moduleSection(uni, direct, facIds);
     return h + VIEWS._programSection(uni, filters, direct, "专业列表");
   };
 
@@ -208,11 +217,10 @@
              : "该校未公开课程目录（或尚未找到公开源）") + "</p></section>";
     }
     mods.sort(function (a, b) { return (a.code || "zz").localeCompare(b.code || "zz"); });
-    var h = "<section><h2>课程列表</h2>" +
-      '<p class="h2note">共 ' + mods.length + " 门 · 来自本系各专业的课程表 · 点击行看大纲/考核</p>" +
+    var b = '<p class="h2note">来自本系各专业的课程表 · 点击行看大纲/考核</p>' +
       '<div class="scroll"><table><tr><th>代码</th><th>课程</th><th>学分</th><th>学期</th><th>考核</th></tr>';
     mods.forEach(function (m) {
-      h += '<tr class="click" data-href="#/u/' + esc(uni.code) + "/m/" + m.id + '">' +
+      b += '<tr class="click" data-href="#/u/' + esc(uni.code) + "/m/" + m.id + '">' +
         '<td class="mcode">' + esc(m.code || "—") + "</td>" +
         "<td>" + esc(m.name_en) +
         (m.name_zh ? '<span class="sub">' + esc(m.name_zh) + "</span>"
@@ -221,7 +229,8 @@
         "<td>" + esc(m.semester || "—") + "</td>" +
         "<td>" + UI.assBar(m.assessment) + "</td></tr>";
     });
-    return h + "</table></div></section>";
+    // 课程是主角，默认展开；量大时可手动收起，数量在徽章上一眼可见
+    return foldSec("课程列表", mods.length + " 门", b + "</table></div>", true);
   };
 
   /* ---------------- 系页：课程列表在上，专业列表在下 ---------------- */
@@ -238,6 +247,7 @@
       (dept && dept.url ? '<p class="sub"><a href="' + esc(dept.url) +
         '" target="_blank" rel="noopener">官网 ↗</a></p>' : "") + "</header>";
     var facIds = {}; facIds[deptId] = 1;
+    // 课程在上、专业在下（辅导镜头：课程是主角）
     h += VIEWS._moduleSection(uni, progs, facIds);
     return h + VIEWS._programSection(uni, filters, progs, "专业列表");
   };
@@ -262,8 +272,7 @@
       return true;
     });
 
-    var h = "<section><h2>" + esc(title) + "</h2>" +
-      '<p class="h2note">共 ' + progs.length + " 个已入库 · 点击行进入专业详情</p>" +
+    var h = '<p class="h2note">点击行进入专业详情</p>' +
       '<div class="filterbar">' +
       '<div class="seg" data-filter="level">' +
       ["all|本硕", "PGT|硕士", "UG|本科"].map(function (s) {
@@ -275,7 +284,7 @@
       '<input type="search" data-filter="q" value="' + esc(f.q || "") + '" placeholder="搜索专业名…" aria-label="搜索专业">' +
       '<span class="count">' + rows.length + " / " + progs.length + "</span></div>";
 
-    if (!rows.length) return h + '<p class="empty">没有匹配的专业</p></section>';
+    if (!rows.length) return foldSec(title, progs.length + " 个", h + '<p class="empty">没有匹配的专业</p>', true);
 
     var showFac = Object.keys(facs).length > 1;  // 院系只有一个时列是纯重复，不显示
     h += '<div class="scroll"><table><tr><th>专业</th><th>层次</th>' +
@@ -296,7 +305,8 @@
         '<td class="num">' + (p.modules.length || "—") + "</td>" +
         (UI.SHOW_APP ? "<td>" + dl.html + "</td>" : "") + "</tr>";
     });
-    return h + "</table></div></section>";
+    // 专业是系页主内容，默认展开
+    return foldSec(title, progs.length + " 个", h + "</table></div>", true);
   };
 
   VIEWS._deadlineBody = function (uni) {

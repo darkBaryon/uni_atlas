@@ -1,0 +1,38 @@
+# 澳国立 —— 澳洲第五所（2026-07-05 调研，实测记录见 parsers/au/anu.py 头注）。
+# 数据拓扑：自研目录站（非 CourseLoop）但更友好——**公开 JSON API 枚举**
+# （课程 3,013 门两页扫完；专业 96 UG + 199 PGT），详情页服务端渲染、
+# 元数据规整键值列表（Offered by 学院 / ANU College 学部两级归属齐）。
+# 校历 = university-calendar?year=YYYY 表格（含 examination period 成对行）。
+code: anu
+name: Australian National University
+name_zh: 澳大利亚国立大学
+website: https://www.anu.edu.au
+city: Canberra
+
+domains:
+  # 2026-07-05 实测：6 并发全 200 无挑战
+  programsandcourses.anu.edu.au: {interval: 0.5, concurrency: 6}
+  www.anu.edu.au: {interval: 3.0, concurrency: 1}
+
+faculties:
+  "ANU College of Arts and Social Sciences": 艺术与社会科学学部
+  "ANU College of Asia and the Pacific": 亚洲与太平洋学部
+  "ANU College of Business and Economics": 商业与经济学部
+  "ANU College of Law, Governance and Policy": 法律、治理与政策学部
+  "ANU College of Science and Medicine": 科学与医学学部
+  "ANU College of Systems and Society": 系统与社会学部
+
+seed_pages:
+  # 课程 API（PageIndex 由解析器懒发现翻页）
+  - {category: program_catalog, crawl_freq: monthly,
+     url: "https://programsandcourses.anu.edu.au/data/CourseSearch/GetCourses?AppliedFilter=FilterByCourses&SelectedYear=2026&PageIndex=0&PageSize=2000"}
+  # 专业 API（UG / PGT 两端）
+  - {category: program_catalog, crawl_freq: monthly,
+     url: "https://programsandcourses.anu.edu.au/data/ProgramSearch/GetProgramsUnderGraduate?AppliedFilter=FilterByPrograms&SelectedYear=2026&PageIndex=0&PageSize=2000"}
+  - {category: program_catalog, crawl_freq: monthly,
+     url: "https://programsandcourses.anu.edu.au/data/ProgramSearch/GetProgramsPostGraduate?AppliedFilter=FilterByPrograms&SelectedYear=2026&PageIndex=0&PageSize=2000"}
+  # 校历（当年+次年；examination period 在表内）
+  - {category: term_dates, crawl_freq: monthly,
+     url: "https://www.anu.edu.au/directories/university-calendar?year=2026"}
+  - {category: term_dates, crawl_freq: monthly,
+     url: "https://www.anu.edu.au/directories/university-calendar?year=2027"}

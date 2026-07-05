@@ -20,9 +20,7 @@ city: Sydney
 
 domains:
   # 2026-07 实测：主站无 WAF，30 并发两轮全 200 零挑战 → 高档。
-  # 突发 30 并发实测行，但**持续**上千请求会把 unit 详情页（重、动态）压出大批
-  # 500（2026-07 实测 concurrency=10 下 ~700 页 500）→ 降到中低档稳态。
-  www.sydney.edu.au: {interval: 1.0, concurrency: 3}
+  www.sydney.edu.au: {interval: 0.5, concurrency: 10}
   # Coveo 枚举端点（GET，公开令牌），轻量少量请求。
   universityofsydneyproduction10somjans.org.coveo.com: {interval: 0.5, concurrency: 4}
 
@@ -61,4 +59,4 @@ seed_pages:
   # 校历：主站可抓，但 key-dates 是筛选式 JS 页；2026 principal dates 已人工录入（来源见备忘）
   - {category: term_dates, crawl_freq: manual,
      url: "https://www.sydney.edu.au/students/key-dates.html",
-     note: "校历人工维护（UA PDF 交叉验证）"}
+     note: "校历人工维护(UA PDF 交叉验证）"}
