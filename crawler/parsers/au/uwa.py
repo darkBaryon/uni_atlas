@@ -15,7 +15,8 @@
 import re
 
 from parsers.base import BaseParser
-from parsers.models import CalendarData, DiscoveredPage, ModuleData, ProgramData
+from parsers.models import (CalendarData, DiscoveredPage, ModuleData,
+                            ModuleRef, ProgramData)
 from parsers.page import norm_ws
 from parsers.uk.common import date_loose, event_type
 from config.codes import Category, UniCode
@@ -77,6 +78,17 @@ class UWA(BaseParser):
             name_en=(f"{name}（Major）" if is_major else name),
             level=level, url=page.url, entry_year=self.entry_year)
         p.faculty = meta.get("Administered by")
+        # 课表引用：major/degree 页列出的 unitdetails 链接（按码挂到课程行）
+        # ——units 全站无归属，课程在前端的显形通道就是这些专业课表（2026-07-05）
+        seen = set()
+        for a in page.soup.find_all("a", href=True):
+            m2 = re.search(r"unitdetails\?code=([A-Z0-9]+)", a["href"])
+            if not m2 or m2.group(1) in seen:
+                continue
+            seen.add(m2.group(1))
+            p.modules.append(ModuleRef(
+                name=norm_ws(a.get_text(" ", strip=True)) or m2.group(1),
+                code=m2.group(1), url=page.abs(a["href"])))
         res.programs.append(p)
 
     # ---------------- 校历 ----------------
