@@ -24,7 +24,7 @@ DB_NAME = "study_abroad"
 # 库中以 JSON 字符串存储的列，导出时解析成对象
 JSON_COLUMNS = {
     "extra", "subject_tags", "ielts_detail", "scholarships",
-    "other_tests", "agent_list", "assessment", "research_areas",
+    "other_tests", "agent_list", "assessment", "research_areas", "plan",
 }
 
 
@@ -113,6 +113,9 @@ def main():
             prog["modules"] = fetch_all(
                 cur, "SELECT pm.module_id, pm.module_type, pm.year_of_study, pm.note "
                      "FROM program_modules pm WHERE pm.program_id=%s", (pid,))
+            prog["plans"] = fetch_all(
+                cur, "SELECT variant_label, plan, source_url FROM program_plans "
+                     "WHERE program_id=%s ORDER BY variant_label", (pid,))
             faculty = next((f for f in uni["faculties"] if f["id"] == prog["faculty_id"]), None)
             prog["faculty_name"] = (faculty or {}).get("name_zh") or (faculty or {}).get("name_en")
 

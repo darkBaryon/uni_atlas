@@ -25,3 +25,6 @@ logs/
 
 # Playwright 浏览器会话配置（含 cookie/指纹，勿入仓）
 .browser-profile/
+
+# Claude Code 本地会话/配置（含 worktree 元数据，勿入仓）
+.claude/

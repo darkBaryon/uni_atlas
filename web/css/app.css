@@ -208,3 +208,47 @@ footer{margin-top:56px;padding-top:16px;border-top:1px solid var(--line);
   main{animation:fadein .12s ease-out}
   @keyframes fadein{from{opacity:.4}to{opacity:1}}
 }
+
+/* ---- 培养计划路线图 ---- */
+details.planfold summary{gap:0}
+.planfold summary .pvar{font-size:14px;font-weight:600;color:var(--ink)}
+.planfold summary .pdf{margin-left:auto;font-size:11.5px;color:var(--accent);
+  border:1px solid var(--line);border-radius:99px;padding:2px 10px;text-decoration:none}
+.planfold summary .pdf:hover{border-color:var(--accent)}
+.planroad{margin-top:6px;padding-bottom:6px}
+
+/* 学年横带：左侧竖标签 + 右侧学期列 */
+.pyear{display:flex;gap:12px;padding:14px 0;border-top:1px solid var(--line)}
+.pyear:first-child{border-top:0}
+.pyear-tag{flex:0 0 34px;writing-mode:vertical-rl;transform:rotate(180deg);
+  text-align:center;font-family:var(--serif);font-weight:700;font-size:14px;
+  color:#fff;background:var(--accent);border-radius:6px;padding:8px 0;letter-spacing:.08em}
+.pterms{flex:1;display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;min-width:0}
+
+/* 学期列 */
+.pterm{border:1px solid var(--line);border-radius:8px;background:var(--card);overflow:hidden}
+.pterm-hd{display:flex;align-items:baseline;justify-content:space-between;
+  padding:7px 11px;background:var(--accent-soft);font-size:12px;font-weight:700;color:var(--accent)}
+.pterm-cr{font-size:10.5px;font-weight:600;color:var(--ink-soft);
+  font-variant-numeric:tabular-nums;letter-spacing:.02em}
+
+/* 单门课/活动 */
+.pitem{padding:7px 11px;border-top:1px dashed var(--line)}
+.pitem:first-of-type{border-top:0}
+.pitem-main{display:flex;align-items:baseline;gap:7px;flex-wrap:wrap}
+.pcode{font-family:var(--mono);font-size:11.5px;font-weight:700;color:var(--accent);
+  text-decoration:none;background:var(--accent-soft);border-radius:4px;padding:1px 6px;white-space:nowrap}
+a.pcode:hover{background:var(--accent);color:#fff}
+.pcode.dead{color:var(--ink-soft);background:var(--past-soft)}
+.pname{font-size:12.5px;line-height:1.4;flex:1;min-width:0}
+.pcr{font-size:10.5px;color:var(--ink-soft);font-variant-numeric:tabular-nums;white-space:nowrap}
+.pitem.activity{background:var(--paper)}
+.pitem.activity .pname{color:var(--ink-soft);font-style:italic}
+.ppre{display:block;margin-top:2px;font-size:11px;color:var(--info);padding-left:2px}
+@media(max-width:760px){.pterms{grid-template-columns:1fr}}
+
+/* 申请参考折叠栏：键值两列紧凑排列（不再独占左栏） */
+.appkv{display:grid;grid-template-columns:auto 1fr;gap:6px 18px;margin:0;font-size:14px}
+.appkv dt{font-weight:600;font-size:12.5px;color:var(--ink-soft);white-space:nowrap;margin:0;padding-top:2px}
+.appkv dd{margin:0}
+.appkv dd .sub{display:block;font-size:12px;color:var(--ink-soft)}
