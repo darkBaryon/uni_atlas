@@ -34,8 +34,8 @@ UA = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
 def parse_plan(pdf_bytes):
     """PDF bytes → {'years': [{year, term, items:[{code?,label,prereq?,credits}]}]}。"""
     import pdfplumber
-    years = []
-    cur = None
+    years: list[dict] = []
+    cur: dict | None = None
     with pdfplumber.open(io.BytesIO(pdf_bytes)) as pdf:
         for page in pdf.pages:
             words = page.extract_words()
@@ -64,7 +64,7 @@ def parse_plan(pdf_bytes):
                 if not name or not credit.isdigit():
                     continue
                 lead = CODE.match(name)
-                item = {"credits": int(credit)}
+                item: dict = {"credits": int(credit)}
                 if lead and "or" not in name.split(lead.group(0), 1)[1][:4].lower():
                     item["code"] = lead.group(0)
                     item["label"] = name[lead.end():].strip() or lead.group(0)
@@ -74,6 +74,72 @@ def parse_plan(pdf_bytes):
                     item["prereq"] = prereq
                 cur["items"].append(item)
     return {"years": years}
+
+
+# 培养计划占位活动/类别措辞词典（封闭集合，机翻会乱）
+_PLAN_TERMS = [
+    ("general education", "通识教育"), ("free electives", "自由选修"),
+    ("free elective", "自由选修"), ("optional minors", "可选辅修"),
+    ("optional minor", "可选辅修"), ("broadening discipline electives", "拓展学科选修"),
+    ("recommended discipline electives", "推荐学科选修"),
+    ("built environment electives", "建成环境选修"),
+    ("engineering and technical management electives", "工程与技术管理选修"),
+    ("discipline electives", "学科选修"), ("discipline elective", "学科选修"),
+    ("computing electives", "计算机选修"), ("computing elective", "计算机选修"),
+    ("prescribed electives", "指定选修"), ("prescribed elective", "指定选修"),
+    ("technical electives", "技术选修"), ("professional electives", "专业选修"),
+    ("electives", "选修课"), ("elective", "选修课"),
+    ("thesis", "毕业论文"), ("capstone", "毕业设计"),
+    ("industrial training", "实习"), ("work integrated learning", "带薪实习"),
+    ("research project", "研究项目"), ("minor", "辅修"), ("major", "主修"),
+    ("or", "或"), ("and", "和"),
+]
+
+
+def label_zh(text, modules_zh):
+    """计划条目 label → 中文。带课程码的用 modules 表已翻名；
+    'A or B' 二选一保留码只译连接词；类别名走词典。"""
+    codes = CODE.findall(text)
+    if codes:
+        # 全是课程码的组合（A or B / A and B）：码不译，仅译连接词
+        parts = re.split(r"\b(or|and)\b", text)
+        out = []
+        for p in parts:
+            p = p.strip()
+            if p in ("or", "and"):
+                out.append("或" if p == "or" else "和")
+            elif CODE.fullmatch(p) and modules_zh.get(p):
+                out.append(f"{p} {modules_zh[p]}")
+            elif p:
+                out.append(p)
+        return " ".join(out)
+    s = re.sub(r"\bLevel (\d)\b", r"\1级", text, flags=re.I)   # Level 3 → 3级
+    hit = False
+    for en, zh in _PLAN_TERMS:                    # 长词组在前，整串多次替换
+        new = re.sub(r"\b" + re.escape(en) + r"\b", zh, s, flags=re.I)
+        if new != s:
+            s, hit = new, True
+    return re.sub(r"\s+", " ", s).strip() if hit and re.search(r"[一-鿿]", s) else None
+
+
+def enrich_zh(conn, program_id, plan):
+    """就地给 plan 各 item 补 label_zh：真课程用 modules.name_zh，活动走词典。"""
+    with conn.cursor() as cur:
+        cur.execute("SELECT code, name_zh FROM modules WHERE university_id="
+                    "(SELECT university_id FROM programs WHERE id=%s)"
+                    " AND code IS NOT NULL AND name_zh IS NOT NULL", (program_id,))
+        mz = {r["code"]: r["name_zh"] for r in cur.fetchall()}
+    for y in plan.get("years", []):
+        for it in y.get("items", []):
+            it.pop("label_zh", None)     # 幂等：先清旧值
+            # 带码课程不在计划里翻（复用 modules.name_zh，但那是机翻、
+            # 技术课名常错——前端显英文码名+可点，翻译交课程详情页）；
+            # 只译占位活动/类别（词典可靠）
+            if not it.get("code"):
+                z = label_zh(it.get("label", ""), mz)
+                if z:
+                    it["label_zh"] = z
+    return plan
 
 
 def variant_label(url):
@@ -117,6 +183,7 @@ def main():
         logger.error("解析出 0 条目，PDF 版式可能不同，未入库")
         return 1
     conn = registry.connect()
+    enrich_zh(conn, args.program_id, plan)   # 活动/类别补中文
     load_plan(conn, args.program_id, args.entry_year, plan, args.url)
     logger.info("培养计划入库：program %d，%d 学期 %d 条目",
                 args.program_id, len(plan["years"]), n)

@@ -26,9 +26,11 @@
         : "";
       var pre = it.prereq
         ? '<span class="ppre" title="先修">↳ ' + esc(it.prereq) + "</span>" : "";
+      // 活动/类别显中文（label_zh，词典翻）；带码课程显英文名（点码看详情+译文）
+      var nm = it.label_zh ? esc(it.label_zh) : esc(it.label || "");
       return '<div class="pitem' + (isCourse ? "" : " activity") + '">' +
         '<div class="pitem-main">' + codeHtml +
-        '<span class="pname">' + esc(it.label || "") + "</span>" +
+        '<span class="pname">' + nm + "</span>" +
         (it.credits ? '<span class="pcr">' + it.credits + "</span>" : "") +
         "</div>" + pre + "</div>";
     }
